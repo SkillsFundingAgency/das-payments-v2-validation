@@ -71,10 +71,12 @@
     <Compile Include="Constants\PaymentSystem.cs" />
     <Compile Include="Constants\Script.cs" />
     <Compile Include="DTO\Earning.cs" />
+    <Compile Include="DTO\HighLevelSummary.cs" />
     <Compile Include="DTO\IContainLearnerDetails.cs" />
     <Compile Include="DTO\Payment.cs" />
     <Compile Include="DTO\RequiredPayment.cs" />
     <Compile Include="Excel.cs" />
+    <Compile Include="Log.cs" />
     <Compile Include="Sql.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

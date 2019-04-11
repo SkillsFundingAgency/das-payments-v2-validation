@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Linq;
@@ -25,6 +26,7 @@ namespace SFA.DAS.Payments.Verification
                 var innerType = type.GetGenericArguments().First();
                 var dataTable = data.rows.TransformToDataTable(innerType);
                 document.AddWorksheet(dataTable, data.name);
+                Log.Write("Completed worksheet");
             }
 
             document.SaveAs(stream);
@@ -44,14 +46,15 @@ namespace SFA.DAS.Payments.Verification
                 output.Columns.Add(property.Name);
             }
 
-            var enumerableSource = source as IEnumerable;
+            var enumerableSource = source as IList;
 
             if (enumerableSource == null)
             {
                 throw new ArgumentException("Please ensure that types are all IEnumerables");
             }
 
-            foreach (var line in enumerableSource)
+            var progress = 0;
+            foreach (var line in (dynamic)source)
             {
                 var row = output.NewRow();
                 foreach (var property in properties)
@@ -60,6 +63,11 @@ namespace SFA.DAS.Payments.Verification
                 }
 
                 output.Rows.Add(row);
+                progress++;
+                if (progress % 1000 == 0)
+                {
+                    Log.Write($"Processed: {progress} rows");
+                }
             }
 
             return output;
