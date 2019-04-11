@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Linq;
@@ -46,7 +45,7 @@ namespace SFA.DAS.Payments.Verification
                 output.Columns.Add(property.Name);
             }
 
-            var enumerableSource = source as IList;
+            var enumerableSource = source as IEnumerable;
 
             if (enumerableSource == null)
             {

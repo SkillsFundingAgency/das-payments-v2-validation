@@ -21,11 +21,11 @@ namespace SFA.DAS.Payments.Verification
             Log.Write("Initialised learner group");
 
             // Get the payments
-            var v1Payments = await Sql.Execute<Payment>(PaymentSystem.V1, Script.Payments);
+            var v1Payments = await Sql.Read<Payment>(PaymentSystem.V1, Script.Payments);
             //v1Payments = v1Payments.LimitToActiveLearners();
             Log.Write("Retrieved V1 Payments");
 
-            var v2Payments = await Sql.Execute<Payment>(PaymentSystem.V2, Script.Payments);
+            var v2Payments = await Sql.Read<Payment>(PaymentSystem.V2, Script.Payments);
             //v2Payments = v2Payments.LimitToActiveLearners();
             Log.Write("Retrieved V2 Payments");
 
@@ -35,12 +35,12 @@ namespace SFA.DAS.Payments.Verification
             Log.Write("Payment comparison complete");
 
             // Get the earnings
-            var v1Earnings = await Sql.Execute<Earning>(PaymentSystem.V1, Script.Earnings);
-            //v1Earnings = v1Earnings.LimitToActiveLearners();
+            var v1Earnings = await Sql.Read<Earning>(PaymentSystem.V1, Script.Earnings);
+            v1Earnings = v1Earnings.LimitToActiveLearners();
             Log.Write("Retrieved V1 Earnings");
 
-            var v2Earnings = await Sql.Execute<Earning>(PaymentSystem.V2, Script.Earnings);
-            //v2Earnings = v2Earnings.LimitToActiveLearners();
+            var v2Earnings = await Sql.Read<Earning>(PaymentSystem.V2, Script.Earnings);
+            v2Earnings = v2Earnings.LimitToActiveLearners();
             Log.Write("Retrieved V2 Earnings");
 
             var v1EarningsWithoutV2 = v1Earnings.Except(v2Earnings);
@@ -49,12 +49,12 @@ namespace SFA.DAS.Payments.Verification
             Log.Write("Earning comparison complete");
 
             // Get the required payments
-            var v1RequiredPayments = await Sql.Execute<RequiredPayment>(PaymentSystem.V1, Script.RequiredPayments);
-            //v1RequiredPayments = v1RequiredPayments.LimitToActiveLearners();
+            var v1RequiredPayments = await Sql.Read<RequiredPayment>(PaymentSystem.V1, Script.RequiredPayments);
+            v1RequiredPayments = v1RequiredPayments.LimitToActiveLearners();
             Log.Write("Retrieved V1 Required Payments");
 
-            var v2RequiredPayments = await Sql.Execute<RequiredPayment>(PaymentSystem.V2, Script.RequiredPayments);
-            //v2RequiredPayments = v2RequiredPayments.LimitToActiveLearners();
+            var v2RequiredPayments = await Sql.Read<RequiredPayment>(PaymentSystem.V2, Script.RequiredPayments);
+            v2RequiredPayments = v2RequiredPayments.LimitToActiveLearners();
             Log.Write("Retrieved V2 Required Payments");
 
             var v1RequiredPaymentsWithoutV2 = v1RequiredPayments.Except(v2RequiredPayments);
@@ -111,7 +111,7 @@ namespace SFA.DAS.Payments.Verification
 
         private static async Task InitialiseActiveLearners()
         {
-            _activeLearners = new HashSet<long>(await Sql.Execute<long>(PaymentSystem.V1, Script.Inclusions));
+            _activeLearners = new HashSet<long>(await Sql.Read<long>(PaymentSystem.V1, Script.Inclusions));
         }
         
         private static List<T> LimitToActiveLearners<T>(this IEnumerable<T> source) where T : IContainLearnerDetails

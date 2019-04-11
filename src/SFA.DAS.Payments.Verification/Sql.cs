@@ -18,13 +18,23 @@ namespace SFA.DAS.Payments.Verification
             {PaymentSystem.V2, ConfigurationManager.ConnectionStrings["V2"].ConnectionString},
         };
 
-        public static async Task<List<T>> Execute<T>(PaymentSystem database, Script script)
+        public static async Task<List<T>> Read<T>(PaymentSystem database, Script script)
         {
             var sql = GetSqlText(database, script);
 
             using (var connection = Connection(database))
             {
                 return (await connection.QueryAsync<T>(sql)).ToList();
+            }
+        }
+
+        public static async Task Write<T>(PaymentSystem database, List<T> dataToWrite, string tableName)
+        {
+            using (var connection = Connection(database))
+            using (var bulkCopy = new SqlBulkCopy(connection))
+            {
+                var columns = typeof(T).GetProperties().Select(x => x.Name);
+
             }
         }
 
