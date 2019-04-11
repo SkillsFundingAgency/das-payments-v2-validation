@@ -24,3 +24,5 @@ SELECT TOP(100)
 FROM [DAS_PeriodEnd].Payments.Payments P
 JOIN [DAS_PeriodEnd].PaymentsDue.RequiredPayments R
  ON P.RequiredPaymentId = R.Id
+
+Order by UKPRN, learneruln, AcademicYear, CollectionPeriodName, DeliveryPeriod, TransactionType, FundingSource

@@ -24,29 +24,29 @@ namespace SFA.DAS.Payments.Verification
             //v2Payments = v2Payments.LimitToActiveLearners();
 
             var v1PaymentsWithoutV2 = v1Payments.Except(v2Payments);
-            var v2PaymentsWithoutV1 = v1Payments.Except(v1Payments);
+            var v2PaymentsWithoutV1 = v2Payments.Except(v1Payments);
             var commonPayments = v1Payments.Intersect(v2Payments);
 
             // Get the earnings
             var v1Earnings = await Sql.Execute<Earning>(PaymentSystem.V1, Script.Earnings);
-            v1Earnings = v1Earnings.LimitToActiveLearners();
+            //v1Earnings = v1Earnings.LimitToActiveLearners();
 
             var v2Earnings = await Sql.Execute<Earning>(PaymentSystem.V2, Script.Earnings);
-            v2Earnings = v2Earnings.LimitToActiveLearners();
+            //v2Earnings = v2Earnings.LimitToActiveLearners();
 
             var v1EarningsWithoutV2 = v1Earnings.Except(v2Earnings);
-            var v2EarningsWithoutV1 = v1Earnings.Except(v1Earnings);
+            var v2EarningsWithoutV1 = v2Earnings.Except(v1Earnings);
             var commonEarnings = v1Earnings.Intersect(v2Earnings);
 
             // Get the required payments
             var v1RequiredPayments = await Sql.Execute<RequiredPayment>(PaymentSystem.V1, Script.RequiredPayments);
-            v1RequiredPayments = v1RequiredPayments.LimitToActiveLearners();
+            //v1RequiredPayments = v1RequiredPayments.LimitToActiveLearners();
 
             var v2RequiredPayments = await Sql.Execute<RequiredPayment>(PaymentSystem.V2, Script.RequiredPayments);
-            v2RequiredPayments = v2RequiredPayments.LimitToActiveLearners();
+            //v2RequiredPayments = v2RequiredPayments.LimitToActiveLearners();
 
             var v1RequiredPaymentsWithoutV2 = v1RequiredPayments.Except(v2RequiredPayments);
-            var v2RequiredPaymentsWithoutV1 = v1RequiredPayments.Except(v1RequiredPayments);
+            var v2RequiredPaymentsWithoutV1 = v2RequiredPayments.Except(v1RequiredPayments);
             var commonRequiredPayments = v1RequiredPayments.Intersect(v2RequiredPayments);
 
             // For V1 payments without V2 - are the earnings the same?

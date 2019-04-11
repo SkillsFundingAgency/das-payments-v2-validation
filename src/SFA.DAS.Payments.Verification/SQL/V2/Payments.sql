@@ -21,3 +21,5 @@ SELECT
       ,[AccountId]
       
   FROM [SFA.DAS.Payments.Database].[Payments2].[Payment]
+
+  Order by UKPRN, learneruln, AcademicYear, CollectionPeriod, DeliveryPeriod, TransactionType, FundingSource

@@ -127,3 +127,5 @@ WHERE (
     AND LD.LearnAimRef != 'ZPROG001'
 
 	
+
+Order by UKPRN, learneruln, DeliveryPeriod
