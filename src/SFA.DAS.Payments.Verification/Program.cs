@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -70,6 +69,8 @@ namespace SFA.DAS.Payments.Verification
             // High level summary
             var v1PaymentsByTransactionType = v1Payments.ToLookup(x => x.TransactionType);
             var v2PaymentsByTransactionType = v2Payments.ToLookup(x => x.TransactionType);
+            var v1RequiredPaymentsByTransactionType = v1RequiredPayments.ToLookup(x => x.TransactionType);
+            var v2RequiredPaymentsByTransactionType = v2RequiredPayments.ToLookup(x => x.TransactionType);
             var summary = new List<HighLevelSummary>();
 
             // For each transaction type
@@ -79,9 +80,11 @@ namespace SFA.DAS.Payments.Verification
                 summary.Add(new HighLevelSummary
                 {
                     TransactionType = i,
-                    // Aggregate all amount for this transaction type
-                    V1Amount = v1PaymentsByTransactionType[i].Sum(x => x.Amount), 
-                    V2Amount = v2PaymentsByTransactionType[i].Sum(x => x.Amount),
+                    // Aggregate all amounts for this transaction type
+                    V1PaymentsAmount = v1PaymentsByTransactionType[i].Sum(x => x.Amount), 
+                    V2PaymentsAmount = v2PaymentsByTransactionType[i].Sum(x => x.Amount),
+                    V1RequiredPaymentsAmount = v1RequiredPaymentsByTransactionType[i].Sum(x => x.Amount),
+                    V2RequiredPaymentsAmount = v2RequiredPaymentsByTransactionType[i].Sum(x => x.Amount),
                 });
             }
 
