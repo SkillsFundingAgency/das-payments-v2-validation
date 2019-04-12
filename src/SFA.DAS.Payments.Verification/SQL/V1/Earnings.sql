@@ -67,8 +67,7 @@ WHERE (
 	OR [APEP].[PriceEpisodeLearnerAdditionalPayment] != 0
 	OR [APEP].[Period] = 1
     )
-
-
+	
 UNION
 
 select

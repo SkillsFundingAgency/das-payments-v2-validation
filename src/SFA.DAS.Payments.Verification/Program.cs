@@ -27,7 +27,7 @@ namespace SFA.DAS.Payments.Verification
             Log.Write("Retrieved V1 Payments");
 
             var v2Payments = await Sql.Read<Payment>(PaymentSystem.V2, Script.Payments);
-            //v2Payments = v2Payments.LimitToActiveLearners();
+            v2Payments = v2Payments.Take(1000).ToList(); //.LimitToActiveLearners();
             Log.Write("Retrieved V2 Payments");
 
             var v1PaymentsWithoutV2 = v1Payments.Except(v2Payments).ToList();
@@ -37,11 +37,11 @@ namespace SFA.DAS.Payments.Verification
 
             // Get the earnings
             var v1Earnings = await Sql.Read<Earning>(PaymentSystem.V1, Script.Earnings);
-            v1Earnings = v1Earnings.LimitToActiveLearners();
+            //v1Earnings = v1Earnings.LimitToActiveLearners();
             Log.Write("Retrieved V1 Earnings");
 
             var v2Earnings = await Sql.Read<Earning>(PaymentSystem.V2, Script.Earnings);
-            v2Earnings = v2Earnings.LimitToActiveLearners();
+            v2Earnings = v2Earnings.Take(1000).ToList(); //.LimitToActiveLearners();
             Log.Write("Retrieved V2 Earnings");
 
             var v1EarningsWithoutV2 = v1Earnings.Except(v2Earnings).ToList();
@@ -51,11 +51,11 @@ namespace SFA.DAS.Payments.Verification
 
             // Get the required payments
             var v1RequiredPayments = await Sql.Read<RequiredPayment>(PaymentSystem.V1, Script.RequiredPayments);
-            v1RequiredPayments = v1RequiredPayments.LimitToActiveLearners();
+            //v1RequiredPayments = v1RequiredPayments.LimitToActiveLearners();
             Log.Write("Retrieved V1 Required Payments");
 
             var v2RequiredPayments = await Sql.Read<RequiredPayment>(PaymentSystem.V2, Script.RequiredPayments);
-            v2RequiredPayments = v2RequiredPayments.LimitToActiveLearners();
+            //v2RequiredPayments = v2RequiredPayments.LimitToActiveLearners();
             Log.Write("Retrieved V2 Required Payments");
 
             var v1RequiredPaymentsWithoutV2 = v1RequiredPayments.Except(v2RequiredPayments).ToList();

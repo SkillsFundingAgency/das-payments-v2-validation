@@ -16,12 +16,12 @@ namespace SFA.DAS.Payments.Verification.DTO
         public int DeliveryPeriod { get; set; }
         public string LearnerReferenceNumber { get; set; }
         public string LearningAimReference { get; set; }
-        public int LearningAimProgrammeType { get; set; }
-        public int LearningAimStandardCode { get; set; }
-        public int LearningAimFrameworkCode { get; set; }
-        public int LearningAimPathwayCode { get; set; }
+        public int? LearningAimProgrammeType { get; set; }
+        public int? LearningAimStandardCode { get; set; }
+        public int? LearningAimFrameworkCode { get; set; }
+        public int? LearningAimPathwayCode { get; set; }
         public string LearningAimFundingLineType { get; set; }
-        public long AccountId { get; set; }
+        public long? AccountId { get; set; }
         public VerificationResult VerificationResult { get; set; }
     }
 }

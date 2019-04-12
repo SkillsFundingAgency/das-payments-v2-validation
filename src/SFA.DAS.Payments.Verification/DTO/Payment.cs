@@ -6,16 +6,16 @@ namespace SFA.DAS.Payments.Verification.DTO
     struct Payment : IContainLearnerDetails
     {
         public long LearnerUln { get; set; }
-        public long CommitmentId { get; set; }
-        public long AccountId { get; set; }
+        public long? CommitmentId { get; set; }
+        public long? AccountId { get; set; }
         public string LearnerReferenceNumber { get; set; }
         public long Ukprn { get; set; }
         public DateTime IlrSubmissionDateTime { get; set; }
         public string PriceEpisodeIdentifier { get; set; }
-        public int LearningAimStandardCode { get; set; }
-        public int LearningAimProgrammeType { get; set; }
-        public int LearningAimFrameworkCode { get; set; }
-        public int LearningAimPathwayCode { get; set; }
+        public int? LearningAimStandardCode { get; set; }
+        public int? LearningAimProgrammeType { get; set; }
+        public int? LearningAimFrameworkCode { get; set; }
+        public int? LearningAimPathwayCode { get; set; }
         public int ContractType { get; set; }
         public string LearningAimReference { get; set; }
         public string CollectionPeriodName { get; set; }

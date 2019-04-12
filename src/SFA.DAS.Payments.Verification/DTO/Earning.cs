@@ -1,7 +1,6 @@
 ﻿
 
 using System;
-using ClosedXML.Excel;
 using SFA.DAS.Payments.Verification.Constants;
 
 namespace SFA.DAS.Payments.Verification.DTO
@@ -15,10 +14,10 @@ namespace SFA.DAS.Payments.Verification.DTO
         public DateTime EpisodeStartDate { get; set; }
         public DateTime EpisodeEffectiveTnpStartDate { get; set; }
         public int DeliveryPeriod { get; set; }
-        public int LearningAimProgrammeType { get; set; }
-        public int LearningAimFrameworkCode { get; set; }
-        public int LearningAimPathwayCode { get; set; }
-        public int LearningAimStandardCode { get; set; }
+        public int? LearningAimProgrammeType { get; set; }
+        public int? LearningAimFrameworkCode { get; set; }
+        public int? LearningAimPathwayCode { get; set; }
+        public int? LearningAimStandardCode { get; set; }
         public decimal SfaContributionPercentage { get; set; }
         public string LearningAimFundingLineType { get; set; }
         public string LearningAimReference { get; set; }
@@ -40,11 +39,11 @@ namespace SFA.DAS.Payments.Verification.DTO
         public decimal TransactionType15 { get; set; }
         public decimal TransactionType16 { get; set; }
         public int ContractType { get; set; }
-        public DateTime FirstIncentiveCensusDate { get; set; }
-        public DateTime SecondIncentiveCensusDate { get; set; }
-        public DateTime LearnerAdditionalPaymentsDate { get; set; }
+        public DateTime? FirstIncentiveCensusDate { get; set; }
+        public DateTime? SecondIncentiveCensusDate { get; set; }
+        public DateTime? LearnerAdditionalPaymentsDate { get; set; }
         public decimal AgreedPrice { get; set; }
-        public DateTime EndDate { get; set; }
+        public DateTime? EndDate { get; set; }
         public int CumulativePmrs { get; set; }
         public int ExemptionCodeForCompletionHoldback { get; set; }
         public VerificationResult VerificationResult { get; set; }
