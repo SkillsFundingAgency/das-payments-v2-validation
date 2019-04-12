@@ -2,6 +2,7 @@
 
 using System;
 using ClosedXML.Excel;
+using SFA.DAS.Payments.Verification.Constants;
 
 namespace SFA.DAS.Payments.Verification.DTO
 {
@@ -12,7 +13,7 @@ namespace SFA.DAS.Payments.Verification.DTO
         public long Ukprn { get; set; }
         public string PriceEpisodeIdentifier { get; set; }
         public DateTime EpisodeStartDate { get; set; }
-        public DateTime EpisodeEffectiveTNPStartDate { get; set; }
+        public DateTime EpisodeEffectiveTnpStartDate { get; set; }
         public int DeliveryPeriod { get; set; }
         public int LearningAimProgrammeType { get; set; }
         public int LearningAimFrameworkCode { get; set; }
@@ -46,5 +47,6 @@ namespace SFA.DAS.Payments.Verification.DTO
         public DateTime EndDate { get; set; }
         public int CumulativePmrs { get; set; }
         public int ExemptionCodeForCompletionHoldback { get; set; }
+        public VerificationResult VerificationResult { get; set; }
     }
 }

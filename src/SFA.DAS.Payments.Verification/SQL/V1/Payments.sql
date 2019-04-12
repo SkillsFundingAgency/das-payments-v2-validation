@@ -14,7 +14,7 @@ SELECT TOP(100)
  R.CollectionPeriodName,
  R.TransactionType,
  SfaContributionPercentage,
- FundingLineType,
+ FundingLineType [LearningAimFundingLineType],
  LearnAimRef [LearningAimReference],
  CASE WHEN P.DeliveryMonth < 8 THEN P.DeliveryMonth + 5 ELSE P.DeliveryMonth - 7 END [DeliveryPeriod],
  SUBSTRING(R.CollectionPeriodName, 1, 4) [AcademicYear],

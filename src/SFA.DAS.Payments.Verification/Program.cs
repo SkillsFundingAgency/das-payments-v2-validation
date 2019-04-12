@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using MoreLinq;
 using SFA.DAS.Payments.Verification.Constants;
 using SFA.DAS.Payments.Verification.DTO;
 
@@ -29,9 +30,9 @@ namespace SFA.DAS.Payments.Verification
             //v2Payments = v2Payments.LimitToActiveLearners();
             Log.Write("Retrieved V2 Payments");
 
-            var v1PaymentsWithoutV2 = v1Payments.Except(v2Payments);
-            var v2PaymentsWithoutV1 = v2Payments.Except(v1Payments);
-            var commonPayments = v1Payments.Intersect(v2Payments);
+            var v1PaymentsWithoutV2 = v1Payments.Except(v2Payments).ToList();
+            var v2PaymentsWithoutV1 = v2Payments.Except(v1Payments).ToList();
+            var commonPayments = v1Payments.Intersect(v2Payments).ToList();
             Log.Write("Payment comparison complete");
 
             // Get the earnings
@@ -43,9 +44,9 @@ namespace SFA.DAS.Payments.Verification
             v2Earnings = v2Earnings.LimitToActiveLearners();
             Log.Write("Retrieved V2 Earnings");
 
-            var v1EarningsWithoutV2 = v1Earnings.Except(v2Earnings);
-            var v2EarningsWithoutV1 = v2Earnings.Except(v1Earnings);
-            var commonEarnings = v1Earnings.Intersect(v2Earnings);
+            var v1EarningsWithoutV2 = v1Earnings.Except(v2Earnings).ToList();
+            var v2EarningsWithoutV1 = v2Earnings.Except(v1Earnings).ToList();
+            var commonEarnings = v1Earnings.Intersect(v2Earnings).ToList();
             Log.Write("Earning comparison complete");
 
             // Get the required payments
@@ -57,9 +58,9 @@ namespace SFA.DAS.Payments.Verification
             v2RequiredPayments = v2RequiredPayments.LimitToActiveLearners();
             Log.Write("Retrieved V2 Required Payments");
 
-            var v1RequiredPaymentsWithoutV2 = v1RequiredPayments.Except(v2RequiredPayments);
-            var v2RequiredPaymentsWithoutV1 = v2RequiredPayments.Except(v1RequiredPayments);
-            var commonRequiredPayments = v1RequiredPayments.Intersect(v2RequiredPayments);
+            var v1RequiredPaymentsWithoutV2 = v1RequiredPayments.Except(v2RequiredPayments).ToList();
+            var v2RequiredPaymentsWithoutV1 = v2RequiredPayments.Except(v1RequiredPayments).ToList();
+            var commonRequiredPayments = v1RequiredPayments.Intersect(v2RequiredPayments).ToList();
             Log.Write("Required Payments comparison complete");
 
             // For V1 payments without V2 - are the earnings the same?
@@ -105,7 +106,32 @@ namespace SFA.DAS.Payments.Verification
                 dataStream.CopyTo(file);
             }
 
-            Log.Write("Complete");
+            Log.Write("Finished creating Excel file");
+            Log.Write("Saving to SQL");
+
+            v1PaymentsWithoutV2.ForEach(x => x.VerificationResult = VerificationResult.V1Only);
+            await Sql.Write(PaymentSystem.Output, v1PaymentsWithoutV2, "Payments");
+            v2PaymentsWithoutV1.ForEach(x => x.VerificationResult = VerificationResult.V2Only);
+            await Sql.Write(PaymentSystem.Output, v2PaymentsWithoutV1, "Payments");
+            commonPayments.ForEach(x => x.VerificationResult = VerificationResult.Okay);
+            await Sql.Write(PaymentSystem.Output, commonPayments, "Payments");
+
+            v1EarningsWithoutV2.ForEach(x => x.VerificationResult = VerificationResult.V1Only);
+            await Sql.Write(PaymentSystem.Output, v1EarningsWithoutV2, "Earnings");
+            v2EarningsWithoutV1.ForEach(x => x.VerificationResult = VerificationResult.V2Only);
+            await Sql.Write(PaymentSystem.Output, v2EarningsWithoutV1, "Earnings");
+            commonEarnings.ForEach(x => x.VerificationResult = VerificationResult.Okay);
+            await Sql.Write(PaymentSystem.Output, commonEarnings, "Earnings");
+
+            v1RequiredPaymentsWithoutV2.ForEach(x => x.VerificationResult = VerificationResult.V1Only);
+            await Sql.Write(PaymentSystem.Output, v1RequiredPaymentsWithoutV2, "RequiredPayments");
+            v2RequiredPaymentsWithoutV1.ForEach(x => x.VerificationResult = VerificationResult.V2Only);
+            await Sql.Write(PaymentSystem.Output, v2RequiredPaymentsWithoutV1, "RequiredPayments");
+            commonRequiredPayments.ForEach(x => x.VerificationResult = VerificationResult.Okay);
+            await Sql.Write(PaymentSystem.Output, commonRequiredPayments, "RequiredPayments");
+
+
+            Log.Write("Complete, press any key to close");
             Console.ReadKey();
         }
 

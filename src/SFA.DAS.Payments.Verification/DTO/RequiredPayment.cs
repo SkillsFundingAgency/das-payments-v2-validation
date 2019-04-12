@@ -1,4 +1,6 @@
-﻿namespace SFA.DAS.Payments.Verification.DTO
+﻿using SFA.DAS.Payments.Verification.Constants;
+
+namespace SFA.DAS.Payments.Verification.DTO
 {
     struct RequiredPayment : IContainLearnerDetails
     {
@@ -20,5 +22,6 @@
         public int LearningAimPathwayCode { get; set; }
         public string LearningAimFundingLineType { get; set; }
         public long AccountId { get; set; }
+        public VerificationResult VerificationResult { get; set; }
     }
 }

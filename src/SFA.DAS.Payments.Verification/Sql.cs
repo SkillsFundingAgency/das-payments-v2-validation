@@ -1,11 +1,12 @@
 ﻿using System.Collections.Generic;
 using System.Configuration;
+using System.Data;
 using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
-using System.Runtime.Remoting.Messaging;
 using System.Threading.Tasks;
 using Dapper;
+using FastMember;
 using SFA.DAS.Payments.Verification.Constants;
 
 namespace SFA.DAS.Payments.Verification
@@ -16,6 +17,7 @@ namespace SFA.DAS.Payments.Verification
         {
             {PaymentSystem.V1, ConfigurationManager.ConnectionStrings["V1"].ConnectionString},
             {PaymentSystem.V2, ConfigurationManager.ConnectionStrings["V2"].ConnectionString},
+            {PaymentSystem.Output, ConfigurationManager.ConnectionStrings["Output"].ConnectionString},
         };
 
         public static async Task<List<T>> Read<T>(PaymentSystem database, Script script)
@@ -28,13 +30,24 @@ namespace SFA.DAS.Payments.Verification
             }
         }
 
-        public static async Task Write<T>(PaymentSystem database, List<T> dataToWrite, string tableName)
+        public static async Task Write<T>(PaymentSystem database, IEnumerable<T> dataToWrite, string tableName)
         {
+            var columns = typeof(T).GetProperties().Select(x => x.Name).ToArray();
             using (var connection = Connection(database))
-            using (var bulkCopy = new SqlBulkCopy(connection))
+            using (var bulkCopy = new SqlBulkCopy(connection) { DestinationTableName = $"[Verification].[{tableName}]" })
+            using (var reader = ObjectReader.Create(dataToWrite, columns))
             {
-                var columns = typeof(T).GetProperties().Select(x => x.Name);
+                foreach (var column in columns)
+                {
+                    bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping(column, column));
+                }
 
+                if (connection.State != ConnectionState.Open)
+                {
+                    await connection.OpenAsync();
+                }
+
+                await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
             }
         }
 

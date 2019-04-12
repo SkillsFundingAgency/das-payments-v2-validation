@@ -1,0 +1,59 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Operations Version="1.0" xmlns="http://schemas.microsoft.com/sqlserver/dac/Serialization/2012/02">
+  <Operation Name="Rename Refactor" Key="ecaef1d3-d076-4442-aba1-51ba5eaf533d" ChangeDateTime="04/12/2019 10:23:43">
+    <Property Name="ElementName" Value="[Verification].[V1OnlyPayments].[LearnRefNumber]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[Verification].[V1OnlyPayments]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="LearnerReferenceNumber" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="59cfde07-c660-4738-8830-be637c3b2342" ChangeDateTime="04/12/2019 10:27:53">
+    <Property Name="ElementName" Value="[Verification].[V1OnlyPayments].[StandardCode]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[Verification].[V1OnlyPayments]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="LearningAimStandardCode" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="78435597-cd7d-4e77-b790-c7e93ec627e9" ChangeDateTime="04/12/2019 10:27:58">
+    <Property Name="ElementName" Value="[Verification].[V1OnlyPayments].[ProgrammeType]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[Verification].[V1OnlyPayments]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="LearningAimProgrammeType" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="b8b1968c-5be8-4a90-a431-2bfcf4d53502" ChangeDateTime="04/12/2019 10:28:04">
+    <Property Name="ElementName" Value="[Verification].[V1OnlyPayments].[FrameworkCode]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[Verification].[V1OnlyPayments]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="LearningAimFrameworkCode" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="cd39775d-88d7-41ba-bc71-b9b12adcd0ab" ChangeDateTime="04/12/2019 10:28:08">
+    <Property Name="ElementName" Value="[Verification].[V1OnlyPayments].[PathwayCode]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[Verification].[V1OnlyPayments]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="LearningAimPathwayCode" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="791a22b1-0790-42fc-9436-a5795208fc8e" ChangeDateTime="04/12/2019 10:28:15">
+    <Property Name="ElementName" Value="[Verification].[V1OnlyPayments].[ApprenticeshipContractType]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[Verification].[V1OnlyPayments]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="ContractType" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="ea80b274-fa41-466f-a1e1-dc2d3cbd0f8a" ChangeDateTime="04/12/2019 10:28:22">
+    <Property Name="ElementName" Value="[Verification].[V1OnlyPayments].[LearnAimRef]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[Verification].[V1OnlyPayments]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="LearningAimReference" />
+  </Operation>
+  <Operation Name="Rename Refactor" Key="0ab11c79-1f82-495e-a40e-1d0183a05d94" ChangeDateTime="04/12/2019 10:28:41">
+    <Property Name="ElementName" Value="[Verification].[V1OnlyPayments].[FundingLineType]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[Verification].[V1OnlyPayments]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="LearningAimFundingLineType" />
+  </Operation>
+</Operations>
