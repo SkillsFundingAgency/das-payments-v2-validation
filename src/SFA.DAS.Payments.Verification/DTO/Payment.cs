@@ -3,7 +3,7 @@ using SFA.DAS.Payments.Verification.Constants;
 
 namespace SFA.DAS.Payments.Verification.DTO
 {
-    struct Payment : IContainLearnerDetails
+    struct Payment : IContainLearnerDetails, IContainVerificationResults
     {
         public long LearnerUln { get; set; }
         public long? CommitmentId { get; set; }

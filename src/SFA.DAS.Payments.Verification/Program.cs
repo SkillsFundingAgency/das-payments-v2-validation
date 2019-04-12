@@ -55,7 +55,7 @@ namespace SFA.DAS.Payments.Verification
             Log.Write("Retrieved V1 Required Payments");
 
             var v2RequiredPayments = await Sql.Read<RequiredPayment>(PaymentSystem.V2, Script.RequiredPayments);
-            //v2RequiredPayments = v2RequiredPayments.LimitToActiveLearners();
+            v2RequiredPayments = v2RequiredPayments.Take(1000).ToList(); //.LimitToActiveLearners();
             Log.Write("Retrieved V2 Required Payments");
 
             var v1RequiredPaymentsWithoutV2 = v1RequiredPayments.Except(v2RequiredPayments).ToList();
@@ -109,25 +109,25 @@ namespace SFA.DAS.Payments.Verification
             Log.Write("Finished creating Excel file");
             Log.Write("Saving to SQL");
 
-            v1PaymentsWithoutV2.ForEach(x => x.VerificationResult = VerificationResult.V1Only);
+            SetVerificationResult(v1PaymentsWithoutV2, VerificationResult.V1Only);
             await Sql.Write(PaymentSystem.Output, v1PaymentsWithoutV2, "Payments");
-            v2PaymentsWithoutV1.ForEach(x => x.VerificationResult = VerificationResult.V2Only);
+            SetVerificationResult(v2PaymentsWithoutV1, VerificationResult.V2Only);
             await Sql.Write(PaymentSystem.Output, v2PaymentsWithoutV1, "Payments");
-            commonPayments.ForEach(x => x.VerificationResult = VerificationResult.Okay);
+            SetVerificationResult(commonPayments, VerificationResult.Okay);
             await Sql.Write(PaymentSystem.Output, commonPayments, "Payments");
 
-            v1EarningsWithoutV2.ForEach(x => x.VerificationResult = VerificationResult.V1Only);
+            SetVerificationResult(v1EarningsWithoutV2, VerificationResult.V1Only);
             await Sql.Write(PaymentSystem.Output, v1EarningsWithoutV2, "Earnings");
-            v2EarningsWithoutV1.ForEach(x => x.VerificationResult = VerificationResult.V2Only);
+            SetVerificationResult(v2EarningsWithoutV1, VerificationResult.V2Only);
             await Sql.Write(PaymentSystem.Output, v2EarningsWithoutV1, "Earnings");
-            commonEarnings.ForEach(x => x.VerificationResult = VerificationResult.Okay);
+            SetVerificationResult(commonEarnings, VerificationResult.Okay);
             await Sql.Write(PaymentSystem.Output, commonEarnings, "Earnings");
 
-            v1RequiredPaymentsWithoutV2.ForEach(x => x.VerificationResult = VerificationResult.V1Only);
+            SetVerificationResult(v1RequiredPaymentsWithoutV2, VerificationResult.V1Only);
             await Sql.Write(PaymentSystem.Output, v1RequiredPaymentsWithoutV2, "RequiredPayments");
-            v2RequiredPaymentsWithoutV1.ForEach(x => x.VerificationResult = VerificationResult.V2Only);
+            SetVerificationResult(v2RequiredPaymentsWithoutV1, VerificationResult.V2Only);
             await Sql.Write(PaymentSystem.Output, v2RequiredPaymentsWithoutV1, "RequiredPayments");
-            commonRequiredPayments.ForEach(x => x.VerificationResult = VerificationResult.Okay);
+            SetVerificationResult(commonRequiredPayments, VerificationResult.Okay);
             await Sql.Write(PaymentSystem.Output, commonRequiredPayments, "RequiredPayments");
 
 
@@ -143,6 +143,18 @@ namespace SFA.DAS.Payments.Verification
         private static List<T> LimitToActiveLearners<T>(this IEnumerable<T> source) where T : IContainLearnerDetails
         {
             return source.Where(x => _activeLearners.Contains(x.LearnerUln)).ToList();
+        }
+
+        private static List<T> SetVerificationResult<T>(List<T> input, VerificationResult result) where T : IContainVerificationResults
+        {
+            for (int i = 0; i < input.Count; i++)
+            {
+                var temp = input[i];
+                temp.VerificationResult = result;
+                input[i] = temp;
+            }
+
+            return input;
         }
     }
 }

@@ -5,7 +5,7 @@ using SFA.DAS.Payments.Verification.Constants;
 
 namespace SFA.DAS.Payments.Verification.DTO
 {
-    struct Earning : IContainLearnerDetails
+    struct Earning : IContainLearnerDetails, IContainVerificationResults
     {
         public long LearnerUln { get; set; }
         public string LearnerReferenceNumber { get; set; }

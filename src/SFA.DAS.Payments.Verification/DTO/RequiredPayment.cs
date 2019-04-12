@@ -2,7 +2,7 @@
 
 namespace SFA.DAS.Payments.Verification.DTO
 {
-    struct RequiredPayment : IContainLearnerDetails
+    struct RequiredPayment : IContainLearnerDetails, IContainVerificationResults
     {
         public long LearnerUln { get; set; }
         public string PriceEpisodeIdentifier { get; set; }
