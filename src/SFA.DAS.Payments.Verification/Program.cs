@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using FastMember;
 using MoreLinq;
 using SFA.DAS.Payments.Verification.Constants;
 using SFA.DAS.Payments.Verification.DTO;
@@ -86,6 +87,8 @@ namespace SFA.DAS.Payments.Verification
                     V2PaymentsAmount = v2PaymentsByTransactionType[i].Sum(x => x.Amount),
                     V1RequiredPaymentsAmount = v1RequiredPaymentsByTransactionType[i].Sum(x => x.Amount),
                     V2RequiredPaymentsAmount = v2RequiredPaymentsByTransactionType[i].Sum(x => x.Amount),
+                    V1EarningsAmount = CalculateEarnings(v1EarningsWithoutV2, i),
+                    V2EarningsAmount = CalculateEarnings(v2EarningsWithoutV1, i),
                 });
             }
 
@@ -109,6 +112,7 @@ namespace SFA.DAS.Payments.Verification
             Log.Write("Finished creating Excel file");
             Log.Write("Saving to SQL");
 
+            // Save 3 tables with a flag for where the record came from
             SetVerificationResult(v1PaymentsWithoutV2, VerificationResult.V1Only);
             await Sql.Write(PaymentSystem.Output, v1PaymentsWithoutV2, "Payments");
             SetVerificationResult(v2PaymentsWithoutV1, VerificationResult.V2Only);
@@ -133,6 +137,18 @@ namespace SFA.DAS.Payments.Verification
 
             Log.Write("Complete, press any key to close");
             Console.ReadKey();
+        }
+
+        private static readonly TypeAccessor EarningsAccesor = TypeAccessor.Create(typeof(Earning));
+        private static decimal CalculateEarnings(List<Earning> earnings, int transactionType)
+        {
+            var total = 0m;
+            foreach (var earning in earnings)
+            {
+                total += (decimal)EarningsAccesor[earning, $"TransactionType{transactionType:D2}"];
+            }
+
+            return total;
         }
 
         private static async Task InitialiseActiveLearners()

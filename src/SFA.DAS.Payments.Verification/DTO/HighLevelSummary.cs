@@ -9,5 +9,8 @@
         public decimal V1RequiredPaymentsAmount { get; set; }
         public decimal V2RequiredPaymentsAmount { get; set; }
         public decimal RequiredPaymentsDifference => V1RequiredPaymentsAmount - V2RequiredPaymentsAmount;
+        public decimal V1EarningsAmount { get; set; }
+        public decimal V2EarningsAmount { get; set; }
+        public decimal EarningsDifference => V2EarningsAmount - V1EarningsAmount;
     }
 }
