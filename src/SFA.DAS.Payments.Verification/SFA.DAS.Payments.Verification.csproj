@@ -74,6 +74,7 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DTO\IContainVerificationResults.cs" />
     <Compile Include="Constants\PaymentSystem.cs" />
     <Compile Include="Constants\Script.cs" />
     <Compile Include="Constants\VerificationResult.cs" />
