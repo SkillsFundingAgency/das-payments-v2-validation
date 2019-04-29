@@ -9,3 +9,6 @@
 **/*.sln.*
 **/*.ncrunchsolution*
 **/*.csproj.*
+
+*.dbmdl
+*.jfm

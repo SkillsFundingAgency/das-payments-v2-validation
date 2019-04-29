@@ -19,4 +19,6 @@ SELECT [PriceEpisodeIdentifier]
       
   FROM [SFA.DAS.Payments.Database].[Payments2].[RequiredPaymentEvent]
 
+  WHERE LearnerUln IN @ulns
+
   Order by UKPRN, learneruln, AcademicYear, CollectionPeriod, DeliveryPeriod, TransactionType

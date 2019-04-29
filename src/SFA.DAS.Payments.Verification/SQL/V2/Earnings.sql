@@ -31,6 +31,8 @@ WITH Data AS (
 	 ON E.EventId = P.EarningEventId
 	JOIN [SFA.DAS.Payments.Database].Payments2.EarningEventPriceEpisode PE
 	 ON E.EventId = PE.EarningEventId 
+
+	WHERE LearnerUln IN @ulns
  )
 
  SELECT
