@@ -20,13 +20,13 @@ namespace SFA.DAS.Payments.Verification
             {PaymentSystem.Output, ConfigurationManager.ConnectionStrings["Output"].ConnectionString},
         };
 
-        public static async Task<List<T>> Read<T>(PaymentSystem database, Script script)
+        public static async Task<List<T>> Read<T>(PaymentSystem database, Script script, HashSet<long> ulns )
         {
             var sql = GetSqlText(database, script);
 
             using (var connection = Connection(database))
             {
-                return (await connection.QueryAsync<T>(sql)).ToList();
+                return (await connection.QueryAsync<T>(sql, new {ulns})).ToList();
             }
         }
 

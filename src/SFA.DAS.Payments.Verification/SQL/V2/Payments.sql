@@ -22,4 +22,6 @@ SELECT
       
   FROM [SFA.DAS.Payments.Database].[Payments2].[Payment]
 
+  WHERE LearnerUln IN @ulns
+
   Order by UKPRN, learneruln, AcademicYear, CollectionPeriod, DeliveryPeriod, TransactionType, FundingSource

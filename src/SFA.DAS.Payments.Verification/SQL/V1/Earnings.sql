@@ -67,6 +67,7 @@ WHERE (
 	OR [APEP].[PriceEpisodeLearnerAdditionalPayment] != 0
 	OR [APEP].[Period] = 1
     )
+	AND [L].[Uln] IN @ulns
 	
 UNION
 
@@ -124,6 +125,7 @@ WHERE (
     OR LearnSuppFundCash != 0
     )
     AND LD.LearnAimRef != 'ZPROG001'
+	AND [L].[ULN] IN @ulns
 
 	
 

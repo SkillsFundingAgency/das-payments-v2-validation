@@ -25,4 +25,6 @@ FROM [DAS_PeriodEnd].Payments.Payments P
 JOIN [DAS_PeriodEnd].PaymentsDue.RequiredPayments R
  ON P.RequiredPaymentId = R.Id
 
+WHERE Uln IN @ulns
+
 Order by UKPRN, learneruln, AcademicYear, CollectionPeriodName, DeliveryPeriod, TransactionType, FundingSource
