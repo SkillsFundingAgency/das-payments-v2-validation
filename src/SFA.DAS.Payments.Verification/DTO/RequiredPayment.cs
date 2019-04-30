@@ -2,7 +2,7 @@
 
 namespace SFA.DAS.Payments.Verification.DTO
 {
-    class RequiredPayment : IContainLearnerDetails, IContainVerificationResults
+    internal class RequiredPayment : IContainLearnerDetails, IContainVerificationResults
     {
         public long LearnerUln { get; set; }
         public string PriceEpisodeIdentifier { get; set; }

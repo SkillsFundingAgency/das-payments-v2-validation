@@ -3,7 +3,7 @@ using SFA.DAS.Payments.Verification.Constants;
 
 namespace SFA.DAS.Payments.Verification.DTO
 {
-    class Payment : IContainLearnerDetails, IContainVerificationResults
+    internal class Payment : IContainLearnerDetails, IContainVerificationResults
     {
         public long LearnerUln { get; set; }
         public long? CommitmentId { get; set; }
