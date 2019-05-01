@@ -19,7 +19,7 @@ SELECT
       ,[AccountId]
 FROM [DAS_PeriodEnd].PaymentsDue.RequiredPayments
 
-WHERE ULN IN @ulns
+WHERE ULN IN (SELECT ULN FROM #Learners)
 
 Order by UKPRN, learneruln, AcademicYear, CollectionPeriod, DeliveryPeriod, TransactionType
 

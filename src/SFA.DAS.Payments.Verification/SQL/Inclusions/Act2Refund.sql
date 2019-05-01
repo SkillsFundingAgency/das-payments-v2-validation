@@ -100,16 +100,10 @@ BEGIN
 		WHERE [Count] = 2
 	)
 	
-	SELECT * INTO #SinglePaymentPerMonth
+	SELECT * INTO #SingePaymentPerMonth
 	FROM SinglePaymentPerMonth
 END
 
 
-IF OBJECT_ID('tempdb..#Learners') IS NULL
-BEGIN
-	SELECT DISTINCT (ULN) INTO #Learners
-	FROM #SinglePaymentPerMonth
-END
-
---SELECT *
---FROM #Learners
+SELECT DISTINCT (ULN)
+FROM #SingePaymentPerMonth

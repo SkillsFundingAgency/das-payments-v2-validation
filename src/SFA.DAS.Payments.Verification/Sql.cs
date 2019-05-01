@@ -4,6 +4,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Dapper;
 using FastMember;
@@ -21,22 +22,26 @@ namespace SFA.DAS.Payments.Verification
             {PaymentSystem.Output, ConfigurationManager.ConnectionStrings["Output"].ConnectionString},
         };
 
+        private static string learnerSetup = string.Empty;
+
         public static async Task<List<long>> IncludedLearners(Inclusions inclusions)
         {
             var sql = GetInclusionSqlText(Inclusions.Act2BasicDay);
             using (var connection = Connection(PaymentSystem.V1))
             {
-                return (await connection.QueryAsync<long>(sql)).ToList();
+                var learners = (await connection.QueryAsync<long>(sql)).ToList();
+                return learners;
             }
         }
 
-        public static async Task<List<T>> Read<T>(PaymentSystem database, Script script, HashSet<long> ulns)
+        public static async Task<List<T>> Read<T>(PaymentSystem database, Script script)
         {
+            database = PaymentSystem.V1;
             var sql = GetSqlText(database, script);
             
             using (var connection = Connection(database))
             {
-                return (await connection.QueryAsync<T>(sql, new {ulns})).ToList();
+                return (await connection.QueryAsync<T>(sql, commandTimeout:600)).ToList();
             }
         }
 
@@ -69,14 +74,19 @@ namespace SFA.DAS.Payments.Verification
         private static string GetInclusionSqlText(Inclusions inclusion)
         {
             var path = Path.Combine(BasePath, "SQL", "Inclusions", $"{inclusion.Description()}.sql");
-            return File.ReadAllText(path);
+            learnerSetup = File.ReadAllText(path);
+            return learnerSetup;
         }
 
         private static string GetSqlText(PaymentSystem system, Script script)
         {
             var scriptPath = Path.Combine(BasePath, "SQL", system.ToString(), $"{script.ToString()}.sql");
-            
-            return File.ReadAllText(scriptPath);
+
+            var result = new StringBuilder(learnerSetup);
+            result.AppendLine();
+            result.AppendLine();
+            result.Append(File.ReadAllText(scriptPath));
+            return result.ToString();
         }
 
         private static string BasePath => Path.GetDirectoryName(typeof(Sql).Assembly.Location);
