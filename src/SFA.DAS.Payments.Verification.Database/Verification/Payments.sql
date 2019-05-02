@@ -6,7 +6,7 @@
     [LearnerReferenceNumber] NVARCHAR(50) NOT NULL, 
     [Ukprn] BIGINT NOT NULL, 
     [IlrSubmissionDateTime] DATETIME2 NOT NULL, 
-    [PriceEpisodeIdentifier] NVARCHAR(50) NOT NULL, 
+    [PriceEpisodeIdentifier] NVARCHAR(50) NULL, 
     [LearningAimStandardCode] INT NULL, 
     [LearningAimProgrammeType] INT NULL, 
     [LearningAimFrameworkCode] INT NULL, 

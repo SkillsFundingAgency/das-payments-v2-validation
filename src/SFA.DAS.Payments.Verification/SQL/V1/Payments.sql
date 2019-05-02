@@ -1,4 +1,4 @@
-SELECT TOP(100)
+SELECT 
  CommitmentId,
  AccountId, 
  Uln [LearnerUln],
@@ -25,6 +25,7 @@ FROM [DAS_PeriodEnd].Payments.Payments P
 JOIN [DAS_PeriodEnd].PaymentsDue.RequiredPayments R
  ON P.RequiredPaymentId = R.Id
 
-WHERE Uln IN @ulns
+WHERE Uln IN (SELECT ULN FROM ##Learners)
+AND R.CollectionPeriodName LIKE '1819-R%'
 
 Order by UKPRN, learneruln, AcademicYear, CollectionPeriodName, DeliveryPeriod, TransactionType, FundingSource

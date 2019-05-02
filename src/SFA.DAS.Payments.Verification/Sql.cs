@@ -4,6 +4,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Dapper;
 using FastMember;
@@ -21,22 +22,27 @@ namespace SFA.DAS.Payments.Verification
             {PaymentSystem.Output, ConfigurationManager.ConnectionStrings["Output"].ConnectionString},
         };
 
-        public static async Task<List<long>> IncludedLearners(Inclusions inclusions)
+        public static async Task InitialiseLearnerTables(Inclusions inclusions)
         {
-            var sql = GetInclusionSqlText(Inclusions.Act2BasicDay);
-            using (var connection = Connection(PaymentSystem.V1))
-            {
-                return (await connection.QueryAsync<long>(sql)).ToList();
-            }
+            var sql = GetInclusionSqlText( PaymentSystem.V1, inclusions);
+            var connection = Connection(PaymentSystem.V1);
+            await connection.OpenAsync();
+            await connection.ExecuteAsync(sql);
+            
+            sql = GetInclusionSqlText(PaymentSystem.V2, inclusions);
+            connection = Connection(PaymentSystem.V2);
+            await connection.OpenAsync();
+            await connection.ExecuteAsync(sql);
         }
 
-        public static async Task<List<T>> Read<T>(PaymentSystem database, Script script, HashSet<long> ulns)
+        public static async Task<List<T>> Read<T>(PaymentSystem database, Script script)
         {
+            //database = PaymentSystem.V1;
             var sql = GetSqlText(database, script);
             
             using (var connection = Connection(database))
             {
-                return (await connection.QueryAsync<T>(sql, new {ulns})).ToList();
+                return (await connection.QueryAsync<T>(sql, commandTimeout:600)).ToList();
             }
         }
 
@@ -44,9 +50,13 @@ namespace SFA.DAS.Payments.Verification
         {
             var columns = typeof(T).GetProperties().Select(x => x.Name).ToArray();
             using (var connection = Connection(database))
-            using (var bulkCopy = new SqlBulkCopy(connection) { DestinationTableName = $"[Verification].[{tableName}]" })
+            using (var bulkCopy = new SqlBulkCopy(connection))
             using (var reader = ObjectReader.Create(dataToWrite, columns))
             {
+                bulkCopy.DestinationTableName = $"[Verification].[{tableName}]";
+                bulkCopy.BulkCopyTimeout = 1200;
+                bulkCopy.BatchSize = 10_000;
+
                 foreach (var column in columns)
                 {
                     bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping(column, column));
@@ -66,17 +76,21 @@ namespace SFA.DAS.Payments.Verification
             return new SqlConnection(ConnectionStrings[system]);
         }
 
-        private static string GetInclusionSqlText(Inclusions inclusion)
+        private static string GetInclusionSqlText(PaymentSystem system, Inclusions inclusion)
         {
-            var path = Path.Combine(BasePath, "SQL", "Inclusions", $"{inclusion.Description()}.sql");
+            var path = Path.Combine(BasePath, "SQL", "Inclusions", system.ToString(), $"{inclusion.Description()}.sql");
             return File.ReadAllText(path);
         }
 
         private static string GetSqlText(PaymentSystem system, Script script)
         {
             var scriptPath = Path.Combine(BasePath, "SQL", system.ToString(), $"{script.ToString()}.sql");
-            
-            return File.ReadAllText(scriptPath);
+
+            var result = new StringBuilder(); 
+            result.AppendLine();
+            result.AppendLine();
+            result.Append(File.ReadAllText(scriptPath));
+            return result.ToString();
         }
 
         private static string BasePath => Path.GetDirectoryName(typeof(Sql).Assembly.Location);

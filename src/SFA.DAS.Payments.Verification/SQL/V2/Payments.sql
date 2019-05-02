@@ -22,6 +22,7 @@ SELECT
       
   FROM [SFA.DAS.Payments.Database].[Payments2].[Payment]
 
-  WHERE LearnerUln IN @ulns
+  WHERE LearnerUln IN (SELECT ULN FROM ##Learners)
+  AND AcademicYear = 1819
 
   Order by UKPRN, learneruln, AcademicYear, CollectionPeriod, DeliveryPeriod, TransactionType, FundingSource

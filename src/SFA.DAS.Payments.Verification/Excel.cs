@@ -63,7 +63,7 @@ namespace SFA.DAS.Payments.Verification
 
                 output.Rows.Add(row);
                 progress++;
-                if (progress % 1000 == 0)
+                if (progress % 100_000 == 0)
                 {
                     Log.Write($"Processed: {progress} rows");
                 }

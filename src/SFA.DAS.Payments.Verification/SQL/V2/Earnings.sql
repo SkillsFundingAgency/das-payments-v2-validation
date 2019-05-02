@@ -32,7 +32,7 @@ WITH Data AS (
 	JOIN [SFA.DAS.Payments.Database].Payments2.EarningEventPriceEpisode PE
 	 ON E.EventId = PE.EarningEventId 
 
-	WHERE LearnerUln IN @ulns
+	WHERE LearnerUln IN (SELECT ULN FROM ##Learners)
  )
 
  SELECT
