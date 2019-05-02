@@ -11,8 +11,6 @@ namespace SFA.DAS.Payments.Verification
 {
     static class Program
     {
-        private static HashSet<long> _activeLearners;
-
         static async Task Main(string[] args)
         {
             try
@@ -22,12 +20,19 @@ namespace SFA.DAS.Payments.Verification
                 // Get the list of learners that we are interested in
                 Console.WriteLine("Please select an learner group:");
                 Console.WriteLine("");
-                Console.WriteLine("\t1. ACT2 Basic Day");
+                Console.WriteLine("\t1. All learners");
+                Console.WriteLine("\t2. ACT2 Basic Day");
 
-                var key = Console.ReadKey();
+                var key = Console.ReadKey(true);
+                Console.WriteLine();
+                Log.Write($"{key.KeyChar} pressed. Processing...");
+
                 switch (key.Key)
                 {
                     case ConsoleKey.D1:
+                        await InitialiseActiveLearners(Inclusions.AllLearners);
+                        break;
+                    case ConsoleKey.D2:
                         await InitialiseActiveLearners(Inclusions.Act2BasicDay);
                         break;
                     default:
@@ -97,8 +102,8 @@ namespace SFA.DAS.Payments.Verification
                         V2PaymentsAmount = v2PaymentsByTransactionType[i].Sum(x => x.Amount),
                         V1RequiredPaymentsAmount = v1RequiredPaymentsByTransactionType[i].Sum(x => x.Amount),
                         V2RequiredPaymentsAmount = v2RequiredPaymentsByTransactionType[i].Sum(x => x.Amount),
-                        V1EarningsAmount = CalculateEarnings(v1EarningsWithoutV2, i),
-                        V2EarningsAmount = CalculateEarnings(v2EarningsWithoutV1, i),
+                        V1EarningsAmount = CalculateEarnings(v1Earnings, i),
+                        V2EarningsAmount = CalculateEarnings(v2Earnings, i),
                     });
                 }
 
@@ -120,6 +125,9 @@ namespace SFA.DAS.Payments.Verification
                 }
 
                 Log.Write("Finished creating Excel file");
+
+                Log.Write($"Memory usage: {GC.GetTotalMemory(false):###,###,###,###,###,### bytes}");
+
                 Log.Write("Saving to SQL");
 
                 // Save 3 tables with a flag for where the record came from
@@ -167,9 +175,9 @@ namespace SFA.DAS.Payments.Verification
             return total;
         }
 
-        private static async Task InitialiseActiveLearners(Inclusions inclusions)
+        private static Task InitialiseActiveLearners(Inclusions inclusions)
         {
-            _activeLearners = new HashSet<long>(await Sql.IncludedLearners(inclusions));
+            return Sql.IncludedLearners(inclusions);
         }
 
         private static List<T> SetVerificationResult<T>(List<T> input, VerificationResult result) where T : IContainVerificationResults

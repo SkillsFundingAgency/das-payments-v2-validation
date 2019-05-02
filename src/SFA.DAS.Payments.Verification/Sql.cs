@@ -22,15 +22,20 @@ namespace SFA.DAS.Payments.Verification
             {PaymentSystem.Output, ConfigurationManager.ConnectionStrings["Output"].ConnectionString},
         };
 
-        private static string learnerSetup = string.Empty;
-
-        public static async Task<List<long>> IncludedLearners(Inclusions inclusions)
+        private static readonly Dictionary<PaymentSystem, string> LearnerSetup = new Dictionary<PaymentSystem, string>();
+        
+        public static async Task IncludedLearners(Inclusions inclusions)
         {
-            var sql = GetInclusionSqlText(Inclusions.Act2BasicDay);
+            var sql = GetInclusionSqlText( PaymentSystem.V1, inclusions);
             using (var connection = Connection(PaymentSystem.V1))
             {
-                var learners = (await connection.QueryAsync<long>(sql)).ToList();
-                return learners;
+                await connection.ExecuteAsync(sql);
+            }
+
+            sql = GetInclusionSqlText(PaymentSystem.V2, inclusions);
+            using (var connection = Connection(PaymentSystem.V2))
+            {
+                await connection.ExecuteAsync(sql);
             }
         }
 
@@ -49,7 +54,7 @@ namespace SFA.DAS.Payments.Verification
         {
             var columns = typeof(T).GetProperties().Select(x => x.Name).ToArray();
             using (var connection = Connection(database))
-            using (var bulkCopy = new SqlBulkCopy(connection) { DestinationTableName = $"[Verification].[{tableName}]" })
+            using (var bulkCopy = new SqlBulkCopy(connection) { DestinationTableName = $"[Verification].[{tableName}]", BulkCopyTimeout = 1200, })
             using (var reader = ObjectReader.Create(dataToWrite, columns))
             {
                 foreach (var column in columns)
@@ -71,18 +76,18 @@ namespace SFA.DAS.Payments.Verification
             return new SqlConnection(ConnectionStrings[system]);
         }
 
-        private static string GetInclusionSqlText(Inclusions inclusion)
+        private static string GetInclusionSqlText(PaymentSystem system, Inclusions inclusion)
         {
-            var path = Path.Combine(BasePath, "SQL", "Inclusions", $"{inclusion.Description()}.sql");
-            learnerSetup = File.ReadAllText(path);
-            return learnerSetup;
+            var path = Path.Combine(BasePath, "SQL", "Inclusions", system.ToString(), $"{inclusion.Description()}.sql");
+            LearnerSetup[system] = File.ReadAllText(path);
+            return LearnerSetup[system];
         }
 
         private static string GetSqlText(PaymentSystem system, Script script)
         {
             var scriptPath = Path.Combine(BasePath, "SQL", system.ToString(), $"{script.ToString()}.sql");
 
-            var result = new StringBuilder(learnerSetup);
+            var result = new StringBuilder(LearnerSetup[system]);
             result.AppendLine();
             result.AppendLine();
             result.Append(File.ReadAllText(scriptPath));

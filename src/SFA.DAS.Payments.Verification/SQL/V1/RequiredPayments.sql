@@ -20,6 +20,7 @@ SELECT
 FROM [DAS_PeriodEnd].PaymentsDue.RequiredPayments
 
 WHERE ULN IN (SELECT ULN FROM #Learners)
+AND CollectionPeriodName LIKE '1819-R%'
 
 Order by UKPRN, learneruln, AcademicYear, CollectionPeriod, DeliveryPeriod, TransactionType
 

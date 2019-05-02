@@ -19,6 +19,7 @@ SELECT [PriceEpisodeIdentifier]
       
   FROM [SFA.DAS.Payments.Database].[Payments2].[RequiredPaymentEvent]
 
-  WHERE LearnerUln IN @ulns
+  WHERE LearnerUln IN (SELECT ULN FROM #Learners)
+  AND AcademicYear = 1819
 
   Order by UKPRN, learneruln, AcademicYear, CollectionPeriod, DeliveryPeriod, TransactionType
