@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using FastMember;
-using MoreLinq;
 using SFA.DAS.Payments.Verification.Constants;
 using SFA.DAS.Payments.Verification.DTO;
 
@@ -17,9 +16,24 @@ namespace SFA.DAS.Payments.Verification
         static async Task Main(string[] args)
         {
             Log.Initialise();
-            
+
             // Get the list of learners that we are interested in
-            await InitialiseActiveLearners();
+            Console.WriteLine("Please select an learner group:");
+            Console.WriteLine("");
+            Console.WriteLine("\t1. ACT2 Basic Day");
+
+            var key = Console.ReadKey();
+            switch (key.Key)
+            {
+                case ConsoleKey.D1:
+                    await InitialiseActiveLearners(Inclusions.Act2BasicDay);
+                    break;
+                default:
+                    Console.WriteLine("Unknown response, exiting when you press any key...");
+                    Console.ReadKey();
+                    return;
+            }
+            
             Log.Write("Initialised learner group");
 
             // Get the payments
@@ -151,14 +165,9 @@ namespace SFA.DAS.Payments.Verification
             return total;
         }
 
-        private static async Task InitialiseActiveLearners()
+        private static async Task InitialiseActiveLearners(Inclusions inclusions)
         {
-            _activeLearners = new HashSet<long>(await Sql.Read<long>(PaymentSystem.V1, Script.Inclusions, null));
-        }
-        
-        private static List<T> LimitToActiveLearners<T>(this IEnumerable<T> source) where T : IContainLearnerDetails
-        {
-            return source.Where(x => _activeLearners.Contains(x.LearnerUln)).ToList();
+            _activeLearners = new HashSet<long>(await Sql.IncludedLearners(inclusions));
         }
 
         private static List<T> SetVerificationResult<T>(List<T> input, VerificationResult result) where T : IContainVerificationResults

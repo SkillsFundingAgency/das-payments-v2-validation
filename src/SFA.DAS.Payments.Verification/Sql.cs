@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Dapper;
 using FastMember;
 using SFA.DAS.Payments.Verification.Constants;
+using SFA.DAS.Payments.Verification.Utilities;
 
 namespace SFA.DAS.Payments.Verification
 {
@@ -20,10 +21,19 @@ namespace SFA.DAS.Payments.Verification
             {PaymentSystem.Output, ConfigurationManager.ConnectionStrings["Output"].ConnectionString},
         };
 
-        public static async Task<List<T>> Read<T>(PaymentSystem database, Script script, HashSet<long> ulns )
+        public static async Task<List<long>> IncludedLearners(Inclusions inclusions)
+        {
+            var sql = GetInclusionSqlText(Inclusions.Act2BasicDay);
+            using (var connection = Connection(PaymentSystem.V1))
+            {
+                return (await connection.QueryAsync<long>(sql)).ToList();
+            }
+        }
+
+        public static async Task<List<T>> Read<T>(PaymentSystem database, Script script, HashSet<long> ulns)
         {
             var sql = GetSqlText(database, script);
-
+            
             using (var connection = Connection(database))
             {
                 return (await connection.QueryAsync<T>(sql, new {ulns})).ToList();
@@ -56,23 +66,19 @@ namespace SFA.DAS.Payments.Verification
             return new SqlConnection(ConnectionStrings[system]);
         }
 
+        private static string GetInclusionSqlText(Inclusions inclusion)
+        {
+            var path = Path.Combine(BasePath, "SQL", "Inclusions", $"{inclusion.Description()}.sql");
+            return File.ReadAllText(path);
+        }
+
         private static string GetSqlText(PaymentSystem system, Script script)
         {
-            string scriptPath;
-
-            if (script == Script.Inclusions)
-            {
-                scriptPath = Path.Combine(BasePath, "SQL",  "Inclusions", "BasicDayACT2.sql");
-            }
-            else
-            {
-                scriptPath = Path.Combine(BasePath, "SQL", system.ToString(), $"{script.ToString()}.sql");
-            }
-
+            var scriptPath = Path.Combine(BasePath, "SQL", system.ToString(), $"{script.ToString()}.sql");
+            
             return File.ReadAllText(scriptPath);
         }
 
         private static string BasePath => Path.GetDirectoryName(typeof(Sql).Assembly.Location);
-
     }
 }
