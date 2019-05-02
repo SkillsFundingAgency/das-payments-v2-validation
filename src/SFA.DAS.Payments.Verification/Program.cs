@@ -177,10 +177,10 @@ namespace SFA.DAS.Payments.Verification
 
         private static Task InitialiseActiveLearners(Inclusions inclusions)
         {
-            return Sql.IncludedLearners(inclusions);
+            return Sql.InitialiseLearnerTables(inclusions);
         }
 
-        private static List<T> SetVerificationResult<T>(List<T> input, VerificationResult result) where T : IContainVerificationResults
+        private static void SetVerificationResult<T>(List<T> input, VerificationResult result) where T : IContainVerificationResults
         {
             for (int i = 0; i < input.Count; i++)
             {
@@ -188,8 +188,6 @@ namespace SFA.DAS.Payments.Verification
                 temp.VerificationResult = result;
                 input[i] = temp;
             }
-
-            return input;
         }
     }
 }

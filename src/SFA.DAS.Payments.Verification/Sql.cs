@@ -22,26 +22,22 @@ namespace SFA.DAS.Payments.Verification
             {PaymentSystem.Output, ConfigurationManager.ConnectionStrings["Output"].ConnectionString},
         };
 
-        private static readonly Dictionary<PaymentSystem, string> LearnerSetup = new Dictionary<PaymentSystem, string>();
-        
-        public static async Task IncludedLearners(Inclusions inclusions)
+        public static async Task InitialiseLearnerTables(Inclusions inclusions)
         {
             var sql = GetInclusionSqlText( PaymentSystem.V1, inclusions);
-            using (var connection = Connection(PaymentSystem.V1))
-            {
-                await connection.ExecuteAsync(sql);
-            }
-
+            var connection = Connection(PaymentSystem.V1);
+            await connection.OpenAsync();
+            await connection.ExecuteAsync(sql);
+            
             sql = GetInclusionSqlText(PaymentSystem.V2, inclusions);
-            using (var connection = Connection(PaymentSystem.V2))
-            {
-                await connection.ExecuteAsync(sql);
-            }
+            connection = Connection(PaymentSystem.V2);
+            await connection.OpenAsync();
+            await connection.ExecuteAsync(sql);
         }
 
         public static async Task<List<T>> Read<T>(PaymentSystem database, Script script)
         {
-            database = PaymentSystem.V1;
+            //database = PaymentSystem.V1;
             var sql = GetSqlText(database, script);
             
             using (var connection = Connection(database))
@@ -54,9 +50,13 @@ namespace SFA.DAS.Payments.Verification
         {
             var columns = typeof(T).GetProperties().Select(x => x.Name).ToArray();
             using (var connection = Connection(database))
-            using (var bulkCopy = new SqlBulkCopy(connection) { DestinationTableName = $"[Verification].[{tableName}]", BulkCopyTimeout = 1200, })
+            using (var bulkCopy = new SqlBulkCopy(connection))
             using (var reader = ObjectReader.Create(dataToWrite, columns))
             {
+                bulkCopy.DestinationTableName = $"[Verification].[{tableName}]";
+                bulkCopy.BulkCopyTimeout = 1200;
+                bulkCopy.BatchSize = 10_000;
+
                 foreach (var column in columns)
                 {
                     bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping(column, column));
@@ -79,15 +79,14 @@ namespace SFA.DAS.Payments.Verification
         private static string GetInclusionSqlText(PaymentSystem system, Inclusions inclusion)
         {
             var path = Path.Combine(BasePath, "SQL", "Inclusions", system.ToString(), $"{inclusion.Description()}.sql");
-            LearnerSetup[system] = File.ReadAllText(path);
-            return LearnerSetup[system];
+            return File.ReadAllText(path);
         }
 
         private static string GetSqlText(PaymentSystem system, Script script)
         {
             var scriptPath = Path.Combine(BasePath, "SQL", system.ToString(), $"{script.ToString()}.sql");
 
-            var result = new StringBuilder(LearnerSetup[system]);
+            var result = new StringBuilder(); 
             result.AppendLine();
             result.AppendLine();
             result.Append(File.ReadAllText(scriptPath));

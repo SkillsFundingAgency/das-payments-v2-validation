@@ -1,4 +1,9 @@
 
+
+IF OBJECT_ID('tempdb..##Learners') IS NOT NULL
+	DROP TABLE ##Learners
+
+
 --DROP TABLE #Payments
 IF OBJECT_ID('tempdb..#Payments') IS NULL 
 BEGIN
@@ -105,11 +110,9 @@ BEGIN
 END
 
 
-IF OBJECT_ID('tempdb..#Learners') IS NULL
-BEGIN
-	SELECT DISTINCT (ULN) INTO #Learners
-	FROM #SinglePaymentPerMonth
-END
+
+SELECT DISTINCT (ULN) INTO ##Learners
+FROM #SinglePaymentPerMonth
 
 --SELECT *
 --FROM #Learners

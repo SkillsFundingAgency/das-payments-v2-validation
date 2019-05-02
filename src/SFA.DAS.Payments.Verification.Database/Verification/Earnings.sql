@@ -4,7 +4,7 @@
 	LearnerUln bigint NOT NULL,
 	LearnerReferenceNumber NVARCHAR(50) NOT NULL,
 	Ukprn bigint NOT NULL,
-	PriceEpisodeIdentifier NVARCHAR(50) NOT NULL,
+	PriceEpisodeIdentifier NVARCHAR(50) NULL,
 	EpisodeStartDate DATETIME2 NOT NULL,
 	EpisodeEffectiveTnpStartDate DATETIME2 NOT NULL,
 	DeliveryPeriod int NOT NULL,
