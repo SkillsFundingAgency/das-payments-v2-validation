@@ -7,5 +7,6 @@ namespace SFA.DAS.Payments.Verification.Constants
         [Description("BasicDayACT2")]
         Act2BasicDay,
         AllLearners,
+        Act2Refund,
     }
 }
