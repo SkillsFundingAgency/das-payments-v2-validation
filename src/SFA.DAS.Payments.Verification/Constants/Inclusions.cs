@@ -8,5 +8,6 @@ namespace SFA.DAS.Payments.Verification.Constants
         Act2BasicDay,
         AllLearners,
         Act2Refund,
+        Act2Incentives,
     }
 }

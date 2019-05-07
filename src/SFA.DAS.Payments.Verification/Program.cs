@@ -23,6 +23,7 @@ namespace SFA.DAS.Payments.Verification
                 Console.WriteLine("\t1. All learners");
                 Console.WriteLine("\t2. ACT2 Basic Day");
                 Console.WriteLine("\t3. ACT2 with Refunds");
+                Console.WriteLine("\t4. ACT2 with Incentives");
 
                 var key = Console.ReadKey(true);
                 Console.WriteLine();
@@ -38,6 +39,9 @@ namespace SFA.DAS.Payments.Verification
                         break;
                     case ConsoleKey.D3:
                         await InitialiseActiveLearners(Inclusions.Act2Refund);
+                        break;
+                    case ConsoleKey.D4:
+                        await InitialiseActiveLearners(Inclusions.Act2Incentives);
                         break;
                     default:
                         Console.WriteLine("Unknown response, exiting when you press any key...");
