@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
@@ -33,6 +34,18 @@ namespace SFA.DAS.Payments.Verification
             connection = Connection(PaymentSystem.V2);
             await connection.OpenAsync();
             await connection.ExecuteAsync(sql);
+        }
+
+        public static async Task<int> InitialiseJob()
+        {
+            using (var connection = Connection(PaymentSystem.Output))
+            {
+                await connection.OpenAsync();
+                return await connection.ExecuteScalarAsync<int>(
+                    @"  INSERT INTO [Verification].[Jobs] (CreatedAt) VALUES (@createdAt) 
+                            SELECT @@identity",
+                    new {createdAt = DateTime.Now});
+            }
         }
 
         public static async Task<List<T>> Read<T>(PaymentSystem database, Script script)

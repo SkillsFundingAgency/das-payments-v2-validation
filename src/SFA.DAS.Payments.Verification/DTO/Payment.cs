@@ -27,7 +27,8 @@ namespace SFA.DAS.Payments.Verification.DTO
         public int FundingSource { get; set; }
         public decimal Amount { get; set; }
         public VerificationResult VerificationResult { get; set; }
-
+        public int JobId { get; set; }
+        
         public bool Equals(Payment other)
         {
             return CommitmentId == other.CommitmentId && 

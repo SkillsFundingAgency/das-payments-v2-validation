@@ -22,5 +22,6 @@
 	FundingSource int NOT NULL,
 	Amount money NOT NULL, 
     [LearnerUln] BIGINT NOT NULL, 
-    [VerificationResult] INT NOT NULL
+    [VerificationResult] INT NOT NULL, 
+    [JobId] INT NOT NULL DEFAULT 0
 )

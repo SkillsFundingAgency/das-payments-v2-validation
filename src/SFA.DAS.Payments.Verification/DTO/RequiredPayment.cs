@@ -23,6 +23,7 @@ namespace SFA.DAS.Payments.Verification.DTO
         public string LearningAimFundingLineType { get; set; }
         public long? AccountId { get; set; }
         public VerificationResult VerificationResult { get; set; }
+        public int JobId { get; set; }
 
         public bool Equals(RequiredPayment other)
         {

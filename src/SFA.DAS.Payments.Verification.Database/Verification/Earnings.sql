@@ -40,7 +40,8 @@
     [EndDate] DATETIME NULL, 
     [CumulativePmrs] INT NOT NULL, 
     [ExemptionCodeForCompletionHoldback] INT NOT NULL, 
-    [VerificationResult] INT NOT NULL
+    [VerificationResult] INT NOT NULL, 
+    [JobId] INT NOT NULL DEFAULT 0
 	
 
 )
