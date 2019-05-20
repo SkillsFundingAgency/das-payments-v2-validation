@@ -47,6 +47,8 @@ namespace SFA.DAS.Payments.Verification
 
                 Log.Write("Initialised learner group");
 
+                var jobId = await Sql.InitialiseJob();
+
                 // Get the payments
                 var v1Payments = await Sql.Read<Payment>(PaymentSystem.V1, Script.Payments);
                 Log.Write($"Retrieved {v1Payments.Count} V1 Payments");
@@ -135,34 +137,35 @@ namespace SFA.DAS.Payments.Verification
                 Log.Write("Saving to SQL");
 
                 // Save 3 tables with a flag for where the record came from
-                SetVerificationResult(v1PaymentsWithoutV2, VerificationResult.V1Only);
+                SetVerificationResult(v1PaymentsWithoutV2, VerificationResult.V1Only, jobId);
                 await Sql.Write(PaymentSystem.Output, v1PaymentsWithoutV2, "Payments");
-                SetVerificationResult(v2PaymentsWithoutV1, VerificationResult.V2Only);
+                SetVerificationResult(v2PaymentsWithoutV1, VerificationResult.V2Only, jobId);
                 await Sql.Write(PaymentSystem.Output, v2PaymentsWithoutV1, "Payments");
-                SetVerificationResult(commonPayments, VerificationResult.Okay);
+                SetVerificationResult(commonPayments, VerificationResult.Okay, jobId);
                 await Sql.Write(PaymentSystem.Output, commonPayments, "Payments");
 
-                SetVerificationResult(v1EarningsWithoutV2, VerificationResult.V1Only);
+                SetVerificationResult(v1EarningsWithoutV2, VerificationResult.V1Only, jobId);
                 await Sql.Write(PaymentSystem.Output, v1EarningsWithoutV2, "Earnings");
-                SetVerificationResult(v2EarningsWithoutV1, VerificationResult.V2Only);
+                SetVerificationResult(v2EarningsWithoutV1, VerificationResult.V2Only, jobId);
                 await Sql.Write(PaymentSystem.Output, v2EarningsWithoutV1, "Earnings");
-                SetVerificationResult(commonEarnings, VerificationResult.Okay);
+                SetVerificationResult(commonEarnings, VerificationResult.Okay, jobId);
                 await Sql.Write(PaymentSystem.Output, commonEarnings, "Earnings");
 
-                SetVerificationResult(v1RequiredPaymentsWithoutV2, VerificationResult.V1Only);
+                SetVerificationResult(v1RequiredPaymentsWithoutV2, VerificationResult.V1Only, jobId);
                 await Sql.Write(PaymentSystem.Output, v1RequiredPaymentsWithoutV2, "RequiredPayments");
-                SetVerificationResult(v2RequiredPaymentsWithoutV1, VerificationResult.V2Only);
+                SetVerificationResult(v2RequiredPaymentsWithoutV1, VerificationResult.V2Only, jobId);
                 await Sql.Write(PaymentSystem.Output, v2RequiredPaymentsWithoutV1, "RequiredPayments");
-                SetVerificationResult(commonRequiredPayments, VerificationResult.Okay);
+                SetVerificationResult(commonRequiredPayments, VerificationResult.Okay, jobId);
                 await Sql.Write(PaymentSystem.Output, commonRequiredPayments, "RequiredPayments");
 
 
-                Log.Write("Complete, press any key to close");
+                Log.Write($"Job complete with JobId: {jobId}, press any key to close");
                 Console.ReadKey();
             }
             catch (Exception e)
             {
                 Console.WriteLine(e);
+                Console.WriteLine("Press any key to exit");
                 Console.ReadKey();
             }
         }
@@ -184,12 +187,13 @@ namespace SFA.DAS.Payments.Verification
             return Sql.InitialiseLearnerTables(inclusions);
         }
 
-        private static void SetVerificationResult<T>(List<T> input, VerificationResult result) where T : IContainVerificationResults
+        private static void SetVerificationResult<T>(List<T> input, VerificationResult result, int jobId) where T : IContainVerificationResults
         {
             for (int i = 0; i < input.Count; i++)
             {
                 var temp = input[i];
                 temp.VerificationResult = result;
+                temp.JobId = jobId;
                 input[i] = temp;
             }
         }

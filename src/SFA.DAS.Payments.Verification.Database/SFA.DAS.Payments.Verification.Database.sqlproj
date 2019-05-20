@@ -64,6 +64,7 @@
     <Build Include="Security\Verification.sql" />
     <Build Include="Verification\Earnings.sql" />
     <Build Include="Verification\RequiredPayments.sql" />
+    <Build Include="Verification\Jobs.sql" />
   </ItemGroup>
   <ItemGroup>
     <RefactorLog Include="SFA.DAS.Payments.Verification.Database.refactorlog" />

@@ -56,4 +56,11 @@
     <Property Name="ParentElementType" Value="SqlTable" />
     <Property Name="NewName" Value="LearningAimFundingLineType" />
   </Operation>
+  <Operation Name="Rename Refactor" Key="7332aeeb-06f4-46e1-a119-bd1aa06fe43e" ChangeDateTime="05/07/2019 13:10:00">
+    <Property Name="ElementName" Value="[Verification].[Earnings].[Job]" />
+    <Property Name="ElementType" Value="SqlSimpleColumn" />
+    <Property Name="ParentElementName" Value="[Verification].[Earnings]" />
+    <Property Name="ParentElementType" Value="SqlTable" />
+    <Property Name="NewName" Value="JobId" />
+  </Operation>
 </Operations>

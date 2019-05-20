@@ -45,6 +45,7 @@ namespace SFA.DAS.Payments.Verification.DTO
         public int CumulativePmrs { get; set; }
         public int ExemptionCodeForCompletionHoldback { get; set; }
         public VerificationResult VerificationResult { get; set; }
+        public int JobId { get; set; }
 
         protected bool Equals(Earning other)
         {
