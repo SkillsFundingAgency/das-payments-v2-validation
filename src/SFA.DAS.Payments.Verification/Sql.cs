@@ -23,17 +23,17 @@ namespace SFA.DAS.Payments.Verification
             {PaymentSystem.Output, ConfigurationManager.ConnectionStrings["Output"].ConnectionString},
         };
 
-        public static async Task InitialiseLearnerTables(Inclusions inclusions)
+        public static async Task InitialiseLearnerTables(Inclusions inclusions, List<long> ukprns)
         {
-            var sql = GetInclusionSqlText( PaymentSystem.V1, inclusions);
+            var sql = GetInclusionSqlText(PaymentSystem.V1, inclusions);
             var connection = Connection(PaymentSystem.V1);
             await connection.OpenAsync();
-            await connection.ExecuteAsync(sql);
+            await connection.ExecuteAsync(sql, new {ukprns});
             
             sql = GetInclusionSqlText(PaymentSystem.V2, inclusions);
             connection = Connection(PaymentSystem.V2);
             await connection.OpenAsync();
-            await connection.ExecuteAsync(sql);
+            await connection.ExecuteAsync(sql, new {ukprns});
         }
 
         public static async Task<int> InitialiseJob()
@@ -48,14 +48,14 @@ namespace SFA.DAS.Payments.Verification
             }
         }
 
-        public static async Task<List<T>> Read<T>(PaymentSystem database, Script script)
+        public static async Task<List<T>> Read<T>(PaymentSystem database, Script script, List<int> periods)
         {
             //database = PaymentSystem.V1;
             var sql = GetSqlText(database, script);
             
             using (var connection = Connection(database))
             {
-                return (await connection.QueryAsync<T>(sql, commandTimeout:600)).ToList();
+                return (await connection.QueryAsync<T>(sql, new {periods}, commandTimeout:600)).ToList();
             }
         }
 

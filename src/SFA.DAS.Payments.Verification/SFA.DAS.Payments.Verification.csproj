@@ -81,6 +81,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Constants\Inclusions.cs" />
+    <Compile Include="Constants\Periods.cs" />
     <Compile Include="DTO\Job.cs" />
     <Compile Include="DTO\IContainVerificationResults.cs" />
     <Compile Include="Constants\PaymentSystem.cs" />

@@ -85,6 +85,7 @@ BEGIN
 				OR COALESCE(R.PathwayCode, 0) != COALESCE(R3.PathwayCode, 0)
 			)
 		)
+		AND Ukprn IN @ukprns
 	)
 	SELECT * INTO #SingleCourseOnProgAct2Payments
 	FROM SingleCourseOnProgAct2Payments

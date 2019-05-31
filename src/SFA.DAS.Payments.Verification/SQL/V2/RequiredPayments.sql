@@ -21,5 +21,6 @@ SELECT [PriceEpisodeIdentifier]
 
   WHERE LearnerUln IN (SELECT ULN FROM ##Learners)
   AND AcademicYear = 1819
+  AND DeliveryPeriod IN @periods
 
   Order by UKPRN, learneruln, AcademicYear, CollectionPeriod, DeliveryPeriod, TransactionType

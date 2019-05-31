@@ -105,6 +105,7 @@ BEGIN
 			WHERE R.Uln = R2.Uln
 			AND R2.Amount < 0
 		)
+		AND Ukprn IN @ukprns
 	)
 	SELECT * INTO #Refunds
 	FROM Refunds
