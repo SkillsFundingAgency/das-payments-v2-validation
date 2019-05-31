@@ -103,7 +103,7 @@ BEGIN
 	, SinglePaymentPerMonth AS (
 		SELECT * FROM PaymentPerMonth
 		WHERE [Count] = 2
-		AND Ukprn IN @ukprns
+		--AND Ukprn IN @ukprns
 	)
 	
 	SELECT * INTO #SinglePaymentPerMonth

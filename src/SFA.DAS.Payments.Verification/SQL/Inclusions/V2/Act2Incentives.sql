@@ -75,7 +75,7 @@ BEGIN
 				OR COALESCE(R.LearningAimFrameworkCode, 0) != COALESCE(R3.LearningAimFrameworkCode, 0)
 				OR COALESCE(R.LearningAimPathwayCode, 0) != COALESCE(R3.LearningAimPathwayCode, 0)
 			)
-			AND Ukprn IN @ukprns
+			--AND Ukprn IN @ukprns
 		)
 	)
 	SELECT * INTO #SingleCourseOnProgAct2Payments
