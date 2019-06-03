@@ -98,16 +98,21 @@ BEGIN
 	WITH PaymentPerMonth AS (
 		SELECT COUNT(*) [Count], ULN, DeliveryMonth
 		 FROM #SingleCourseOnProgAct2Payments R
+		 WHERE (
+			(@restrictUkprns = 1 AND Ukprn IN @ukprns)
+			OR
+			(@restrictUkprns = 0)
+		)
 		 GROUP BY Uln, DeliveryMonth
 	)
 	, SinglePaymentPerMonth AS (
 		SELECT * FROM PaymentPerMonth
 		WHERE [Count] = 2
-		--AND Ukprn IN @ukprns
 	)
 	
 	SELECT * INTO #SinglePaymentPerMonth
 	FROM SinglePaymentPerMonth
+	
 END
 
 

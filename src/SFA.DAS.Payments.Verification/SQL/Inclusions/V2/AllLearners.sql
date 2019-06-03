@@ -8,7 +8,11 @@ IF OBJECT_ID('tempdb..##Learners') IS NOT NULL
 	SELECT [LearnerUln] [Uln]
 	FROM [SFA.DAS.Payments.Database].[Payments2].[Payment]
 	WHERE AcademicYear = 1819
-	--AND Ukprn IN @ukprns
+	AND (
+			(@restrictUkprns = 1 AND Ukprn IN @ukprns)
+			OR
+			(@restrictUkprns = 0)
+		)
 )
 
 SELECT * INTO ##Learners

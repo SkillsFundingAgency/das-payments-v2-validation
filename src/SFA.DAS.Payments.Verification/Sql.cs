@@ -25,15 +25,17 @@ namespace SFA.DAS.Payments.Verification
 
         public static async Task InitialiseLearnerTables(Inclusions inclusions, List<long> ukprns)
         {
+            var restrictUkprns = ukprns.Any() ? 1 : 0;
+
             var sql = GetInclusionSqlText(PaymentSystem.V1, inclusions);
             var connection = Connection(PaymentSystem.V1);
             await connection.OpenAsync();
-            await connection.ExecuteAsync(sql, new {ukprns});
+            await connection.ExecuteAsync(sql, new {ukprns, restrictUkprns});
             
             sql = GetInclusionSqlText(PaymentSystem.V2, inclusions);
             connection = Connection(PaymentSystem.V2);
             await connection.OpenAsync();
-            await connection.ExecuteAsync(sql, new {ukprns});
+            await connection.ExecuteAsync(sql, new {ukprns, restrictUkprns });
         }
 
         public static async Task<int> InitialiseJob()
