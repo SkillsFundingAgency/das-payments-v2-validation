@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -191,11 +190,13 @@ namespace SFA.DAS.Payments.Verification
             Log.Write("Payment comparison complete");
 
             // Get the earnings
-            var v1Earnings = await Sql.Read<Earning>(PaymentSystem.V1, Script.Earnings, _periods);
-            Log.Write($"Retrieved {v1Earnings.Count} V1 Earnings");
+            var v1Earnings = new List<Earning>();
+            var v2Earnings = new List<Earning>();
+            //var v1Earnings = await Sql.Read<Earning>(PaymentSystem.V1, Script.Earnings, _periods);
+            //Log.Write($"Retrieved {v1Earnings.Count} V1 Earnings");
 
-            var v2Earnings = await Sql.Read<Earning>(PaymentSystem.V2, Script.Earnings, _periods);
-            Log.Write($"Retrieved {v2Earnings.Count} V2 Earnings");
+            //var v2Earnings = await Sql.Read<Earning>(PaymentSystem.V2, Script.Earnings, _periods);
+            //Log.Write($"Retrieved {v2Earnings.Count} V2 Earnings");
 
             var v1EarningsWithoutV2 = v1Earnings.Except(v2Earnings).ToList();
             var v2EarningsWithoutV1 = v2Earnings.Except(v1Earnings).ToList();
@@ -247,8 +248,8 @@ namespace SFA.DAS.Payments.Verification
                 (v1PaymentsWithoutV2, "V1 Payments without V2"),
                 (v2PaymentsWithoutV1, "V2 Payments without V1"),
                 //(commonPayments, "Common Payments"),
-                (v1EarningsWithoutV2, "V1 Earnings without V2"),
-                (v2EarningsWithoutV1, "V2 Earnings without V1"),
+                //(v1EarningsWithoutV2, "V1 Earnings without V2"),
+                //(v2EarningsWithoutV1, "V2 Earnings without V1"),
                 //(commonEarnings, "Common Earnings"),
                 (v1RequiredPaymentsWithoutV2, "V1 Required Payments without V2"),
                 (v2RequiredPaymentsWithoutV1, "V2 Required Payments without V1")
