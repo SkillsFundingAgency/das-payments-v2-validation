@@ -8,7 +8,7 @@ BEGIN
 	WITH InitialPayments AS (
 
 		SELECT [LearnerUln] [Uln], *
-		FROM [SFA.DAS.Payments.Database].[Payments2].[Payment]
+		FROM [@@V2DATABASE@@].[Payments2].[Payment]
 		WHERE AcademicYear = 1819
 	)
 

@@ -20,7 +20,7 @@ SELECT
       ,[SfaContributionPercentage]
       ,[AccountId]
       
-  FROM [SFA.DAS.Payments.Database].[Payments2].[Payment]
+  FROM [@@V2DATABASE@@].[Payments2].[Payment]
 
   WHERE LearnerUln IN (SELECT ULN FROM ##Learners)
   AND AcademicYear = 1819

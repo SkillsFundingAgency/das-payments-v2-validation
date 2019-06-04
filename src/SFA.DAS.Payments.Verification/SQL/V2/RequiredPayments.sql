@@ -17,7 +17,7 @@ SELECT [PriceEpisodeIdentifier]
       ,[LearningAimFundingLineType]
       ,[AccountId]
       
-  FROM [SFA.DAS.Payments.Database].[Payments2].[RequiredPaymentEvent]
+  FROM [@@V2DATABASE@@].[Payments2].[RequiredPaymentEvent]
 
   WHERE LearnerUln IN (SELECT ULN FROM ##Learners)
   AND AcademicYear = 1819

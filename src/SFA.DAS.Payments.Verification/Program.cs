@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -19,6 +20,7 @@ namespace SFA.DAS.Payments.Verification
             try
             {
                 Log.Initialise();
+                InitialiseSavedSettings();
 
                 var readyToProcess = false;
 
@@ -114,13 +116,36 @@ namespace SFA.DAS.Payments.Verification
             }
         }
 
+        private static void InitialiseSavedSettings()
+        {
+            var list = Config.UkprnList.Split(',');
+            foreach (var ukprn in list)
+            {
+                SetUkprn(ukprn);
+            }
+
+            SetPeriodsFromString(Config.PeriodList);
+        }
+
         private static void AddUkprn()
         {
             Console.WriteLine("Type a new UKRPN and press enter when done");
+            Console.WriteLine("Enter 0 to clear");
             var unparsedUkprn = Console.ReadLine();
-            if (long.TryParse(unparsedUkprn, out var result))
+            SetUkprn(unparsedUkprn);
+        }
+
+        private static void SetUkprn(string ukprn)
+        {
+            if (ukprn.Trim().Equals("0"))
+            {
+                Ukprns.Clear();
+                Config.UkprnList = "0";
+            }
+            else if (long.TryParse(ukprn, out var result))
             {
                 Ukprns.Add(result);
+                Config.UkprnList += $",{ukprn}";
             }
         }
 
@@ -128,7 +153,12 @@ namespace SFA.DAS.Payments.Verification
         {
             Console.WriteLine("Type a comma separated list of delivery periods and press enter when done");
             var allPeriods = Console.ReadLine();
-            var periodArray = allPeriods?.Split(',')??new string[0];
+            SetPeriodsFromString(allPeriods);
+        }
+
+        private static void SetPeriodsFromString(string allPeriods)
+        {
+            var periodArray = allPeriods?.Split(',') ?? new string[0];
             var candidatePeriods = new List<int>();
 
             foreach (var unparsedPeriod in periodArray)
@@ -142,6 +172,7 @@ namespace SFA.DAS.Payments.Verification
             if (candidatePeriods.Count > 0)
             {
                 _periods = candidatePeriods;
+                Config.PeriodList = allPeriods;
             }
         }
 
