@@ -18,6 +18,11 @@ BEGIN
 			ON R.Id = P.RequiredPaymentId
 
 		WHERE R.CollectionPeriodName LIKE '1819-R%'
+		AND (
+			(@restrictUkprns = 1 AND Ukprn IN @ukprns)
+			OR
+			(@restrictUkprns = 0)
+		)	
 	)
 
 	SELECT * INTO #Payments
@@ -88,11 +93,6 @@ BEGIN
 	)
 	SELECT * INTO #SingleCourseOnProgAct2Payments
 	FROM SingleCourseOnProgAct2Payments
-	WHERE (
-			(@restrictUkprns = 1 AND Ukprn IN @ukprns)
-			OR
-			(@restrictUkprns = 0)
-		)
 END
 
 

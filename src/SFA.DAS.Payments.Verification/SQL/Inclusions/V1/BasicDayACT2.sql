@@ -18,6 +18,11 @@ IF OBJECT_ID('tempdb..#Payments') IS NOT NULL
 		ON R.Id = P.RequiredPaymentId
 
 	WHERE R.CollectionPeriodName LIKE '1819-R%'
+	AND (
+		(@restrictUkprns = 1 AND Ukprn IN @ukprns)
+		OR
+		(@restrictUkprns = 0)
+	)
 )
 
 SELECT * INTO #Payments
@@ -97,11 +102,6 @@ BEGIN
 	WITH PaymentPerMonth AS (
 		SELECT COUNT(*) [Count], ULN, DeliveryMonth
 		 FROM #SingleCourseOnProgAct2Payments R
-		 WHERE (
-			(@restrictUkprns = 1 AND Ukprn IN @ukprns)
-			OR
-			(@restrictUkprns = 0)
-		)
 		 GROUP BY Uln, DeliveryMonth
 	)
 	, SinglePaymentPerMonth AS (
