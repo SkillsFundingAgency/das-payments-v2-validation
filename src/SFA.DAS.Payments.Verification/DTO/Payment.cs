@@ -16,6 +16,13 @@ namespace SFA.DAS.Payments.Verification.DTO
         public int? LearningAimProgrammeType { get; set; }
         public int? LearningAimFrameworkCode { get; set; }
         public int? LearningAimPathwayCode { get; set; }
+
+        private int StandardCode => LearningAimStandardCode ?? 0;
+        private int ProgrammeType => LearningAimProgrammeType ?? 0;
+        private int FrameworkCode => LearningAimFrameworkCode ?? 0;
+        private int PathwayCode => LearningAimPathwayCode ?? 0;
+
+
         public int ContractType { get; set; }
         public string LearningAimReference { get; set; }
         public string CollectionPeriodName { get; set; }
@@ -36,10 +43,10 @@ namespace SFA.DAS.Payments.Verification.DTO
                    string.Equals(LearnerReferenceNumber, other.LearnerReferenceNumber) && 
                    Ukprn == other.Ukprn &&
                    string.Equals(PriceEpisodeIdentifier, other.PriceEpisodeIdentifier) &&
-                   LearningAimStandardCode == other.LearningAimStandardCode &&
-                   LearningAimProgrammeType == other.LearningAimProgrammeType &&
-                   LearningAimFrameworkCode == other.LearningAimFrameworkCode &&
-                   LearningAimPathwayCode == other.LearningAimPathwayCode && 
+                   StandardCode == other.StandardCode &&
+                   ProgrammeType == other.ProgrammeType &&
+                   FrameworkCode == other.FrameworkCode &&
+                   PathwayCode == other.PathwayCode && 
                    ContractType == other.ContractType &&
                    string.Equals(LearningAimReference, other.LearningAimReference) &&
                    string.Equals(CollectionPeriodName, other.CollectionPeriodName) &&
@@ -67,10 +74,10 @@ namespace SFA.DAS.Payments.Verification.DTO
                 hashCode = (hashCode * 397) ^ (LearnerReferenceNumber != null ? LearnerReferenceNumber.GetHashCode() : 0);
                 hashCode = (hashCode * 397) ^ Ukprn.GetHashCode();
                 hashCode = (hashCode * 397) ^ (PriceEpisodeIdentifier != null ? PriceEpisodeIdentifier.GetHashCode() : 0);
-                hashCode = (hashCode * 397) ^ LearningAimStandardCode.GetHashCode();
-                hashCode = (hashCode * 397) ^ LearningAimProgrammeType.GetHashCode();
-                hashCode = (hashCode * 397) ^ LearningAimFrameworkCode.GetHashCode();
-                hashCode = (hashCode * 397) ^ LearningAimPathwayCode.GetHashCode();
+                hashCode = (hashCode * 397) ^ StandardCode.GetHashCode();
+                hashCode = (hashCode * 397) ^ ProgrammeType.GetHashCode();
+                hashCode = (hashCode * 397) ^ FrameworkCode.GetHashCode();
+                hashCode = (hashCode * 397) ^ PathwayCode.GetHashCode();
                 hashCode = (hashCode * 397) ^ ContractType;
                 hashCode = (hashCode * 397) ^ (LearningAimReference != null ? LearningAimReference.GetHashCode() : 0);
                 hashCode = (hashCode * 397) ^ (CollectionPeriodName != null ? CollectionPeriodName.GetHashCode() : 0);
