@@ -10,7 +10,7 @@ BEGIN
 	WITH InitialPayments AS (
 
 		SELECT [LearnerUln] [Uln], *
-		FROM [SFA.DAS.Payments.Database].[Payments2].[Payment]
+		FROM [@@V2DATABASE@@].[Payments2].[Payment]
 		WHERE AcademicYear = 1819
 	)
 
@@ -99,10 +99,14 @@ BEGIN
 			WHERE R.Uln = R2.Uln
 			AND R2.Amount < 0
 		)
-		--AND Ukprn IN @ukprns
 	)
 	SELECT * INTO #Refunds
 	FROM Refunds
+	WHERE (
+			(@restrictUkprns = 1 AND Ukprn IN @ukprns)
+			OR
+			(@restrictUkprns = 0)
+		)
 END
 
 

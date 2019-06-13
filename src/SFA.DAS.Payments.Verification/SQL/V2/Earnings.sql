@@ -26,10 +26,10 @@ WITH Data AS (
 	   , PE.ActualEndDate
 	   , PE.Completed
 
-	FROM [SFA.DAS.Payments.Database].[Payments2].[EarningEvent] E
-	  JOIN [SFA.DAS.Payments.Database].Payments2.EarningEventPeriod P
+	FROM [@@V2DATABASE@@].[Payments2].[EarningEvent] E
+	  JOIN [@@V2DATABASE@@].Payments2.EarningEventPeriod P
 	 ON E.EventId = P.EarningEventId
-	JOIN [SFA.DAS.Payments.Database].Payments2.EarningEventPriceEpisode PE
+	JOIN [@@V2DATABASE@@].Payments2.EarningEventPriceEpisode PE
 	 ON E.EventId = PE.EarningEventId 
 
 	WHERE P.DeliveryPeriod IN @periods

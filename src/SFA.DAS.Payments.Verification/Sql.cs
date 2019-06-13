@@ -25,15 +25,17 @@ namespace SFA.DAS.Payments.Verification
 
         public static async Task InitialiseLearnerTables(Inclusions inclusions, List<long> ukprns)
         {
+            var restrictUkprns = ukprns.Any() ? 1 : 0;
+
             var sql = GetInclusionSqlText(PaymentSystem.V1, inclusions);
             var connection = Connection(PaymentSystem.V1);
             await connection.OpenAsync();
-            await connection.ExecuteAsync(sql, new {ukprns});
+            await connection.ExecuteAsync(sql, new {ukprns, restrictUkprns}, commandTimeout:3600);
             
             sql = GetInclusionSqlText(PaymentSystem.V2, inclusions);
             connection = Connection(PaymentSystem.V2);
             await connection.OpenAsync();
-            await connection.ExecuteAsync(sql, new {ukprns});
+            await connection.ExecuteAsync(sql, new {ukprns, restrictUkprns }, commandTimeout:3600);
         }
 
         public static async Task<int> InitialiseJob()
@@ -55,7 +57,7 @@ namespace SFA.DAS.Payments.Verification
             
             using (var connection = Connection(database))
             {
-                return (await connection.QueryAsync<T>(sql, new {periods}, commandTimeout:600)).ToList();
+                return (await connection.QueryAsync<T>(sql, new {periods}, commandTimeout:3600)).ToList();
             }
         }
 
@@ -92,17 +94,31 @@ namespace SFA.DAS.Payments.Verification
         private static string GetInclusionSqlText(PaymentSystem system, Inclusions inclusion)
         {
             var path = Path.Combine(BasePath, "SQL", "Inclusions", system.ToString(), $"{inclusion.Description()}.sql");
-            return File.ReadAllText(path);
+            var sql = File.ReadAllText(path);
+            return UpdateTableAndSchemaNames(sql);
+        }
+
+        private static string UpdateTableAndSchemaNames(string originalSql)
+        {
+            return originalSql
+                .Replace("[DAS_PeriodEnd]", $"[{Config.PaymentsDatabase}]")
+                .Replace(".Payments.", $".[{Config.PaymentsSchemaPrefix}Payments].")
+                .Replace(".PaymentsDue.", $".[{Config.PaymentsSchemaPrefix}PaymentsDue].")
+                .Replace("DS_SILR1819_Collection", Config.EarningsDatabase)
+                .Replace("[@@V2DATABASE@@]", $"[{Config.V2PaymentsDatabase}]")
+                ;
         }
 
         private static string GetSqlText(PaymentSystem system, Script script)
         {
             var scriptPath = Path.Combine(BasePath, "SQL", system.ToString(), $"{script.ToString()}.sql");
+            var fileSql = File.ReadAllText(scriptPath);
+            var sql = UpdateTableAndSchemaNames(fileSql);
 
             var result = new StringBuilder(); 
             result.AppendLine();
             result.AppendLine();
-            result.Append(File.ReadAllText(scriptPath));
+            result.Append(sql);
             return result.ToString();
         }
 

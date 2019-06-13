@@ -19,6 +19,7 @@ namespace SFA.DAS.Payments.Verification
             try
             {
                 Log.Initialise();
+                InitialiseSavedSettings();
 
                 var readyToProcess = false;
 
@@ -114,13 +115,36 @@ namespace SFA.DAS.Payments.Verification
             }
         }
 
+        private static void InitialiseSavedSettings()
+        {
+            var list = Config.UkprnList.Split(',');
+            foreach (var ukprn in list)
+            {
+                SetUkprn(ukprn);
+            }
+
+            SetPeriodsFromString(Config.PeriodList);
+        }
+
         private static void AddUkprn()
         {
             Console.WriteLine("Type a new UKRPN and press enter when done");
+            Console.WriteLine("Enter 0 to clear");
             var unparsedUkprn = Console.ReadLine();
-            if (long.TryParse(unparsedUkprn, out var result))
+            SetUkprn(unparsedUkprn);
+        }
+
+        private static void SetUkprn(string ukprn)
+        {
+            if (ukprn.Trim().Equals("0"))
+            {
+                Ukprns.Clear();
+                Config.UkprnList = "0";
+            }
+            else if (long.TryParse(ukprn, out var result))
             {
                 Ukprns.Add(result);
+                Config.UkprnList += $",{ukprn}";
             }
         }
 
@@ -128,7 +152,12 @@ namespace SFA.DAS.Payments.Verification
         {
             Console.WriteLine("Type a comma separated list of delivery periods and press enter when done");
             var allPeriods = Console.ReadLine();
-            var periodArray = allPeriods?.Split(',')??new string[0];
+            SetPeriodsFromString(allPeriods);
+        }
+
+        private static void SetPeriodsFromString(string allPeriods)
+        {
+            var periodArray = allPeriods?.Split(',') ?? new string[0];
             var candidatePeriods = new List<int>();
 
             foreach (var unparsedPeriod in periodArray)
@@ -142,6 +171,7 @@ namespace SFA.DAS.Payments.Verification
             if (candidatePeriods.Count > 0)
             {
                 _periods = candidatePeriods;
+                Config.PeriodList = allPeriods;
             }
         }
 
@@ -160,11 +190,13 @@ namespace SFA.DAS.Payments.Verification
             Log.Write("Payment comparison complete");
 
             // Get the earnings
-            var v1Earnings = await Sql.Read<Earning>(PaymentSystem.V1, Script.Earnings, _periods);
-            Log.Write($"Retrieved {v1Earnings.Count} V1 Earnings");
+            var v1Earnings = new List<Earning>();
+            var v2Earnings = new List<Earning>();
+            //var v1Earnings = await Sql.Read<Earning>(PaymentSystem.V1, Script.Earnings, _periods);
+            //Log.Write($"Retrieved {v1Earnings.Count} V1 Earnings");
 
-            var v2Earnings = await Sql.Read<Earning>(PaymentSystem.V2, Script.Earnings, _periods);
-            Log.Write($"Retrieved {v2Earnings.Count} V2 Earnings");
+            //var v2Earnings = await Sql.Read<Earning>(PaymentSystem.V2, Script.Earnings, _periods);
+            //Log.Write($"Retrieved {v2Earnings.Count} V2 Earnings");
 
             var v1EarningsWithoutV2 = v1Earnings.Except(v2Earnings).ToList();
             var v2EarningsWithoutV1 = v2Earnings.Except(v1Earnings).ToList();
@@ -216,8 +248,8 @@ namespace SFA.DAS.Payments.Verification
                 (v1PaymentsWithoutV2, "V1 Payments without V2"),
                 (v2PaymentsWithoutV1, "V2 Payments without V1"),
                 //(commonPayments, "Common Payments"),
-                (v1EarningsWithoutV2, "V1 Earnings without V2"),
-                (v2EarningsWithoutV1, "V2 Earnings without V1"),
+                //(v1EarningsWithoutV2, "V1 Earnings without V2"),
+                //(v2EarningsWithoutV1, "V2 Earnings without V1"),
                 //(commonEarnings, "Common Earnings"),
                 (v1RequiredPaymentsWithoutV2, "V1 Required Payments without V2"),
                 (v2RequiredPaymentsWithoutV1, "V2 Required Payments without V1")

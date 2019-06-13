@@ -8,7 +8,7 @@ BEGIN
 	WITH InitialPayments AS (
 
 		SELECT [LearnerUln] [Uln], *
-		FROM [SFA.DAS.Payments.Database].[Payments2].[Payment]
+		FROM [@@V2DATABASE@@].[Payments2].[Payment]
 		WHERE AcademicYear = 1819
 	)
 
@@ -90,16 +90,21 @@ BEGIN
 	WITH PaymentPerMonth AS (
 		SELECT COUNT(*) [Count], ULN, DeliveryPeriod
 		 FROM #SingleCourseOnProgAct2Payments R
+		 WHERE (
+			(@restrictUkprns = 1 AND Ukprn IN @ukprns)
+			OR
+			(@restrictUkprns = 0)
+		 )
 		 GROUP BY Uln, DeliveryPeriod
 	)
 	, SinglePaymentPerMonth AS (
 		SELECT * FROM PaymentPerMonth
 		WHERE [Count] = 2
-		--AND Ukprn IN @ukprns
 	)
 	
 	SELECT * INTO #SinglePaymentPerMonth
 	FROM SinglePaymentPerMonth
+	
 END
 
 

@@ -5,24 +5,28 @@ IF OBJECT_ID('tempdb..##Learners') IS NOT NULL
 
 
 --DROP TABLE #Payments
-IF OBJECT_ID('tempdb..#Payments') IS NULL 
-BEGIN
-	WITH InitialPayments AS (
+IF OBJECT_ID('tempdb..#Payments') IS NOT NULL 
+	DROP TABLE #Payments
 
-		SELECT Uln, LearnRefNumber, Ukprn, PriceEpisodeIdentifier, StandardCode, ProgrammeType, 
-			FrameworkCode, PathwayCode, P.DeliveryMonth, R.CollectionPeriodMonth, R.TransactionType,
-			AmountDue, SfaContributionPercentage, LearnAimRef, FundingSource, Amount, ApprenticeshipContractType
+;WITH InitialPayments AS (
+	SELECT Uln, LearnRefNumber, Ukprn, PriceEpisodeIdentifier, StandardCode, ProgrammeType, 
+		FrameworkCode, PathwayCode, P.DeliveryMonth, R.CollectionPeriodMonth, R.TransactionType,
+		AmountDue, SfaContributionPercentage, LearnAimRef, FundingSource, Amount, ApprenticeshipContractType
 
-		FROM [DAS_PeriodEnd].PaymentsDue.RequiredPayments R
-		JOIN [DAS_PeriodEnd].Payments.Payments P
-			ON R.Id = P.RequiredPaymentId
+	FROM [DAS_PeriodEnd].PaymentsDue.RequiredPayments R
+	JOIN [DAS_PeriodEnd].Payments.Payments P
+		ON R.Id = P.RequiredPaymentId
 
-		WHERE R.CollectionPeriodName LIKE '1819-R%'
+	WHERE R.CollectionPeriodName LIKE '1819-R%'
+	AND (
+		(@restrictUkprns = 1 AND Ukprn IN @ukprns)
+		OR
+		(@restrictUkprns = 0)
 	)
+)
 
-	SELECT * INTO #Payments
-	 FROM InitialPayments
-END
+SELECT * INTO #Payments
+FROM InitialPayments
 
 
 --DROP TABLE #Act2Payments
@@ -103,11 +107,11 @@ BEGIN
 	, SinglePaymentPerMonth AS (
 		SELECT * FROM PaymentPerMonth
 		WHERE [Count] = 2
-		--AND Ukprn IN @ukprns
 	)
 	
 	SELECT * INTO #SinglePaymentPerMonth
 	FROM SinglePaymentPerMonth
+	
 END
 
 
