@@ -1,16 +1,27 @@
-﻿using SFA.DAS.Payments.Verification.Constants;
+﻿using System;
+using System.Collections.Generic;
+using SFA.DAS.Payments.Verification.Constants;
 
 namespace SFA.DAS.Payments.Verification.DTO
 {
     internal class RequiredPayment : IContainLearnerDetails, IContainVerificationResults
     {
+        private static readonly List<int> MathsEnglishTransactionTypes = new List<int> { 13, 14, 15 };
+
         public long LearnerUln { get; set; }
         public string PriceEpisodeIdentifier { get; set; }
+
+        private string PriceEpisodeIdentifierForComparison =>
+            MathsEnglishTransactionTypes.Contains(TransactionType) ? "" : PriceEpisodeIdentifier;
+
         public long Ukprn { get; set; }
         public int ContractType { get; set; }
         public int TransactionType { get; set; }
         public decimal SfaContributionPercentage { get; set; }
         public decimal Amount { get; set; }
+
+        private decimal AmountToCompare => Math.Round(Amount, 4);
+
         public int CollectionPeriod { get; set; }
         public int AcademicYear { get; set; }
         public int DeliveryPeriod { get; set; }
@@ -35,12 +46,12 @@ namespace SFA.DAS.Payments.Verification.DTO
         public bool Equals(RequiredPayment other)
         {
             return LearnerUln == other.LearnerUln &&
-                   string.Equals(PriceEpisodeIdentifier, other.PriceEpisodeIdentifier) && 
+                   string.Equals(PriceEpisodeIdentifierForComparison, other.PriceEpisodeIdentifierForComparison) && 
                    Ukprn == other.Ukprn &&
                    ContractType == other.ContractType && 
                    TransactionType == other.TransactionType &&
-                   SfaContributionPercentage == other.SfaContributionPercentage && 
-                   Amount == other.Amount &&
+                   SfaContributionPercentage == other.SfaContributionPercentage &&
+                   AmountToCompare == other.AmountToCompare &&
                    CollectionPeriod == other.CollectionPeriod && 
                    AcademicYear == other.AcademicYear &&
                    DeliveryPeriod == other.DeliveryPeriod &&
@@ -65,12 +76,12 @@ namespace SFA.DAS.Payments.Verification.DTO
             unchecked
             {
                 var hashCode = LearnerUln.GetHashCode();
-                hashCode = (hashCode * 397) ^ (PriceEpisodeIdentifier != null ? PriceEpisodeIdentifier.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (PriceEpisodeIdentifierForComparison != null ? PriceEpisodeIdentifierForComparison.GetHashCode() : 0);
                 hashCode = (hashCode * 397) ^ Ukprn.GetHashCode();
                 hashCode = (hashCode * 397) ^ ContractType;
                 hashCode = (hashCode * 397) ^ TransactionType;
                 hashCode = (hashCode * 397) ^ SfaContributionPercentage.GetHashCode();
-                hashCode = (hashCode * 397) ^ Amount.GetHashCode();
+                hashCode = (hashCode * 397) ^ AmountToCompare.GetHashCode();
                 hashCode = (hashCode * 397) ^ CollectionPeriod;
                 hashCode = (hashCode * 397) ^ AcademicYear;
                 hashCode = (hashCode * 397) ^ DeliveryPeriod;

@@ -1,10 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
 using SFA.DAS.Payments.Verification.Constants;
 
 namespace SFA.DAS.Payments.Verification.DTO
 {
     internal class Payment : IContainLearnerDetails, IContainVerificationResults
     {
+        private static readonly List<int> MathsEnglishTransactionTypes = new List<int>{13,14,15};
+
         public long LearnerUln { get; set; }
         public long? CommitmentId { get; set; }
         public long? AccountId { get; set; }
@@ -12,6 +15,10 @@ namespace SFA.DAS.Payments.Verification.DTO
         public long Ukprn { get; set; }
         public DateTime IlrSubmissionDateTime { get; set; }
         public string PriceEpisodeIdentifier { get; set; }
+
+        private string PriceEpisodeIdentifierForComparison =>
+            MathsEnglishTransactionTypes.Contains(TransactionType) ? "" : PriceEpisodeIdentifier;
+
         public int? LearningAimStandardCode { get; set; }
         public int? LearningAimProgrammeType { get; set; }
         public int? LearningAimFrameworkCode { get; set; }
@@ -33,6 +40,9 @@ namespace SFA.DAS.Payments.Verification.DTO
         public int AcademicYear { get; set; }
         public int FundingSource { get; set; }
         public decimal Amount { get; set; }
+
+        private decimal AmountToCompare => Math.Round(Amount, 4);
+
         public VerificationResult VerificationResult { get; set; }
         public int JobId { get; set; }
         
@@ -42,7 +52,7 @@ namespace SFA.DAS.Payments.Verification.DTO
                    AccountId == other.AccountId &&
                    string.Equals(LearnerReferenceNumber, other.LearnerReferenceNumber) && 
                    Ukprn == other.Ukprn &&
-                   string.Equals(PriceEpisodeIdentifier, other.PriceEpisodeIdentifier) &&
+                   string.Equals(PriceEpisodeIdentifierForComparison, other.PriceEpisodeIdentifierForComparison) &&
                    StandardCode == other.StandardCode &&
                    ProgrammeType == other.ProgrammeType &&
                    FrameworkCode == other.FrameworkCode &&
@@ -55,8 +65,8 @@ namespace SFA.DAS.Payments.Verification.DTO
                    string.Equals(LearningAimFundingLineType, other.LearningAimFundingLineType) &&
                    DeliveryPeriod == other.DeliveryPeriod && 
                    AcademicYear == other.AcademicYear &&
-                   FundingSource == other.FundingSource && 
-                   Amount == other.Amount;
+                   FundingSource == other.FundingSource &&
+                   AmountToCompare == other.AmountToCompare;
         }
 
         public override bool Equals(object obj)
@@ -73,7 +83,7 @@ namespace SFA.DAS.Payments.Verification.DTO
                 hashCode = (hashCode * 397) ^ AccountId.GetHashCode();
                 hashCode = (hashCode * 397) ^ (LearnerReferenceNumber != null ? LearnerReferenceNumber.GetHashCode() : 0);
                 hashCode = (hashCode * 397) ^ Ukprn.GetHashCode();
-                hashCode = (hashCode * 397) ^ (PriceEpisodeIdentifier != null ? PriceEpisodeIdentifier.GetHashCode() : 0);
+                hashCode = (hashCode * 397) ^ (PriceEpisodeIdentifierForComparison != null ? PriceEpisodeIdentifierForComparison.GetHashCode() : 0);
                 hashCode = (hashCode * 397) ^ StandardCode.GetHashCode();
                 hashCode = (hashCode * 397) ^ ProgrammeType.GetHashCode();
                 hashCode = (hashCode * 397) ^ FrameworkCode.GetHashCode();
@@ -87,7 +97,7 @@ namespace SFA.DAS.Payments.Verification.DTO
                 hashCode = (hashCode * 397) ^ DeliveryPeriod;
                 hashCode = (hashCode * 397) ^ AcademicYear;
                 hashCode = (hashCode * 397) ^ FundingSource;
-                hashCode = (hashCode * 397) ^ Amount.GetHashCode();
+                hashCode = (hashCode * 397) ^ AmountToCompare.GetHashCode();
                 return hashCode;
             }
         }
