@@ -1,3 +1,13 @@
+WITH MaxJobId AS (
+	SELECT MAX(JobId) [JobId], Ukprn
+	FROM [@@V2DATABASE@@].[Payments2].[RequiredPaymentEvent] 
+	WHERE AcademicYear = 1819
+	AND DeliveryPeriod IN @periods
+	AND CollectionPeriod IN @periods
+	AND LearnerUln IN (SELECT ULN FROM ##Learners)
+	GROUP BY Ukprn
+)
+
 SELECT [PriceEpisodeIdentifier]
       ,[Ukprn]
       ,[ContractType]
@@ -22,5 +32,7 @@ SELECT [PriceEpisodeIdentifier]
   WHERE LearnerUln IN (SELECT ULN FROM ##Learners)
   AND AcademicYear = 1819
   AND DeliveryPeriod IN @periods
+  AND CollectionPeriod IN @periods
+  AND JobId IN (SELECT JobId FROM MaxJobId)
 
   Order by UKPRN, learneruln, AcademicYear, CollectionPeriod, DeliveryPeriod, TransactionType
