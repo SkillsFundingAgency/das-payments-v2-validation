@@ -69,7 +69,7 @@ WITH RawEarnings AS (
 		OR [APEP].[PriceEpisodeLearnerAdditionalPayment] != 0
 		OR [APEP].[Period] = 1
 		)
-		AND [L].[Uln] IN (SELECT ULN FROM ##Learners)
+		AND [L].[Uln] IN (SELECT ULN FROM ##V1Learners)
 	
 	UNION
 
@@ -127,7 +127,7 @@ WITH RawEarnings AS (
 		OR LearnSuppFundCash != 0
 		)
 		AND LD.LearnAimRef != 'ZPROG001'
-		AND [L].[ULN] IN (SELECT ULN FROM ##Learners)
+		AND [L].[ULN] IN (SELECT ULN FROM ##V1Learners)
 )
 
 SELECT * FROM RawEarnings

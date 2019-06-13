@@ -33,7 +33,7 @@ WITH Data AS (
 	 ON E.EventId = PE.EarningEventId 
 
 	WHERE P.DeliveryPeriod IN @periods
-	AND LearnerUln IN (SELECT ULN FROM ##Learners)
+	AND LearnerUln IN (SELECT ULN FROM ##V2Learners)
  )
 
  SELECT

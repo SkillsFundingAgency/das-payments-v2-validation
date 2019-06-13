@@ -26,7 +26,7 @@ WITH RawPayments AS (
 	JOIN [DAS_PeriodEnd].PaymentsDue.RequiredPayments R
 	 ON P.RequiredPaymentId = R.Id
 
-	WHERE Uln IN (SELECT ULN FROM ##Learners)
+	WHERE Uln IN (SELECT ULN FROM ##V1Learners)
 	AND R.CollectionPeriodName LIKE '1819-R%'
 )
 
