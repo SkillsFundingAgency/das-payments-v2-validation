@@ -177,6 +177,8 @@ namespace SFA.DAS.Payments.Verification
 
         private static async Task ProcessComparison(int jobId)
         {
+            var filename = $"V2 Verification Results - Job ID - {jobId} - {DateTime.Now:yyyy-MM-dd hh-mm}.xlsx";
+            
             // Get the payments
             var v1Payments = await Sql.Read<Payment>(PaymentSystem.V1, Script.Payments, _periods);
             Log.Write($"Retrieved {v1Payments.Count} V1 Payments");
@@ -255,7 +257,7 @@ namespace SFA.DAS.Payments.Verification
                 (v2RequiredPaymentsWithoutV1, "V2 Required Payments without V1")
                 //(commonRequiredPayments, "Common Required Payments")
                 ))
-            using (var file = File.Create("V2 Verification Results.xlsx"))
+            using (var file = File.Create(filename))
             {
                 dataStream.CopyTo(file);
             }

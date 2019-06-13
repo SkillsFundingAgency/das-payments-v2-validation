@@ -20,6 +20,13 @@ namespace SFA.DAS.Payments.Verification.DTO
         public int? LearningAimStandardCode { get; set; }
         public int? LearningAimFrameworkCode { get; set; }
         public int? LearningAimPathwayCode { get; set; }
+
+        private int StandardCode => LearningAimStandardCode ?? 0;
+        private int ProgrammeType => LearningAimProgrammeType ?? 0;
+        private int FrameworkCode => LearningAimFrameworkCode ?? 0;
+        private int PathwayCode => LearningAimPathwayCode ?? 0;
+
+
         public string LearningAimFundingLineType { get; set; }
         public long? AccountId { get; set; }
         public VerificationResult VerificationResult { get; set; }
@@ -39,10 +46,10 @@ namespace SFA.DAS.Payments.Verification.DTO
                    DeliveryPeriod == other.DeliveryPeriod &&
                    string.Equals(LearnerReferenceNumber, other.LearnerReferenceNumber) &&
                    string.Equals(LearningAimReference, other.LearningAimReference) &&
-                   LearningAimProgrammeType == other.LearningAimProgrammeType &&
-                   LearningAimStandardCode == other.LearningAimStandardCode &&
-                   LearningAimFrameworkCode == other.LearningAimFrameworkCode &&
-                   LearningAimPathwayCode == other.LearningAimPathwayCode &&
+                   ProgrammeType == other.ProgrammeType &&
+                   StandardCode == other.StandardCode &&
+                   FrameworkCode == other.FrameworkCode &&
+                   PathwayCode == other.PathwayCode &&
                    string.Equals(LearningAimFundingLineType, other.LearningAimFundingLineType) &&
                    AccountId == other.AccountId;
         }
@@ -69,10 +76,10 @@ namespace SFA.DAS.Payments.Verification.DTO
                 hashCode = (hashCode * 397) ^ DeliveryPeriod;
                 hashCode = (hashCode * 397) ^ (LearnerReferenceNumber != null ? LearnerReferenceNumber.GetHashCode() : 0);
                 hashCode = (hashCode * 397) ^ (LearningAimReference != null ? LearningAimReference.GetHashCode() : 0);
-                hashCode = (hashCode * 397) ^ LearningAimProgrammeType.GetHashCode();
-                hashCode = (hashCode * 397) ^ LearningAimStandardCode.GetHashCode();
-                hashCode = (hashCode * 397) ^ LearningAimFrameworkCode.GetHashCode();
-                hashCode = (hashCode * 397) ^ LearningAimPathwayCode.GetHashCode();
+                hashCode = (hashCode * 397) ^ ProgrammeType.GetHashCode();
+                hashCode = (hashCode * 397) ^ StandardCode.GetHashCode();
+                hashCode = (hashCode * 397) ^ FrameworkCode.GetHashCode();
+                hashCode = (hashCode * 397) ^ PathwayCode.GetHashCode();
                 hashCode = (hashCode * 397) ^ (LearningAimFundingLineType != null ? LearningAimFundingLineType.GetHashCode() : 0);
                 hashCode = (hashCode * 397) ^ AccountId.GetHashCode();
                 return hashCode;
