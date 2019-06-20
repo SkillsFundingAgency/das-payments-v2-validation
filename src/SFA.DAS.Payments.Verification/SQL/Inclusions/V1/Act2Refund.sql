@@ -1,7 +1,7 @@
 
 
-IF OBJECT_ID('tempdb..##Learners') IS NOT NULL
-	DROP TABLE ##Learners
+IF OBJECT_ID('tempdb..##V1Learners') IS NOT NULL
+	DROP TABLE ##V1Learners
 
 
 --DROP TABLE #Payments
@@ -117,7 +117,7 @@ END
 
 
 
-SELECT DISTINCT (ULN) INTO ##Learners
+SELECT DISTINCT (ULN) INTO ##V1Learners
 FROM #Refunds
 
---SELECT * FROM ##Learners
+--SELECT * FROM ##V1Learners

@@ -1,7 +1,7 @@
 
 
-IF OBJECT_ID('tempdb..##Learners') IS NOT NULL
-	DROP TABLE ##Learners
+IF OBJECT_ID('tempdb..##V1Learners') IS NOT NULL
+	DROP TABLE ##V1Learners
 
 
 ;WITH InitialPayments AS (
@@ -16,7 +16,7 @@ IF OBJECT_ID('tempdb..##Learners') IS NOT NULL
 	)
 )
 
-SELECT * INTO ##Learners
+SELECT * INTO ##V1Learners
 	FROM InitialPayments
 
 

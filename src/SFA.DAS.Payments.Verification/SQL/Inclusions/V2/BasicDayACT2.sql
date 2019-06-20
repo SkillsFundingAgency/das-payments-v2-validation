@@ -1,5 +1,5 @@
-IF OBJECT_ID('tempdb..##Learners') IS NOT NULL
-	DROP TABLE ##Learners
+IF OBJECT_ID('tempdb..##V2Learners') IS NOT NULL
+	DROP TABLE ##V2Learners
 
 
 --DROP TABLE #Payments
@@ -108,12 +108,12 @@ BEGIN
 END
 
 
-SELECT DISTINCT (ULN) INTO ##Learners
+SELECT DISTINCT (ULN) INTO ##V2Learners
 FROM #SinglePaymentPerMonth
 
 
 
--- SELECT * FROM ##Learners
+-- SELECT * FROM ##V2Learners
 
 
 
