@@ -20,7 +20,7 @@ namespace SFA.DAS.Payments.Verification.DTO
         public decimal SfaContributionPercentage { get; set; }
         public decimal Amount { get; set; }
 
-        private decimal AmountToCompare => Math.Round(Amount, 4);
+        private decimal AmountToCompare => Math.Round(Amount, Config.AmountDP);
 
         public int CollectionPeriod { get; set; }
         public int AcademicYear { get; set; }
