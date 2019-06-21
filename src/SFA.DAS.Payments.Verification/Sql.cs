@@ -23,19 +23,20 @@ namespace SFA.DAS.Payments.Verification
             {PaymentSystem.Output, ConfigurationManager.ConnectionStrings["Output"].ConnectionString},
         };
 
-        public static async Task InitialiseLearnerTables(Inclusions inclusions, List<long> ukprns)
+        public static async Task InitialiseLearnerTables(Inclusions inclusions, List<long> ukprns, List<int> periods)
         {
             var restrictUkprns = ukprns.Any() ? 1 : 0;
+            var restrictPeriods = periods.Any() ? 1 : 0;
 
             var sql = GetInclusionSqlText(PaymentSystem.V1, inclusions);
             var connection = Connection(PaymentSystem.V1);
             await connection.OpenAsync();
-            await connection.ExecuteAsync(sql, new {ukprns, restrictUkprns}, commandTimeout:3600);
-            
+            await connection.ExecuteAsync(sql, new {ukprns, restrictUkprns, periods, restrictPeriods}, commandTimeout: 3600);
+
             sql = GetInclusionSqlText(PaymentSystem.V2, inclusions);
             connection = Connection(PaymentSystem.V2);
             await connection.OpenAsync();
-            await connection.ExecuteAsync(sql, new {ukprns, restrictUkprns }, commandTimeout:3600);
+            await connection.ExecuteAsync(sql, new {ukprns, restrictUkprns, periods, restrictPeriods}, commandTimeout: 3600);
         }
 
         public static async Task<int> InitialiseJob()
@@ -54,7 +55,7 @@ namespace SFA.DAS.Payments.Verification
         {
             //database = PaymentSystem.V1;
             var sql = GetSqlText(database, script);
-            
+
             using (var connection = Connection(database))
             {
                 return (await connection.QueryAsync<T>(sql, new {periods}, commandTimeout:3600)).ToList();

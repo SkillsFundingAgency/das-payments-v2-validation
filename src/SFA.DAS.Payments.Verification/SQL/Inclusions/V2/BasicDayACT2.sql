@@ -10,6 +10,11 @@ BEGIN
 		SELECT [LearnerUln] [Uln], *
 		FROM [@@V2DATABASE@@].[Payments2].[Payment]
 		WHERE AcademicYear = 1819
+		AND (
+			(@restrictPeriods = 1 AND CollectionPeriod IN @periods)
+			OR
+			(@restrictPeriods = 0)
+		)
 	)
 
 	SELECT * INTO #Payments

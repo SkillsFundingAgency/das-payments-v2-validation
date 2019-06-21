@@ -305,7 +305,7 @@ namespace SFA.DAS.Payments.Verification
 
         private static Task InitialiseActiveLearners(Inclusions inclusions)
         {
-            return Sql.InitialiseLearnerTables(inclusions, Ukprns);
+            return Sql.InitialiseLearnerTables(inclusions, Ukprns, _periods);
         }
 
         private static void SetVerificationResult<T>(List<T> input, VerificationResult result, int jobId) where T : IContainVerificationResults
