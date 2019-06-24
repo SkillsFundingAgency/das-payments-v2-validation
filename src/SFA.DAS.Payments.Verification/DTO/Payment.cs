@@ -41,7 +41,7 @@ namespace SFA.DAS.Payments.Verification.DTO
         public int FundingSource { get; set; }
         public decimal Amount { get; set; }
 
-        private decimal AmountToCompare => Math.Round(Amount, Config.AmountDP);
+        private decimal AmountToCompare => Math.Round(Amount, Config.DecimalPlacesToCompare);
 
         public VerificationResult VerificationResult { get; set; }
         public int JobId { get; set; }

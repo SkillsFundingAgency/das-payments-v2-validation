@@ -18,7 +18,7 @@ namespace SFA.DAS.Payments.Verification.Constants
         public static string PaymentsDatabase => ConfigurationManager.AppSettings[Keys.PaymentsDatabaseKey];
         public static string EarningsDatabase => ConfigurationManager.AppSettings[Keys.EarningsDatabaseKey];
         public static string V2PaymentsDatabase => ConfigurationManager.AppSettings[Keys.V2PaymentsDatabaseKey];
-        public const int AmountDP = 3;
+        public const int DecimalPlacesToCompare = 3;
 
         public static string UkprnList
         {
