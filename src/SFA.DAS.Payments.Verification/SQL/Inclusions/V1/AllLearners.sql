@@ -14,6 +14,11 @@ IF OBJECT_ID('tempdb..##V1Learners') IS NOT NULL
 		OR
 		(@restrictUkprns = 0)
 	)
+	AND (
+		(@restrictPeriods = 1 AND cast(substring(P.CollectionPeriod, 6, 2) as int) IN @periods)
+		OR
+		(@restrictPeriods = 0)
+	)
 )
 
 SELECT * INTO ##V1Learners

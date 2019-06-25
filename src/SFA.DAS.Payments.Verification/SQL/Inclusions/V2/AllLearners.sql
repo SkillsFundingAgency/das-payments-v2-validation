@@ -13,6 +13,11 @@ IF OBJECT_ID('tempdb..##V2Learners') IS NOT NULL
 			OR
 			(@restrictUkprns = 0)
 		)
+	AND (
+		(@restrictPeriods = 1 AND CollectionPeriod IN @periods)
+		OR
+		(@restrictPeriods = 0)
+	)
 )
 
 SELECT * INTO ##V2Learners
