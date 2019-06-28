@@ -50,7 +50,7 @@ namespace SFA.DAS.Payments.Verification.DTO
                    Ukprn == other.Ukprn &&
                    ContractType == other.ContractType && 
                    TransactionType == other.TransactionType &&
-                   SfaContributionPercentage == other.SfaContributionPercentage &&
+                   //SfaContributionPercentage == other.SfaContributionPercentage &&
                    AmountToCompare == other.AmountToCompare &&
                    CollectionPeriod == other.CollectionPeriod && 
                    AcademicYear == other.AcademicYear &&
@@ -80,7 +80,7 @@ namespace SFA.DAS.Payments.Verification.DTO
                 hashCode = (hashCode * 397) ^ Ukprn.GetHashCode();
                 hashCode = (hashCode * 397) ^ ContractType;
                 hashCode = (hashCode * 397) ^ TransactionType;
-                hashCode = (hashCode * 397) ^ SfaContributionPercentage.GetHashCode();
+                //hashCode = (hashCode * 397) ^ SfaContributionPercentage.GetHashCode();
                 hashCode = (hashCode * 397) ^ AmountToCompare.GetHashCode();
                 hashCode = (hashCode * 397) ^ CollectionPeriod;
                 hashCode = (hashCode * 397) ^ AcademicYear;
