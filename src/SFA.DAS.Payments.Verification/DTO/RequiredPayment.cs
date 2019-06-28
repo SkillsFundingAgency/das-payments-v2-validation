@@ -50,7 +50,7 @@ namespace SFA.DAS.Payments.Verification.DTO
                    Ukprn == other.Ukprn &&
                    ContractType == other.ContractType && 
                    TransactionType == other.TransactionType &&
-                   SfaContributionPercentage == other.SfaContributionPercentage &&
+                   //SfaContributionPercentage == other.SfaContributionPercentage &&
                    AmountToCompare == other.AmountToCompare &&
                    CollectionPeriod == other.CollectionPeriod && 
                    AcademicYear == other.AcademicYear &&

@@ -61,7 +61,7 @@ namespace SFA.DAS.Payments.Verification.DTO
                    string.Equals(LearningAimReference, other.LearningAimReference) &&
                    string.Equals(CollectionPeriodName, other.CollectionPeriodName) &&
                    TransactionType == other.TransactionType &&
-                   SfaContributionPercentage == other.SfaContributionPercentage &&
+                   //SfaContributionPercentage == other.SfaContributionPercentage &&
                    string.Equals(LearningAimFundingLineType, other.LearningAimFundingLineType) &&
                    DeliveryPeriod == other.DeliveryPeriod && 
                    AcademicYear == other.AcademicYear &&
