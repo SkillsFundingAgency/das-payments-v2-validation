@@ -84,7 +84,7 @@ namespace SFA.DAS.Payments.Verification.DTO
                 hashCode = (hashCode * 397) ^ (LearnerReferenceNumber != null ? LearnerReferenceNumber.GetHashCode() : 0);
                 hashCode = (hashCode * 397) ^ Ukprn.GetHashCode();
                 hashCode = (hashCode * 397) ^ (PriceEpisodeIdentifierForComparison != null ? PriceEpisodeIdentifierForComparison.GetHashCode() : 0);
-                hashCode = (hashCode * 397) ^ StandardCode.GetHashCode();
+                //hashCode = (hashCode * 397) ^ StandardCode.GetHashCode();
                 hashCode = (hashCode * 397) ^ ProgrammeType.GetHashCode();
                 hashCode = (hashCode * 397) ^ FrameworkCode.GetHashCode();
                 hashCode = (hashCode * 397) ^ PathwayCode.GetHashCode();
