@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SFA.DAS.Payments.Verificati
 EndProject
 Project("{00D1A9C2-B5F0-4AF3-8072-F6C62B433612}") = "SFA.DAS.Payments.Verification.Database", "SFA.DAS.Payments.Verification.Database\SFA.DAS.Payments.Verification.Database.sqlproj", "{68F53BF0-1788-444E-BE91-A2516B7E7CED}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SFA.DAS.Payments.Migration", "SFA.DAS.Payments.Migration\SFA.DAS.Payments.Migration.csproj", "{3BA9070D-C8BE-419E-8E7E-D3D437971CDA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -23,6 +25,10 @@ Global
 		{68F53BF0-1788-444E-BE91-A2516B7E7CED}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{68F53BF0-1788-444E-BE91-A2516B7E7CED}.Release|Any CPU.Build.0 = Release|Any CPU
 		{68F53BF0-1788-444E-BE91-A2516B7E7CED}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{3BA9070D-C8BE-419E-8E7E-D3D437971CDA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3BA9070D-C8BE-419E-8E7E-D3D437971CDA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3BA9070D-C8BE-419E-8E7E-D3D437971CDA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3BA9070D-C8BE-419E-8E7E-D3D437971CDA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
