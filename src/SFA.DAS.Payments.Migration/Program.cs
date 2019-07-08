@@ -106,6 +106,9 @@ namespace SFA.DAS.Payments.Migration
                             Console.WriteLine("Deleted old data");
                             
                             bulkCopy.DestinationTableName = "Payments2.Apprenticeship";
+                            bulkCopy.BatchSize = 5000;
+                            bulkCopy.BulkCopyTimeout = 3600;
+
                             bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("AccountId", "AccountId"));
                             bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("EstimatedEndDate",
                                 "EstimatedEndDate"));
@@ -137,6 +140,9 @@ namespace SFA.DAS.Payments.Migration
                         using (var reader = ObjectReader.Create(apprenticeshipPriceEpisodes))
                         {
                             bulkCopy.DestinationTableName = "Payments2.ApprenticeshipPriceEpisode";
+                            bulkCopy.BatchSize = 5000;
+                            bulkCopy.BulkCopyTimeout = 3600;
+
                             bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("ApprenticeshipId",
                                 "ApprenticeshipId"));
                             bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("Cost", "Cost"));
@@ -147,7 +153,7 @@ namespace SFA.DAS.Payments.Migration
                             await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
                         }
 
-                        Console.WriteLine("Save apprenticeship price episodes");
+                        Console.WriteLine("Saved apprenticeship price episodes");
                     }
                 }
 
@@ -184,6 +190,9 @@ namespace SFA.DAS.Payments.Migration
                         using (var reader = ObjectReader.Create(accounts))
                         {
                             bulkCopy.DestinationTableName = "Payments2.LevyAccount";
+                            bulkCopy.BatchSize = 5000;
+                            bulkCopy.BulkCopyTimeout = 3600;
+
                             bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("AccountId", "AccountId"));
                             bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("AccountName", "AccountName"));
                             bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("Balance", "Balance"));
