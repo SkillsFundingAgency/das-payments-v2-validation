@@ -51,8 +51,7 @@ namespace SFA.DAS.Payments.Migration
                     var commitmentsById = commitments.GroupBy(x => x.CommitmentId);
                     var apprenticeships = new List<Apprenticeship>();
                     var apprenticeshipPriceEpisodes = new List<ApprenticeshipPriceEpisode>();
-                    var apprenticeshipId = 1;
-
+                    
                     foreach (var commitmentGroup in commitmentsById)
                     {
                         var firstCommitment = commitmentGroup.First();
@@ -72,7 +71,7 @@ namespace SFA.DAS.Payments.Migration
                             TransferSendingEmployerAccountId = firstCommitment.TransferSendingEmployerAccountId,
                             Ukprn = firstCommitment.Ukprn,
                             Uln = firstCommitment.Uln,
-                            Id = apprenticeshipId,
+                            Id = firstCommitment.CommitmentId,
                             IsLevyPayer = true,
                             AgreedOnDate = new DateTime(1950, 1, 1).AddDays(firstCommitment.Priority),
                         });
@@ -81,15 +80,13 @@ namespace SFA.DAS.Payments.Migration
                         {
                             apprenticeshipPriceEpisodes.Add(new ApprenticeshipPriceEpisode
                             {
-                                ApprenticeshipId = apprenticeshipId,
+                                ApprenticeshipId = firstCommitment.CommitmentId,
                                 Cost = commitment.AgreedCost,
                                 EndDate = commitment.EffectiveToDate,
                                 Removed = false,
                                 StartDate = commitment.EffectiveFromDate,
                             });
                         }
-
-                        apprenticeshipId++;
                     }
 
                     Console.WriteLine($"Loaded {apprenticeships.Count} commitments");
@@ -102,7 +99,7 @@ namespace SFA.DAS.Payments.Migration
                         using (var bulkCopy = new SqlBulkCopy(v2Connection))
                         using (var reader = ObjectReader.Create(apprenticeships))
                         {
-                            await v2Connection.ExecuteAsync(V2Sql.DeleteData).ConfigureAwait(false);
+                            await v2Connection.ExecuteAsync(V2Sql.DeleteData, commandTimeout:3600).ConfigureAwait(false);
                             Console.WriteLine("Deleted old data");
                             
                             bulkCopy.DestinationTableName = "Payments2.Apprenticeship";
