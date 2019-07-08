@@ -9,15 +9,11 @@
             ";
 
         public const string IdentityInsertOn = @"
-                SET IDENTITY_INSERT Payments2.ApprenticeshipPriceEpisode ON
-                SET IDENTITY_INSERT Payments2.Apprenticeship ON
-                SET IDENTITY_INSERT Payments2.LevyAccount ON
+                SET IDENTITY_INSERT Payments2.ApprenticeshipPriceEpisode ON;
             ";
 
         public const string IdentityInsertOff = @"
-                SET IDENTITY_INSERT Payments2.ApprenticeshipPriceEpisode OFF
-                SET IDENTITY_INSERT Payments2.Apprenticeship OFF
-                SET IDENTITY_INSERT Payments2.LevyAccount OFF
+                SET IDENTITY_INSERT Payments2.ApprenticeshipPriceEpisode OFF;
             ";
 
         public const string UpdateLevyPayerFlag = @"
