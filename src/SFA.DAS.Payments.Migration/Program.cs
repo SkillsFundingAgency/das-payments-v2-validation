@@ -70,6 +70,7 @@ namespace SFA.DAS.Payments.Migration
                         Ukprn = firstCommitment.Ukprn,
                         Uln =  firstCommitment.Uln,
                         Id = apprenticeshipId,
+                        IsLevyPayer = true,
                     });
 
                     foreach (var commitment in commitmentGroup)
@@ -178,6 +179,10 @@ namespace SFA.DAS.Payments.Migration
                     }
 
                     await v2Connection.ExecuteAsync(V2Sql.IdentityInsertOff);
+
+                    // Update the IsLevyPayer flag on the commitments
+                    var accountIds = accounts.Where(x => x.IsLevyPayer == false).Select(x => x.AccountId);
+                    await v2Connection.ExecuteAsync(V2Sql.UpdateLevyPayerFlag, new {accountIds}).ConfigureAwait(false);
                 }
 
                 Console.WriteLine("Finished writing v2 levy accounts");

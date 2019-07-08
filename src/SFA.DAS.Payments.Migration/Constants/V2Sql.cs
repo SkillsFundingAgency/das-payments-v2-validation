@@ -19,5 +19,11 @@
                 SET IDENTITY_INSERT Payments2.Apprenticeship OFF
                 SET IDENTITY_INSERT Payments2.LevyAccount OFF
             ";
+
+        public const string UpdateLevyPayerFlag = @"
+                UPDATE Payments2.Apprenticeship
+                SET IsLevyPayer = 0
+                WHERE AccountId IN @accountIds
+            ";
     }
 }
