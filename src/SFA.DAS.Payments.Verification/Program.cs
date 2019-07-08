@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using FastMember;
+using MoreLinq;
 using SFA.DAS.Payments.Verification.Constants;
 using SFA.DAS.Payments.Verification.DTO;
 
@@ -178,7 +179,7 @@ namespace SFA.DAS.Payments.Verification
         private static async Task ProcessComparison(int jobId)
         {
             var filename = $"V2 Verification Results - Job ID - {jobId} - {DateTime.Now:yyyy-MM-dd hh-mm}.xlsx";
-            
+
             // Get the payments
             var v1Payments = await Sql.Read<Payment>(PaymentSystem.V1, Script.Payments, _periods);
             Log.Write($"Retrieved {v1Payments.Count} V1 Payments");
@@ -206,10 +207,12 @@ namespace SFA.DAS.Payments.Verification
             Log.Write("Earning comparison complete");
 
             // Get the required payments
-            var v1RequiredPayments = await Sql.Read<RequiredPayment>(PaymentSystem.V1, Script.RequiredPayments, _periods);
+            var v1RequiredPayments =
+                await Sql.Read<RequiredPayment>(PaymentSystem.V1, Script.RequiredPayments, _periods);
             Log.Write($"Retrieved {v1RequiredPayments.Count} V1 Required Payments");
 
-            var v2RequiredPayments = await Sql.Read<RequiredPayment>(PaymentSystem.V2, Script.RequiredPayments, _periods);
+            var v2RequiredPayments =
+                await Sql.Read<RequiredPayment>(PaymentSystem.V2, Script.RequiredPayments, _periods);
             Log.Write($"Retrieved {v2RequiredPayments.Count} V2 Required Payments");
 
             var v1RequiredPaymentsWithoutV2 = v1RequiredPayments.Except(v2RequiredPayments).ToList();
@@ -229,6 +232,7 @@ namespace SFA.DAS.Payments.Verification
             var summary = new List<HighLevelSummary>();
 
             // For each transaction type
+            summary.Add(new HighLevelSummary{Heading = "All Payments"});
             for (int i = 1; i < 17; i++)
             {
                 // Create a new row
@@ -242,6 +246,73 @@ namespace SFA.DAS.Payments.Verification
                     V2RequiredPaymentsAmount = v2RequiredPaymentsByTransactionType[i].Sum(x => x.Amount),
                     V1EarningsAmount = CalculateEarnings(v1Earnings, i),
                     V2EarningsAmount = CalculateEarnings(v2Earnings, i),
+                    NumberOfV2Payments = v2Payments.Where(x => x.TransactionType == i).Count(),
+                    NumberOfV1Payments = v1Payments.Where(x => x.TransactionType == i).Count(),
+                    NumberOfV1RequiredPayments = v1RequiredPayments.Where(x => x.TransactionType == i).Count(),
+                    NumberOfV2RequiredPayments = v2RequiredPayments.Where(x => x.TransactionType == i).Count(),
+                    NumberOfV1Learners = v1Payments.Where(x => x.TransactionType == i).DistinctBy(x => x.LearnerUln).Count(),
+                    NumberOfV2Learners = v2Payments.Where(x => x.TransactionType == i).DistinctBy(x => x.LearnerUln).Count(),
+                    AbsoluteSumOfV1OnlyPayments = v1PaymentsWithoutV2.Where(x => x.TransactionType == i).Sum(x => Math.Abs(x.Amount)),
+                    AbsoluteSumOfV2OnlyPayments = v2PaymentsWithoutV1.Where(x => x.TransactionType == i).Sum(x => Math.Abs(x.Amount)),
+                    AbsoluteSumOfV1OnlyRequiredPayments = v1RequiredPaymentsWithoutV2.Where(x => x.TransactionType == i).Sum(x => Math.Abs(x.Amount)),
+                    AbsoluteSumOfV2OnlyRequiredPayments = v2PaymentsWithoutV1.Where(x => x.TransactionType == i).Sum(x => Math.Abs(x.Amount)),
+
+                });
+            }
+
+            // ACT1
+            summary.Add(new HighLevelSummary{Heading = "ACT1"});
+            for (int i = 1; i < 17; i++)
+            {
+                // Create a new row
+                summary.Add(new HighLevelSummary
+                {
+                    TransactionType = i,
+                    // Aggregate all amounts for this transaction type
+                    V1PaymentsAmount = v1PaymentsByTransactionType[i].Where(x => x.ContractType == 1).Sum(x => x.Amount),
+                    V2PaymentsAmount = v2PaymentsByTransactionType[i].Where(x => x.ContractType == 1).Sum(x => x.Amount),
+                    V1RequiredPaymentsAmount = v1RequiredPaymentsByTransactionType[i].Where(x => x.ContractType == 1).Sum(x => x.Amount),
+                    V2RequiredPaymentsAmount = v2RequiredPaymentsByTransactionType[i].Where(x => x.ContractType == 1).Sum(x => x.Amount),
+                    V1EarningsAmount = CalculateEarnings(v1Earnings.Where(x => x.ContractType == 1).ToList(), i),
+                    V2EarningsAmount = CalculateEarnings(v2Earnings.Where(x => x.ContractType == 1).ToList(), i),
+                    NumberOfV2Payments = v2Payments.Where(x => x.TransactionType == i).Count(x => x.ContractType == 1),
+                    NumberOfV1Payments = v1Payments.Where(x => x.TransactionType == i).Count(x => x.ContractType == 1),
+                    NumberOfV1RequiredPayments = v1RequiredPayments.Where(x => x.TransactionType == i).Count(x => x.ContractType == 1),
+                    NumberOfV2RequiredPayments = v2RequiredPayments.Where(x => x.TransactionType == i).Count(x => x.ContractType == 1),
+                    NumberOfV1Learners = v1Payments.Where(x => x.ContractType == 1).Where(x => x.TransactionType == i).ToList().DistinctBy(x => x.LearnerUln).Count(),
+                    NumberOfV2Learners = v2Payments.Where(x => x.ContractType == 1).Where(x => x.TransactionType == i).ToList().DistinctBy(x => x.LearnerUln).Count(),
+                    AbsoluteSumOfV1OnlyPayments = v1PaymentsWithoutV2.Where(x => x.ContractType == 1).Where(x => x.TransactionType == i).Sum(x => Math.Abs(x.Amount)),
+                    AbsoluteSumOfV2OnlyPayments = v2PaymentsWithoutV1.Where(x => x.ContractType == 1).Where(x => x.TransactionType == i).Sum(x => Math.Abs(x.Amount)),
+                    AbsoluteSumOfV1OnlyRequiredPayments = v1RequiredPaymentsWithoutV2.Where(x => x.ContractType == 1).Where(x => x.TransactionType == i).Sum(x => Math.Abs(x.Amount)),
+                    AbsoluteSumOfV2OnlyRequiredPayments = v2PaymentsWithoutV1.Where(x => x.ContractType == 1).Where(x => x.TransactionType == i).Sum(x => Math.Abs(x.Amount)),
+                });
+            }
+
+            // ACT2
+            summary.Add(new HighLevelSummary { Heading = "ACT2" });
+            for (int i = 1; i < 17; i++)
+            {
+                // Create a new row
+                summary.Add(new HighLevelSummary
+                {
+                    TransactionType = i,
+                    // Aggregate all amounts for this transaction type
+                    V1PaymentsAmount = v1PaymentsByTransactionType[i].Where(x => x.ContractType == 2).Sum(x => x.Amount),
+                    V2PaymentsAmount = v2PaymentsByTransactionType[i].Where(x => x.ContractType == 2).Sum(x => x.Amount),
+                    V1RequiredPaymentsAmount = v1RequiredPaymentsByTransactionType[i].Where(x => x.ContractType == 2).Sum(x => x.Amount),
+                    V2RequiredPaymentsAmount = v2RequiredPaymentsByTransactionType[i].Where(x => x.ContractType == 2).Sum(x => x.Amount),
+                    V1EarningsAmount = CalculateEarnings(v1Earnings.Where(x => x.ContractType == 2).ToList(), i),
+                    V2EarningsAmount = CalculateEarnings(v2Earnings.Where(x => x.ContractType == 2).ToList(), i),
+                    NumberOfV2Payments = v2Payments.Where(x => x.TransactionType == i).Count(x => x.ContractType == 2),
+                    NumberOfV1Payments = v1Payments.Where(x => x.TransactionType == i).Count(x => x.ContractType == 2),
+                    NumberOfV1RequiredPayments = v1RequiredPayments.Where(x => x.TransactionType == i).Count(x => x.ContractType == 2),
+                    NumberOfV2RequiredPayments = v2RequiredPayments.Where(x => x.TransactionType == i).Count(x => x.ContractType == 2),
+                    NumberOfV1Learners = v1Payments.Where(x => x.ContractType == 2).Where(x => x.TransactionType == i).ToList().DistinctBy(x => x.LearnerUln).Count(),
+                    NumberOfV2Learners = v2Payments.Where(x => x.ContractType == 2).Where(x => x.TransactionType == i).ToList().DistinctBy(x => x.LearnerUln).Count(),
+                    AbsoluteSumOfV1OnlyPayments = v1PaymentsWithoutV2.Where(x => x.ContractType == 2).Where(x => x.TransactionType == i).Sum(x => Math.Abs(x.Amount)),
+                    AbsoluteSumOfV2OnlyPayments = v2PaymentsWithoutV1.Where(x => x.ContractType == 2).Where(x => x.TransactionType == i).Sum(x => Math.Abs(x.Amount)),
+                    AbsoluteSumOfV1OnlyRequiredPayments = v1RequiredPaymentsWithoutV2.Where(x => x.ContractType == 2).Where(x => x.TransactionType == i).Sum(x => Math.Abs(x.Amount)),
+                    AbsoluteSumOfV2OnlyRequiredPayments = v2PaymentsWithoutV1.Where(x => x.ContractType == 2).Where(x => x.TransactionType == i).Sum(x => Math.Abs(x.Amount)),
                 });
             }
 
