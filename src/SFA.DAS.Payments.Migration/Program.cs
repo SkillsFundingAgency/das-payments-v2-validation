@@ -74,7 +74,7 @@ namespace SFA.DAS.Payments.Migration
                             Uln = firstCommitment.Uln,
                             Id = apprenticeshipId,
                             IsLevyPayer = true,
-                            AgreedOnDate = new DateTime(2019, 1, 1),
+                            AgreedOnDate = new DateTime(1950, 1, 1).AddDays(firstCommitment.Priority),
                         });
 
                         foreach (var commitment in commitmentGroup)
