@@ -3,9 +3,9 @@
     public static class V2Sql
     {
         public const string DeleteData = @"
-                TRUNCATE TABLE Payments2.ApprenticeshipPriceEpisode
+                DELETE Payments2.ApprenticeshipPriceEpisode
                 DELETE Payments2.Apprenticeship
-                TRUNCATE TABLE Payments2.LevyAccount
+                DELETE Payments2.LevyAccount
             ";
 
         public const string IdentityInsertOn = @"
