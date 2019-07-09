@@ -181,10 +181,10 @@ namespace SFA.DAS.Payments.Verification
             var filename = $"V2 Verification Results - Job ID - {jobId} - {DateTime.Now:yyyy-MM-dd hh-mm}.xlsx";
 
             // Get the payments
-            var v1Payments = await Sql.Read<Payment>(PaymentSystem.V1, Script.Payments, _periods);
+            var v1Payments = await Sql.Read<Payment>(PaymentSystem.V1, Script.Payments, _periods, Ukprns);
             Log.Write($"Retrieved {v1Payments.Count} V1 Payments");
 
-            var v2Payments = await Sql.Read<Payment>(PaymentSystem.V2, Script.Payments, _periods);
+            var v2Payments = await Sql.Read<Payment>(PaymentSystem.V2, Script.Payments, _periods, Ukprns);
             Log.Write($"Retrieved {v2Payments.Count} V2 Payments");
 
             var v1PaymentsWithoutV2 = v1Payments.Except(v2Payments).ToList();
@@ -208,11 +208,11 @@ namespace SFA.DAS.Payments.Verification
 
             // Get the required payments
             var v1RequiredPayments =
-                await Sql.Read<RequiredPayment>(PaymentSystem.V1, Script.RequiredPayments, _periods);
+                await Sql.Read<RequiredPayment>(PaymentSystem.V1, Script.RequiredPayments, _periods, Ukprns);
             Log.Write($"Retrieved {v1RequiredPayments.Count} V1 Required Payments");
 
             var v2RequiredPayments =
-                await Sql.Read<RequiredPayment>(PaymentSystem.V2, Script.RequiredPayments, _periods);
+                await Sql.Read<RequiredPayment>(PaymentSystem.V2, Script.RequiredPayments, _periods, Ukprns);
             Log.Write($"Retrieved {v2RequiredPayments.Count} V2 Required Payments");
 
             var v1RequiredPaymentsWithoutV2 = v1RequiredPayments.Except(v2RequiredPayments).ToList();
@@ -246,12 +246,12 @@ namespace SFA.DAS.Payments.Verification
                     V2RequiredPaymentsAmount = v2RequiredPaymentsByTransactionType[i].Sum(x => x.Amount),
                     V1EarningsAmount = CalculateEarnings(v1Earnings, i),
                     V2EarningsAmount = CalculateEarnings(v2Earnings, i),
-                    NumberOfV2Payments = v2Payments.Where(x => x.TransactionType == i).Count(),
-                    NumberOfV1Payments = v1Payments.Where(x => x.TransactionType == i).Count(),
-                    NumberOfV1RequiredPayments = v1RequiredPayments.Where(x => x.TransactionType == i).Count(),
-                    NumberOfV2RequiredPayments = v2RequiredPayments.Where(x => x.TransactionType == i).Count(),
-                    NumberOfV1Learners = v1Payments.Where(x => x.TransactionType == i).DistinctBy(x => x.LearnerUln).Count(),
-                    NumberOfV2Learners = v2Payments.Where(x => x.TransactionType == i).DistinctBy(x => x.LearnerUln).Count(),
+                    NumberOfV1Payments = v1Payments.Count(x => x.TransactionType == i),
+                    NumberOfV2Payments = v2Payments.Count(x => x.TransactionType == i),
+                    NumberOfV1RequiredPayments = v1RequiredPayments.Count(x => x.TransactionType == i),
+                    NumberOfV2RequiredPayments = v2RequiredPayments.Count(x => x.TransactionType == i),
+                    NumberOfV1Learners = v1Payments.Where(x => x.TransactionType == i).ToList().DistinctBy(x => x.LearnerUln).Count(),
+                    NumberOfV2Learners = v2Payments.Where(x => x.TransactionType == i).ToList().DistinctBy(x => x.LearnerUln).Count(),
                     AbsoluteSumOfV1OnlyPayments = v1PaymentsWithoutV2.Where(x => x.TransactionType == i).Sum(x => Math.Abs(x.Amount)),
                     AbsoluteSumOfV2OnlyPayments = v2PaymentsWithoutV1.Where(x => x.TransactionType == i).Sum(x => Math.Abs(x.Amount)),
                     AbsoluteSumOfV1OnlyRequiredPayments = v1RequiredPaymentsWithoutV2.Where(x => x.TransactionType == i).Sum(x => Math.Abs(x.Amount)),
@@ -275,8 +275,8 @@ namespace SFA.DAS.Payments.Verification
                     V2RequiredPaymentsAmount = v2RequiredPaymentsByTransactionType[i].Where(x => x.ContractType == 1).Sum(x => x.Amount),
                     V1EarningsAmount = CalculateEarnings(v1Earnings.Where(x => x.ContractType == 1).ToList(), i),
                     V2EarningsAmount = CalculateEarnings(v2Earnings.Where(x => x.ContractType == 1).ToList(), i),
-                    NumberOfV2Payments = v2Payments.Where(x => x.TransactionType == i).Count(x => x.ContractType == 1),
                     NumberOfV1Payments = v1Payments.Where(x => x.TransactionType == i).Count(x => x.ContractType == 1),
+                    NumberOfV2Payments = v2Payments.Where(x => x.TransactionType == i).Count(x => x.ContractType == 1),
                     NumberOfV1RequiredPayments = v1RequiredPayments.Where(x => x.TransactionType == i).Count(x => x.ContractType == 1),
                     NumberOfV2RequiredPayments = v2RequiredPayments.Where(x => x.TransactionType == i).Count(x => x.ContractType == 1),
                     NumberOfV1Learners = v1Payments.Where(x => x.ContractType == 1).Where(x => x.TransactionType == i).ToList().DistinctBy(x => x.LearnerUln).Count(),
@@ -297,14 +297,14 @@ namespace SFA.DAS.Payments.Verification
                 {
                     TransactionType = i,
                     // Aggregate all amounts for this transaction type
-                    V1PaymentsAmount = v1PaymentsByTransactionType[i].Where(x => x.ContractType == 2).Sum(x => x.Amount),
-                    V2PaymentsAmount = v2PaymentsByTransactionType[i].Where(x => x.ContractType == 2).Sum(x => x.Amount),
-                    V1RequiredPaymentsAmount = v1RequiredPaymentsByTransactionType[i].Where(x => x.ContractType == 2).Sum(x => x.Amount),
-                    V2RequiredPaymentsAmount = v2RequiredPaymentsByTransactionType[i].Where(x => x.ContractType == 2).Sum(x => x.Amount),
+                    V1PaymentsAmount = v1Payments.Where(x => x.TransactionType == i).Where(x => x.ContractType == 2).Sum(x => x.Amount),
+                    V2PaymentsAmount = v2Payments.Where(x => x.TransactionType == i).Where(x => x.ContractType == 2).Sum(x => x.Amount),
+                    V1RequiredPaymentsAmount = v1RequiredPayments.Where(x => x.TransactionType == i).Where(x => x.ContractType == 2).Sum(x => x.Amount),
+                    V2RequiredPaymentsAmount = v2RequiredPayments.Where(x => x.TransactionType == i).Where(x => x.ContractType == 2).Sum(x => x.Amount),
                     V1EarningsAmount = CalculateEarnings(v1Earnings.Where(x => x.ContractType == 2).ToList(), i),
                     V2EarningsAmount = CalculateEarnings(v2Earnings.Where(x => x.ContractType == 2).ToList(), i),
-                    NumberOfV2Payments = v2Payments.Where(x => x.TransactionType == i).Count(x => x.ContractType == 2),
                     NumberOfV1Payments = v1Payments.Where(x => x.TransactionType == i).Count(x => x.ContractType == 2),
+                    NumberOfV2Payments = v2Payments.Where(x => x.TransactionType == i).Count(x => x.ContractType == 2),
                     NumberOfV1RequiredPayments = v1RequiredPayments.Where(x => x.TransactionType == i).Count(x => x.ContractType == 2),
                     NumberOfV2RequiredPayments = v2RequiredPayments.Where(x => x.TransactionType == i).Count(x => x.ContractType == 2),
                     NumberOfV1Learners = v1Payments.Where(x => x.ContractType == 2).Where(x => x.TransactionType == i).ToList().DistinctBy(x => x.LearnerUln).Count(),

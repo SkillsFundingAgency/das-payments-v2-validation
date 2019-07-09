@@ -27,5 +27,10 @@ SELECT
   AND AcademicYear = 1819
   AND DeliveryPeriod IN @periods
   AND CollectionPeriod IN @periods
+  AND (
+	(@restrictUkprns = 1 AND Ukprn IN @ukprns)
+	OR
+	(@restrictUkprns = 0)
+)
 
   Order by UKPRN, learneruln, AcademicYear, CollectionPeriod, DeliveryPeriod, TransactionType, FundingSource
