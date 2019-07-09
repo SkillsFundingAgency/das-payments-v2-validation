@@ -4,10 +4,12 @@ using System.Configuration;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
+using ClosedXML.Excel;
 using Dapper;
 using FastMember;
 using SFA.DAS.Payments.Migration.Constants;
 using SFA.DAS.Payments.Migration.DTO;
+using Path = System.IO.Path;
 
 namespace SFA.DAS.Payments.Migration
 {
@@ -162,17 +164,45 @@ namespace SFA.DAS.Payments.Migration
                     var accounts = new List<LevyAccount>();
                     var sequence = 1;
 
+                    // Load the accountData
+                    var accountDetails = new Dictionary<long, (decimal balance, decimal allowance)>();
+                    using (var workbook = new XLWorkbook(Path.Combine("AccountData", $"R{period:D2}.xlsx")))
+                    {
+                        var nonEmptyRows = workbook.Worksheet(1).RowsUsed();
+                        foreach (var nonEmptyRow in nonEmptyRows.Skip(1)) // Headings on row 1
+                        {
+                            accountDetails.Add(long.Parse(nonEmptyRow.Cell(1).Value.ToString()),
+                                (decimal.Parse(nonEmptyRow.Cell(2).Value.ToString()),
+                                    decimal.Parse(nonEmptyRow.Cell(3).Value.ToString())));
+                        }
+                    }
+
                     foreach (var v1Account in v1Accounts)
                     {
+                        decimal balance;
+                        decimal transferAllowance;
+
+                        if (accountDetails.ContainsKey(v1Account.AccountId))
+                        {
+                            balance = accountDetails[v1Account.AccountId].balance;
+                            transferAllowance = accountDetails[v1Account.AccountId].allowance;
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Could not find value for account: {v1Account.AccountId}");
+                            balance = v1Account.Balance;
+                            transferAllowance = v1Account.TransferAllowance;
+                        }
+
                         accounts.Add(new LevyAccount
                         {
                             AccountId = v1Account.AccountId,
                             AccountName = v1Account.AccountName,
-                            Balance = v1Account.Balance,
+                            Balance = balance,
                             IsLevyPayer = v1Account.IsLevyPayer,
-                            TransferAllowance = v1Account.TransferAllowance,
+                            TransferAllowance = transferAllowance,
                             SequenceId = sequence++,
-                            AccountHashId = "NOTUSED",
+                            AccountHashId = v1Account.AccountHashId,
                         });
                     }
 
