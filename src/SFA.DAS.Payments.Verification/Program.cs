@@ -320,10 +320,23 @@ namespace SFA.DAS.Payments.Verification
             {
                 new JobSummary
                 {
+                    Heading = "All",
                     NumberOfV1Learners = v1RequiredPayments.DistinctBy(x => x.LearnerUln).Count(),
                     NumberOfV2Learners = v2RequiredPayments.DistinctBy(x => x.LearnerUln).Count(),
                     Ukprns = string.Join(", ", Ukprns),
                     Periods = string.Join(", ", _periods),
+                },
+                new JobSummary
+                {
+                    Heading = "ACT 1",
+                    NumberOfV1Learners = v1RequiredPayments.Where(x => x.ContractType == 1).DistinctBy(x => x.LearnerUln).Count(),
+                    NumberOfV2Learners = v2RequiredPayments.Where(x => x.ContractType == 1).DistinctBy(x => x.LearnerUln).Count(),
+                },
+                new JobSummary
+                {
+                    Heading = "ACT 2",
+                    NumberOfV1Learners = v1RequiredPayments.Where(x => x.ContractType == 2).DistinctBy(x => x.LearnerUln).Count(),
+                    NumberOfV2Learners = v2RequiredPayments.Where(x => x.ContractType == 2).DistinctBy(x => x.LearnerUln).Count(),
                 },
             };
 
