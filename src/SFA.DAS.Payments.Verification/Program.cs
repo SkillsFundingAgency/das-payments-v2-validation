@@ -229,14 +229,14 @@ namespace SFA.DAS.Payments.Verification
             var v2PaymentsByTransactionType = v2Payments.ToLookup(x => x.TransactionType);
             var v1RequiredPaymentsByTransactionType = v1RequiredPayments.ToLookup(x => x.TransactionType);
             var v2RequiredPaymentsByTransactionType = v2RequiredPayments.ToLookup(x => x.TransactionType);
-            var summary = new List<HighLevelSummary>();
+            var summary = new List<HighLevelSummaryByTransactionType>();
 
             // For each transaction type
-            summary.Add(new HighLevelSummary{Heading = "All Payments"});
+            summary.Add(new HighLevelSummaryByTransactionType{Heading = "All Payments"});
             for (int i = 1; i < 17; i++)
             {
                 // Create a new row
-                summary.Add(new HighLevelSummary
+                summary.Add(new HighLevelSummaryByTransactionType
                 {
                     TransactionType = i,
                     // Aggregate all amounts for this transaction type
@@ -261,11 +261,11 @@ namespace SFA.DAS.Payments.Verification
             }
 
             // ACT1
-            summary.Add(new HighLevelSummary{Heading = "ACT1"});
+            summary.Add(new HighLevelSummaryByTransactionType{Heading = "ACT1"});
             for (int i = 1; i < 17; i++)
             {
                 // Create a new row
-                summary.Add(new HighLevelSummary
+                summary.Add(new HighLevelSummaryByTransactionType
                 {
                     TransactionType = i,
                     // Aggregate all amounts for this transaction type
@@ -289,11 +289,11 @@ namespace SFA.DAS.Payments.Verification
             }
 
             // ACT2
-            summary.Add(new HighLevelSummary { Heading = "ACT2" });
+            summary.Add(new HighLevelSummaryByTransactionType { Heading = "ACT2" });
             for (int i = 1; i < 17; i++)
             {
                 // Create a new row
-                summary.Add(new HighLevelSummary
+                summary.Add(new HighLevelSummaryByTransactionType
                 {
                     TransactionType = i,
                     // Aggregate all amounts for this transaction type
@@ -316,7 +316,19 @@ namespace SFA.DAS.Payments.Verification
                 });
             }
 
+            var jobSummary = new List<JobSummary>
+            {
+                new JobSummary
+                {
+                    NumberOfV1Learners = v1RequiredPayments.DistinctBy(x => x.LearnerUln).Count(),
+                    NumberOfV2Learners = v2RequiredPayments.DistinctBy(x => x.LearnerUln).Count(),
+                    Ukprns = string.Join(", ", Ukprns),
+                    Periods = string.Join(", ", _periods),
+                },
+            };
+
             using (var dataStream = Excel.CreateExcelDocumentWithSheets(
+                (jobSummary, "Job Summary"),
                 (summary, "High Level Summary"),
                 (v1PaymentsWithoutV2, "V1 Payments without V2"),
                 (v2PaymentsWithoutV1, "V2 Payments without V1"),

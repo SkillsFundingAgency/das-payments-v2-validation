@@ -90,8 +90,9 @@
     <Compile Include="Constants\Script.cs" />
     <Compile Include="Constants\VerificationResult.cs" />
     <Compile Include="DTO\Earning.cs" />
-    <Compile Include="DTO\HighLevelSummary.cs" />
+    <Compile Include="DTO\HighLevelSummaryByTransactionType.cs" />
     <Compile Include="DTO\IContainLearnerDetails.cs" />
+    <Compile Include="DTO\JobSummary.cs" />
     <Compile Include="DTO\Payment.cs" />
     <Compile Include="DTO\RequiredPayment.cs" />
     <Compile Include="Excel.cs" />

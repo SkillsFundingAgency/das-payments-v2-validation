@@ -1,6 +1,6 @@
 ﻿namespace SFA.DAS.Payments.Verification.DTO
 {
-    class HighLevelSummary
+    class HighLevelSummaryByTransactionType
     {
         public string Heading { get; set; }
         public int TransactionType { get; set; }
