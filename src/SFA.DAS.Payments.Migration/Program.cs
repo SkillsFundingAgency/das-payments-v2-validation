@@ -189,9 +189,10 @@ namespace SFA.DAS.Payments.Migration
                         }
                         else
                         {
+                            // This happens when there are no transactions for an account i.e. 0 balance
                             Console.WriteLine($"Could not find value for account: {v1Account.AccountId}");
-                            balance = v1Account.Balance;
-                            transferAllowance = v1Account.TransferAllowance;
+                            balance = 0;
+                            transferAllowance = 0;
                         }
 
                         accounts.Add(new LevyAccount
