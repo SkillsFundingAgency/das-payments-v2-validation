@@ -34,5 +34,10 @@ SELECT [PriceEpisodeIdentifier]
   AND DeliveryPeriod IN @periods
   AND CollectionPeriod IN @periods
   AND JobId IN (SELECT JobId FROM MaxJobId)
+  AND (
+	(@restrictUkprns = 1 AND Ukprn IN @ukprns)
+	OR
+	(@restrictUkprns = 0)
+)
 
   Order by UKPRN, learneruln, AcademicYear, CollectionPeriod, DeliveryPeriod, TransactionType

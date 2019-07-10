@@ -51,14 +51,16 @@ namespace SFA.DAS.Payments.Verification
             }
         }
 
-        public static async Task<List<T>> Read<T>(PaymentSystem database, Script script, List<int> periods)
+        public static async Task<List<T>> Read<T>(PaymentSystem database, Script script, List<int> periods, List<long> ukprns)
         {
             //database = PaymentSystem.V1;
+            var restrictUkprns = ukprns.Any();
+
             var sql = GetSqlText(database, script);
 
             using (var connection = Connection(database))
             {
-                return (await connection.QueryAsync<T>(sql, new {periods}, commandTimeout:3600)).ToList();
+                return (await connection.QueryAsync<T>(sql, new {periods, ukprns, restrictUkprns}, commandTimeout:3600)).ToList();
             }
         }
 
