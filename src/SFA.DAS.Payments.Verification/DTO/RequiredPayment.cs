@@ -7,6 +7,7 @@ namespace SFA.DAS.Payments.Verification.DTO
     internal class RequiredPayment : IContainLearnerDetails, IContainVerificationResults
     {
         private static readonly List<int> MathsEnglishTransactionTypes = new List<int> { 13, 14, 15 };
+        private static readonly List<int> TransactionTypesToTestSfaContribution = new List<int> {1, 2, 3};
 
         public long LearnerUln { get; set; }
         public string PriceEpisodeIdentifier { get; set; }
@@ -18,6 +19,10 @@ namespace SFA.DAS.Payments.Verification.DTO
         public int ContractType { get; set; }
         public int TransactionType { get; set; }
         public decimal SfaContributionPercentage { get; set; }
+
+        private decimal SfaContributionPercentageToCompare =>
+            TransactionTypesToTestSfaContribution.Contains(TransactionType) ? SfaContributionPercentage : 0;
+
         public decimal Amount { get; set; }
 
         private decimal AmountToCompare => Math.Round(Amount, Config.DecimalPlacesToCompare);
@@ -50,7 +55,7 @@ namespace SFA.DAS.Payments.Verification.DTO
                    Ukprn == other.Ukprn &&
                    ContractType == other.ContractType && 
                    TransactionType == other.TransactionType &&
-                   //SfaContributionPercentage == other.SfaContributionPercentage &&
+                   SfaContributionPercentageToCompare == other.SfaContributionPercentageToCompare &&
                    AmountToCompare == other.AmountToCompare &&
                    CollectionPeriod == other.CollectionPeriod && 
                    AcademicYear == other.AcademicYear &&
@@ -80,7 +85,7 @@ namespace SFA.DAS.Payments.Verification.DTO
                 hashCode = (hashCode * 397) ^ Ukprn.GetHashCode();
                 hashCode = (hashCode * 397) ^ ContractType;
                 hashCode = (hashCode * 397) ^ TransactionType;
-                //hashCode = (hashCode * 397) ^ SfaContributionPercentage.GetHashCode();
+                hashCode = (hashCode * 397) ^ SfaContributionPercentageToCompare.GetHashCode();
                 hashCode = (hashCode * 397) ^ AmountToCompare.GetHashCode();
                 hashCode = (hashCode * 397) ^ CollectionPeriod;
                 hashCode = (hashCode * 397) ^ AcademicYear;

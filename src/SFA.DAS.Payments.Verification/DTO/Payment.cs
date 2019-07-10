@@ -7,6 +7,7 @@ namespace SFA.DAS.Payments.Verification.DTO
     internal class Payment : IContainLearnerDetails, IContainVerificationResults
     {
         private static readonly List<int> MathsEnglishTransactionTypes = new List<int>{13,14,15};
+        private static readonly List<int> TransactionTypesToTestSfaContribution = new List<int> { 1, 2, 3 };
 
         public long LearnerUln { get; set; }
         public long? CommitmentId { get; set; }
@@ -35,6 +36,9 @@ namespace SFA.DAS.Payments.Verification.DTO
         public string CollectionPeriodName { get; set; }
         public int TransactionType { get; set; }
         public decimal SfaContributionPercentage { get; set; }
+        private decimal SfaContributionPercentageToCompare =>
+            TransactionTypesToTestSfaContribution.Contains(TransactionType) ? SfaContributionPercentage : 0;
+        
         public string LearningAimFundingLineType { get; set; }
         public int DeliveryPeriod { get; set; }
         public int AcademicYear { get; set; }
@@ -61,7 +65,7 @@ namespace SFA.DAS.Payments.Verification.DTO
                    string.Equals(LearningAimReference, other.LearningAimReference) &&
                    string.Equals(CollectionPeriodName, other.CollectionPeriodName) &&
                    TransactionType == other.TransactionType &&
-                   //SfaContributionPercentage == other.SfaContributionPercentage &&
+                   SfaContributionPercentageToCompare == other.SfaContributionPercentageToCompare &&
                    string.Equals(LearningAimFundingLineType, other.LearningAimFundingLineType) &&
                    DeliveryPeriod == other.DeliveryPeriod && 
                    AcademicYear == other.AcademicYear &&
@@ -84,7 +88,7 @@ namespace SFA.DAS.Payments.Verification.DTO
                 hashCode = (hashCode * 397) ^ (LearnerReferenceNumber != null ? LearnerReferenceNumber.GetHashCode() : 0);
                 hashCode = (hashCode * 397) ^ Ukprn.GetHashCode();
                 hashCode = (hashCode * 397) ^ (PriceEpisodeIdentifierForComparison != null ? PriceEpisodeIdentifierForComparison.GetHashCode() : 0);
-                //hashCode = (hashCode * 397) ^ StandardCode.GetHashCode();
+                hashCode = (hashCode * 397) ^ StandardCode.GetHashCode();
                 hashCode = (hashCode * 397) ^ ProgrammeType.GetHashCode();
                 hashCode = (hashCode * 397) ^ FrameworkCode.GetHashCode();
                 hashCode = (hashCode * 397) ^ PathwayCode.GetHashCode();
@@ -92,7 +96,7 @@ namespace SFA.DAS.Payments.Verification.DTO
                 hashCode = (hashCode * 397) ^ (LearningAimReference != null ? LearningAimReference.GetHashCode() : 0);
                 hashCode = (hashCode * 397) ^ (CollectionPeriodName != null ? CollectionPeriodName.GetHashCode() : 0);
                 hashCode = (hashCode * 397) ^ TransactionType;
-                hashCode = (hashCode * 397) ^ SfaContributionPercentage.GetHashCode();
+                hashCode = (hashCode * 397) ^ SfaContributionPercentageToCompare.GetHashCode();
                 hashCode = (hashCode * 397) ^ (LearningAimFundingLineType != null ? LearningAimFundingLineType.GetHashCode() : 0);
                 hashCode = (hashCode * 397) ^ DeliveryPeriod;
                 hashCode = (hashCode * 397) ^ AcademicYear;
