@@ -341,8 +341,8 @@ namespace SFA.DAS.Payments.Verification
             };
 
             using (var dataStream = Excel.CreateExcelDocumentWithSheets(
-                (jobSummary, "Job Summary"),
                 (summary, "High Level Summary"),
+                (jobSummary, "Job Summary"),
                 (v1PaymentsWithoutV2, "V1 Payments without V2"),
                 (v2PaymentsWithoutV1, "V2 Payments without V1"),
                 //(commonPayments, "Common Payments"),
