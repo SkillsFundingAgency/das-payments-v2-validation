@@ -22,10 +22,10 @@ namespace SFA.DAS.Payments.Migration.DTO
         public int Priority { get; set; }
         public DateTime EffectiveFromDate { get; set; }
         public DateTime? EffectiveToDate { get; set; }
-        public long TransferSendingEmployerAccountId { get; set; }
-        public DateTime TransferApprovalDate { get; set; }
-        public DateTime PausedOnDate { get; set; }
-        public DateTime WithdrawnOnDate { get; set; }
+        public long? TransferSendingEmployerAccountId { get; set; }
+        public DateTime? TransferApprovalDate { get; set; }
+        public DateTime? PausedOnDate { get; set; }
+        public DateTime? WithdrawnOnDate { get; set; }
         public string LegalEntityName { get; set; }
     }
 }

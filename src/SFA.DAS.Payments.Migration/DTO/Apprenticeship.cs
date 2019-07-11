@@ -18,8 +18,8 @@ namespace SFA.DAS.Payments.Migration.DTO
         public int? FrameworkCode { get; set; }
         public int? PathwayCode { get; set; }
         public string LegalEntityName { get; set; }
-        public long TransferSendingEmployerAccountId { get; set; }
-        public DateTime StopDate { get; set; }
+        public long? TransferSendingEmployerAccountId { get; set; }
+        public DateTime? StopDate { get; set; }
         public int Status { get; set; }
         public bool IsLevyPayer { get; set; }
     }
