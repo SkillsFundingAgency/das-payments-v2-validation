@@ -255,7 +255,7 @@ namespace SFA.DAS.Payments.Verification
                     AbsoluteSumOfV1OnlyPayments = v1PaymentsWithoutV2.Where(x => x.TransactionType == i).Sum(x => Math.Abs(x.Amount)),
                     AbsoluteSumOfV2OnlyPayments = v2PaymentsWithoutV1.Where(x => x.TransactionType == i).Sum(x => Math.Abs(x.Amount)),
                     AbsoluteSumOfV1OnlyRequiredPayments = v1RequiredPaymentsWithoutV2.Where(x => x.TransactionType == i).Sum(x => Math.Abs(x.Amount)),
-                    AbsoluteSumOfV2OnlyRequiredPayments = v2PaymentsWithoutV1.Where(x => x.TransactionType == i).Sum(x => Math.Abs(x.Amount)),
+                    AbsoluteSumOfV2OnlyRequiredPayments = v2RequiredPaymentsWithoutV1.Where(x => x.TransactionType == i).Sum(x => Math.Abs(x.Amount)),
 
                 });
             }
@@ -284,7 +284,7 @@ namespace SFA.DAS.Payments.Verification
                     AbsoluteSumOfV1OnlyPayments = v1PaymentsWithoutV2.Where(x => x.ContractType == 1).Where(x => x.TransactionType == i).Sum(x => Math.Abs(x.Amount)),
                     AbsoluteSumOfV2OnlyPayments = v2PaymentsWithoutV1.Where(x => x.ContractType == 1).Where(x => x.TransactionType == i).Sum(x => Math.Abs(x.Amount)),
                     AbsoluteSumOfV1OnlyRequiredPayments = v1RequiredPaymentsWithoutV2.Where(x => x.ContractType == 1).Where(x => x.TransactionType == i).Sum(x => Math.Abs(x.Amount)),
-                    AbsoluteSumOfV2OnlyRequiredPayments = v2PaymentsWithoutV1.Where(x => x.ContractType == 1).Where(x => x.TransactionType == i).Sum(x => Math.Abs(x.Amount)),
+                    AbsoluteSumOfV2OnlyRequiredPayments = v2RequiredPaymentsWithoutV1.Where(x => x.ContractType == 1).Where(x => x.TransactionType == i).Sum(x => Math.Abs(x.Amount)),
                 });
             }
 
@@ -312,7 +312,7 @@ namespace SFA.DAS.Payments.Verification
                     AbsoluteSumOfV1OnlyPayments = v1PaymentsWithoutV2.Where(x => x.ContractType == 2).Where(x => x.TransactionType == i).Sum(x => Math.Abs(x.Amount)),
                     AbsoluteSumOfV2OnlyPayments = v2PaymentsWithoutV1.Where(x => x.ContractType == 2).Where(x => x.TransactionType == i).Sum(x => Math.Abs(x.Amount)),
                     AbsoluteSumOfV1OnlyRequiredPayments = v1RequiredPaymentsWithoutV2.Where(x => x.ContractType == 2).Where(x => x.TransactionType == i).Sum(x => Math.Abs(x.Amount)),
-                    AbsoluteSumOfV2OnlyRequiredPayments = v2PaymentsWithoutV1.Where(x => x.ContractType == 2).Where(x => x.TransactionType == i).Sum(x => Math.Abs(x.Amount)),
+                    AbsoluteSumOfV2OnlyRequiredPayments = v2RequiredPaymentsWithoutV1.Where(x => x.ContractType == 2).Where(x => x.TransactionType == i).Sum(x => Math.Abs(x.Amount)),
                 });
             }
 
