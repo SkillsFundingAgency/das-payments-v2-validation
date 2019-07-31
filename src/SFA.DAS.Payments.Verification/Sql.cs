@@ -23,20 +23,37 @@ namespace SFA.DAS.Payments.Verification
             {PaymentSystem.Output, ConfigurationManager.ConnectionStrings["Output"].ConnectionString},
         };
 
-        public static async Task InitialiseLearnerTables(Inclusions inclusions, List<long> ukprns, List<int> periods)
+        public static async Task InitialiseLearnerTables(Inclusions inclusions, 
+            List<long> ukprns, 
+            List<int> collectionPeriods,
+            List<int> deliveryPeriods)
         {
             var restrictUkprns = ukprns.Any() ? 1 : 0;
-            var restrictPeriods = periods.Any() ? 1 : 0;
+            var restrictCollectionPeriods = collectionPeriods.Any() ? 1 : 0;
 
             var sql = GetInclusionSqlText(PaymentSystem.V1, inclusions);
             var connection = Connection(PaymentSystem.V1);
             await connection.OpenAsync();
-            await connection.ExecuteAsync(sql, new {ukprns, restrictUkprns, periods, restrictPeriods}, commandTimeout: 3600);
+            await connection.ExecuteAsync(sql, new
+            {
+                ukprns,
+                restrictUkprns,
+                collectionPeriods,
+                restrictCollectionPeriods,
+                deliveryPeriods
+            }, commandTimeout: 3600);
 
             sql = GetInclusionSqlText(PaymentSystem.V2, inclusions);
             connection = Connection(PaymentSystem.V2);
             await connection.OpenAsync();
-            await connection.ExecuteAsync(sql, new {ukprns, restrictUkprns, periods, restrictPeriods}, commandTimeout: 3600);
+            await connection.ExecuteAsync(sql, new
+            {
+                ukprns,
+                restrictUkprns,
+                collectionPeriods,
+                restrictCollectionPeriods,
+                deliveryPeriods
+            }, commandTimeout: 3600);
         }
 
         public static async Task<int> InitialiseJob()
@@ -51,7 +68,12 @@ namespace SFA.DAS.Payments.Verification
             }
         }
 
-        public static async Task<List<T>> Read<T>(PaymentSystem database, Script script, List<int> periods, List<long> ukprns)
+        public static async Task<List<T>> Read<T>(
+            PaymentSystem database,
+            Script script,
+            List<int> collectionPeriods,
+            List<long> ukprns,
+            List<int> deliveryPeriods)
         {
             //database = PaymentSystem.V1;
             var restrictUkprns = ukprns.Any();
@@ -60,7 +82,13 @@ namespace SFA.DAS.Payments.Verification
 
             using (var connection = Connection(database))
             {
-                return (await connection.QueryAsync<T>(sql, new {periods, ukprns, restrictUkprns}, commandTimeout:3600)).ToList();
+                return (await connection.QueryAsync<T>(sql, new
+                {
+                    collectionPeriods,
+                    ukprns,
+                    restrictUkprns,
+                    deliveryPeriods,
+                }, commandTimeout:3600)).ToList();
             }
         }
 

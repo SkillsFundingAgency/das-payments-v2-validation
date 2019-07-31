@@ -25,8 +25,8 @@ WITH RawPayments AS (
 )
 
 SELECT * FROM RawPayments
-WHERE DeliveryPeriod IN @periods
-AND CollectionPeriod IN @periods
+WHERE DeliveryPeriod IN @deliveryPeriods
+AND CollectionPeriod IN @collectionPeriods
 AND (
 	(@restrictUkprns = 1 AND Ukprn IN @ukprns)
 	OR

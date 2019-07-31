@@ -25,8 +25,8 @@ SELECT
 
   WHERE LearnerUln IN (SELECT ULN FROM ##V2Learners)
   AND AcademicYear = 1819
-  AND DeliveryPeriod IN @periods
-  AND CollectionPeriod IN @periods
+  AND DeliveryPeriod IN @deliveryPeriods
+  AND CollectionPeriod IN @collectionPeriods
   AND (
 	(@restrictUkprns = 1 AND Ukprn IN @ukprns)
 	OR
