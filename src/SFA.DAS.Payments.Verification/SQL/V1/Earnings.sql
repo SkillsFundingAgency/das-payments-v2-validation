@@ -132,6 +132,6 @@ WITH RawEarnings AS (
 
 SELECT * FROM RawEarnings
 
-WHERE DeliveryPeriod IN @periods
+WHERE DeliveryPeriod IN @deliveryPeriods
 
 Order by UKPRN, learneruln, DeliveryPeriod

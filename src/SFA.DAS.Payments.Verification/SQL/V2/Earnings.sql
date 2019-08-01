@@ -32,7 +32,7 @@ WITH Data AS (
 	JOIN [@@V2DATABASE@@].Payments2.EarningEventPriceEpisode PE
 	 ON E.EventId = PE.EarningEventId 
 
-	WHERE P.DeliveryPeriod IN @periods
+	WHERE P.DeliveryPeriod IN @deliveryPeriods
 	AND LearnerUln IN (SELECT ULN FROM ##V2Learners)
  )
 

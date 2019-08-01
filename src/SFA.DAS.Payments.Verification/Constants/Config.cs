@@ -11,7 +11,8 @@ namespace SFA.DAS.Payments.Verification.Constants
             public static readonly string EarningsDatabaseKey = "earnings.database.name";
             public static readonly string V2PaymentsDatabaseKey = "v2.payments.database.name";
             public static readonly string UkprnListKey = "ukprn.list";
-            public static readonly string PeriodListKey = "period.list";
+            public static readonly string CollectionPeriodListKey = "period.list";
+            public static readonly string DeliveryPeriodListKey = "delivery.period.list";
         }
 
         public static string PaymentsSchemaPrefix => ConfigurationManager.AppSettings[Keys.PaymentsSchemaPrefixKey];
@@ -32,13 +33,25 @@ namespace SFA.DAS.Payments.Verification.Constants
             } 
         }
 
-        public static string PeriodList
+        public static string CollectionPeriodList
         {
-            get => ConfigurationManager.AppSettings[Keys.PeriodListKey];
+            get => ConfigurationManager.AppSettings[Keys.CollectionPeriodListKey];
             set
             {
                 var config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-                config.AppSettings.Settings[Keys.PeriodListKey].Value = value;
+                config.AppSettings.Settings[Keys.CollectionPeriodListKey].Value = value;
+                config.Save();
+                ConfigurationManager.RefreshSection("appSettings");
+            }
+        }
+
+        public static string DeliveryPeriodList
+        {
+            get => ConfigurationManager.AppSettings[Keys.DeliveryPeriodListKey];
+            set
+            {
+                var config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+                config.AppSettings.Settings[Keys.DeliveryPeriodListKey].Value = value;
                 config.Save();
                 ConfigurationManager.RefreshSection("appSettings");
             }

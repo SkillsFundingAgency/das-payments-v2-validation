@@ -11,10 +11,11 @@ BEGIN
 		FROM [@@V2DATABASE@@].[Payments2].[Payment]
 		WHERE AcademicYear = 1819
 		AND (
-			(@restrictPeriods = 1 AND CollectionPeriod IN @periods)
+			(@restrictCollectionPeriods = 1 AND CollectionPeriod IN @collectionPeriods)
 			OR
-			(@restrictPeriods = 0)
+			(@restrictCollectionPeriods = 0)
 		)
+		AND DeliveryPeriod IN @deliveryPeriods
 	)
 
 	SELECT * INTO #Payments

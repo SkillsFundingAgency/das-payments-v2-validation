@@ -24,10 +24,15 @@ BEGIN
 			(@restrictUkprns = 0)
 		)	
 		AND (
-			(@restrictPeriods = 1 AND cast(substring(R.CollectionPeriodName, 7, 2) as int) IN @periods)
+			(@restrictCollectionPeriods = 1 AND cast(substring(R.CollectionPeriodName, 7, 2) as int) IN @collectionPeriods)
 			OR
-			(@restrictPeriods = 0)
+			(@restrictCollectionPeriods = 0)
 		)	
+		AND (
+			(R.DeliveryMonth > 7 AND (R.DeliveryMonth - 7) IN @deliveryPeriods)
+			OR
+			(R.DeliveryMonth <= 7 AND (R.DeliveryMonth + 5) IN @deliveryPeriods)
+		)
 	)
 
 	SELECT * INTO #Payments
