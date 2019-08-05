@@ -75,12 +75,14 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Constants\CollectionPeriods.cs" />
+    <Compile Include="Constants\Config.cs" />
     <Compile Include="Constants\V1Sql.cs" />
     <Compile Include="Constants\V2Sql.cs" />
     <Compile Include="DTO\Apprenticeship.cs" />
     <Compile Include="DTO\ApprenticeshipPriceEpisode.cs" />
     <Compile Include="DTO\Commitment.cs" />
     <Compile Include="DTO\LevyAccount.cs" />
+    <Compile Include="DTO\Payment.cs" />
     <Compile Include="DTO\V1Account.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
