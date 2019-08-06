@@ -3,6 +3,7 @@
     public static class V2Sql
     {
         public const string DeleteData = @"
+                DELETE Payments2.ApprenticeshipDuplicate
                 DELETE Payments2.ApprenticeshipPriceEpisode
                 DELETE Payments2.Apprenticeship
                 DELETE Payments2.LevyAccount

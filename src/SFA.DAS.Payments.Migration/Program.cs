@@ -2,14 +2,17 @@
 using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using ClosedXML.Excel;
 using Dapper;
 using FastMember;
 using SFA.DAS.Payments.Migration.Constants;
 using SFA.DAS.Payments.Migration.DTO;
+using SFA.DAS.Payments.Verification.Constants;
 using Path = System.IO.Path;
 
 namespace SFA.DAS.Payments.Migration
@@ -28,7 +31,7 @@ namespace SFA.DAS.Payments.Migration
                     var input = Console.ReadLine();
                     if (!int.TryParse(input, out var inputAsInteger))
                     {
-                        Console.WriteLine("Please enter a number between 1 and 11");
+                        Console.WriteLine("Please enter a number between 1 and 12");
                     }
                     else
                     {
@@ -38,28 +41,36 @@ namespace SFA.DAS.Payments.Migration
                         }
                         else
                         {
-                            Console.WriteLine("Please enter a number between 1 and 11");
+                            Console.WriteLine("Please enter a number between 1 and 12");
                         }
                     }
                 }
 
                 Console.WriteLine("What data do you want to migrate");
-                Console.WriteLine("Please enter 1-Commitments,2-Accounts,3-Both");
+                Console.WriteLine("Please enter 1-Commitments, 2-Accounts, 3-Payments, 4-All");
                 var typeinput = Console.ReadLine();
                 if (!int.TryParse(typeinput, out var typeinputAsInteger))
                 {
-                    Console.WriteLine("Please enter a number between 1 and 3");
+                    Console.WriteLine("Please enter a number between 1 and 4");
                 }
 
 
-                if (typeinputAsInteger == 1 || typeinputAsInteger == 3)
+                if (typeinputAsInteger == 1 || typeinputAsInteger == 4)
                 {
                     await ProcessCommitmentsData(period);
                 }
-                if (typeinputAsInteger == 2 || typeinputAsInteger == 3)
+                if (typeinputAsInteger == 2 || typeinputAsInteger == 4)
                 {
                     await ProcessAccountsData(period);
                 }
+
+                if (typeinputAsInteger == 3 || typeinputAsInteger == 4)
+                {
+                    await ProcessPayments(period);
+                }
+
+                Console.WriteLine("Finished - press any key to continue...");
+                Console.ReadKey();
             }
             catch (Exception e)
             {
@@ -67,6 +78,94 @@ namespace SFA.DAS.Payments.Migration
                 Console.WriteLine(e.StackTrace);
                 Console.ReadKey();
             }
+        }
+
+        static async Task ProcessPayments(int maxPeriod)
+        {
+            Console.WriteLine($"Using {ConfigurationManager.ConnectionStrings["V1"].ConnectionString} for V1");
+            Console.WriteLine($"Using {ConfigurationManager.ConnectionStrings["V2"].ConnectionString} for V2");
+
+
+            Console.WriteLine("Process 1617 and 1718?");
+            Console.WriteLine("Press 1 to process or 0 to ignore...");
+            var process = Console.ReadKey().Key == ConsoleKey.D1;
+
+            var periods = new List<int> {1,2,3,4,5,6,7,8,9,10,11,12,13,14};
+            var academicYears = new List<int> { 1617, 1718, 1819};
+
+            var properties = typeof(Payment).GetProperties();
+            var mappings = new List<SqlBulkCopyColumnMapping>();
+
+            foreach (var propertyInfo in properties)
+            {
+                mappings.Add(new SqlBulkCopyColumnMapping(propertyInfo.Name, propertyInfo.Name));
+            }
+
+            var v1PaymentsSql = UpdateTableAndSchemaNames(V1Sql.Payments);
+            Console.WriteLine($"Using SQL:\n{v1PaymentsSql}");
+
+            using (var connection =
+                new SqlConnection(ConfigurationManager.ConnectionStrings["V1"].ConnectionString))
+            {
+                foreach (var academicYear in academicYears)
+                {
+                    if ((academicYear == 1617 || academicYear == 1718) && !process)
+                    {
+                        continue;
+                    }
+                    foreach (var period in periods)
+                    {
+                        if (academicYear == 1819 && period > maxPeriod)
+                        {
+                            break;
+                        }
+
+                        var collectionPeriodName = $"{academicYear}-R{period:D2}";
+
+                        var payments = await connection
+                            .QueryAsync<Payment>(v1PaymentsSql, new { period = collectionPeriodName }, commandTimeout: 3600)
+                            .ConfigureAwait(false);
+
+                        Console.WriteLine($"Retrieved payments for {collectionPeriodName}");
+
+                        using (var v2Connection =
+                            new SqlConnection(ConfigurationManager.ConnectionStrings["V2"].ConnectionString))
+                        using (var bulkCopy = new SqlBulkCopy(v2Connection))
+                        using (var reader = ObjectReader.Create(payments))
+                        {
+                            if (v2Connection.State != ConnectionState.Open)
+                            {
+                                await v2Connection.OpenAsync();
+                            }
+                            bulkCopy.DestinationTableName = "Payments2.Payment";
+                            bulkCopy.BatchSize = 5000;
+                            bulkCopy.BulkCopyTimeout = 3600;
+
+                            foreach (var sqlBulkCopyColumnMapping in mappings)
+                            {
+                                bulkCopy.ColumnMappings.Add(sqlBulkCopyColumnMapping);
+                            }
+
+
+                            await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
+                        }
+
+                        Console.WriteLine($"Saved payments for {collectionPeriodName}");
+                    }
+                }
+            }
+        }
+
+        private static string UpdateTableAndSchemaNames(string originalSql)
+        {
+            return originalSql
+                    .Replace("[DAS_PeriodEnd]", $"[{Config.PaymentsDatabase}]")
+                    .Replace(".Payments.", $".[{Config.PaymentsSchemaPrefix}Payments].")
+                    .Replace(".PaymentsDue.", $".[{Config.PaymentsSchemaPrefix}PaymentsDue].")
+                    .Replace(".TransferPayments.", $".[{Config.PaymentsSchemaPrefix}TransferPayments].")
+                    .Replace("DS_SILR1819_Collection", Config.EarningsDatabase)
+                    .Replace("[@@V2DATABASE@@]", $"[{Config.V2PaymentsDatabase}]")
+                ;
         }
 
         static async Task ProcessCommitmentsData(int period)
