@@ -5,7 +5,6 @@ using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
-using System.Reflection;
 using System.Threading.Tasks;
 using ClosedXML.Excel;
 using Dapper;
@@ -293,8 +292,7 @@ namespace SFA.DAS.Payments.Migration
                 // Data already deleted and identity insert is on
                 var v1Accounts = await connection.QueryAsync<V1Account>(V1Sql.Accounts);
                 var accounts = new List<LevyAccount>();
-                var sequence = 1;
-
+             
                 // Load the accountData
                 var accountDetails = new Dictionary<long, (decimal balance, decimal allowance)>();
                 using (var workbook = new XLWorkbook(Path.Combine("AccountData", $"R{period:D2}.xlsx")))
@@ -333,8 +331,6 @@ namespace SFA.DAS.Payments.Migration
                         Balance = balance,
                         IsLevyPayer = v1Account.IsLevyPayer,
                         TransferAllowance = transferAllowance,
-                        SequenceId = sequence++,
-                        AccountHashId = v1Account.AccountHashId,
                     });
                 }
 
@@ -358,9 +354,7 @@ namespace SFA.DAS.Payments.Migration
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("IsLevyPayer", "IsLevyPayer"));
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("TransferAllowance",
                             "TransferAllowance"));
-                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("SequenceId", "SequenceId"));
-                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("AccountHashId", "AccountHashId"));
-
+                   
                         await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
                     }
 
