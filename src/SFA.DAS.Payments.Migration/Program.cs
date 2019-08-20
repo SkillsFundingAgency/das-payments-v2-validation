@@ -292,8 +292,7 @@ namespace SFA.DAS.Payments.Migration
                 // Data already deleted and identity insert is on
                 var v1Accounts = await connection.QueryAsync<V1Account>(V1Sql.Accounts);
                 var accounts = new List<LevyAccount>();
-                var sequence = 1;
-
+                
                 foreach (var v1Account in v1Accounts)
                 {
                     accounts.Add(new LevyAccount
@@ -302,7 +301,7 @@ namespace SFA.DAS.Payments.Migration
                         AccountName = v1Account.AccountName,
                         Balance = v1Account.Balance,
                         IsLevyPayer = v1Account.IsLevyPayer,
-                        TransferAllowance = transferAllowance,
+                        TransferAllowance = v1Account.TransferAllowance,
                     });
                 }
 
