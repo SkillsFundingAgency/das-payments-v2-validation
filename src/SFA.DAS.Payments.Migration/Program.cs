@@ -295,44 +295,15 @@ namespace SFA.DAS.Payments.Migration
                 var accounts = new List<LevyAccount>();
                 var sequence = 1;
 
-                // Load the accountData
-                var accountDetails = new Dictionary<long, (decimal balance, decimal allowance)>();
-                using (var workbook = new XLWorkbook(Path.Combine("AccountData", $"R{period:D2}.xlsx")))
-                {
-                    var nonEmptyRows = workbook.Worksheet(1).RowsUsed();
-                    foreach (var nonEmptyRow in nonEmptyRows.Skip(1)) // Headings on row 1
-                    {
-                        accountDetails.Add(long.Parse(nonEmptyRow.Cell(1).Value.ToString()),
-                            (decimal.Parse(nonEmptyRow.Cell(2).Value.ToString()),
-                                decimal.Parse(nonEmptyRow.Cell(3).Value.ToString())));
-                    }
-                }
-
                 foreach (var v1Account in v1Accounts)
                 {
-                    decimal balance;
-                    decimal transferAllowance;
-
-                    if (accountDetails.ContainsKey(v1Account.AccountId))
-                    {
-                        balance = accountDetails[v1Account.AccountId].balance;
-                        transferAllowance = accountDetails[v1Account.AccountId].allowance;
-                    }
-                    else
-                    {
-                        // This happens when there are no transactions for an account i.e. 0 balance
-                        Console.WriteLine($"Could not find value for account: {v1Account.AccountId}");
-                        balance = 0;
-                        transferAllowance = 0;
-                    }
-
                     accounts.Add(new LevyAccount
                     {
                         AccountId = v1Account.AccountId,
                         AccountName = v1Account.AccountName,
-                        Balance = balance,
+                        Balance = v1Account.Balance,
                         IsLevyPayer = v1Account.IsLevyPayer,
-                        TransferAllowance = transferAllowance,
+                        TransferAllowance = v1Account.TransferAllowance,
                         SequenceId = sequence++,
                         AccountHashId = v1Account.AccountHashId,
                     });
@@ -375,7 +346,6 @@ namespace SFA.DAS.Payments.Migration
 
             Console.WriteLine("Finished - press any key to exit");
             Console.ReadKey();
-
         }
     }
 }
