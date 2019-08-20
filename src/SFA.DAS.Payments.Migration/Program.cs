@@ -5,7 +5,6 @@ using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
-using System.Reflection;
 using System.Threading.Tasks;
 using ClosedXML.Excel;
 using Dapper;
@@ -303,9 +302,7 @@ namespace SFA.DAS.Payments.Migration
                         AccountName = v1Account.AccountName,
                         Balance = v1Account.Balance,
                         IsLevyPayer = v1Account.IsLevyPayer,
-                        TransferAllowance = v1Account.TransferAllowance,
-                        SequenceId = sequence++,
-                        AccountHashId = v1Account.AccountHashId,
+                        TransferAllowance = transferAllowance,
                     });
                 }
 
@@ -329,9 +326,7 @@ namespace SFA.DAS.Payments.Migration
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("IsLevyPayer", "IsLevyPayer"));
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("TransferAllowance",
                             "TransferAllowance"));
-                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("SequenceId", "SequenceId"));
-                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("AccountHashId", "AccountHashId"));
-
+                   
                         await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
                     }
 
