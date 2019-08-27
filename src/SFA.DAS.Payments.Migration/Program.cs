@@ -30,7 +30,7 @@ namespace SFA.DAS.Payments.Migration
                     var input = Console.ReadLine();
                     if (!int.TryParse(input, out var inputAsInteger))
                     {
-                        Console.WriteLine("Please enter a number between 1 and 12");
+                        Console.WriteLine("Please enter a number between 1 and 14");
                     }
                     else
                     {
@@ -40,7 +40,7 @@ namespace SFA.DAS.Payments.Migration
                         }
                         else
                         {
-                            Console.WriteLine("Please enter a number between 1 and 12");
+                            Console.WriteLine("Please enter a number between 1 and 14");
                         }
                     }
                 }
@@ -81,10 +81,6 @@ namespace SFA.DAS.Payments.Migration
 
         static async Task ProcessPayments(int maxPeriod)
         {
-            Console.WriteLine($"Using {ConfigurationManager.ConnectionStrings["V1"].ConnectionString} for V1");
-            Console.WriteLine($"Using {ConfigurationManager.ConnectionStrings["V2"].ConnectionString} for V2");
-
-
             Console.WriteLine("Process 1617 and 1718?");
             Console.WriteLine("Press 1 to process or 0 to ignore...");
             var process = Console.ReadKey().Key == ConsoleKey.D1;
