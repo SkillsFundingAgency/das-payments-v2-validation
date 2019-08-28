@@ -4,20 +4,28 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using ClosedXML.Excel;
 using Dapper;
 using FastMember;
 using SFA.DAS.Payments.Migration.Constants;
 using SFA.DAS.Payments.Migration.DTO;
 using SFA.DAS.Payments.Verification.Constants;
-using Path = System.IO.Path;
 
 namespace SFA.DAS.Payments.Migration
 {
     class Program
     {
+        static async Task Log(string message)
+        {
+            using (var file = File.AppendText("log.txt"))
+            {
+                await file.WriteLineAsync(message);
+            }
+            Console.WriteLine(message);
+        }
+
         static async Task Main(string[] args)
         {
             try
@@ -25,12 +33,12 @@ namespace SFA.DAS.Payments.Migration
                 var period = 0;
                 while (period == 0)
                 {
-                    Console.WriteLine("Please enter the period to initialise");
-                    Console.WriteLine("");
+                    await Log("Please enter the period to initialise");
+                    await Log("");
                     var input = Console.ReadLine();
                     if (!int.TryParse(input, out var inputAsInteger))
                     {
-                        Console.WriteLine("Please enter a number between 1 and 14");
+                        await Log("Please enter a number between 1 and 14");
                     }
                     else
                     {
@@ -40,17 +48,17 @@ namespace SFA.DAS.Payments.Migration
                         }
                         else
                         {
-                            Console.WriteLine("Please enter a number between 1 and 14");
+                            await Log("Please enter a number between 1 and 14");
                         }
                     }
                 }
 
-                Console.WriteLine("What data do you want to migrate");
-                Console.WriteLine("Please enter 1-Commitments, 2-Accounts, 3-Payments, 4-All");
+                await Log("What data do you want to migrate");
+                await Log("Please enter 1-Commitments, 2-Accounts, 3-Payments, 4-All");
                 var typeinput = Console.ReadLine();
                 if (!int.TryParse(typeinput, out var typeinputAsInteger))
                 {
-                    Console.WriteLine("Please enter a number between 1 and 4");
+                    await Log("Please enter a number between 1 and 4");
                 }
 
 
@@ -68,25 +76,31 @@ namespace SFA.DAS.Payments.Migration
                     await ProcessPayments(period);
                 }
 
-                Console.WriteLine("Finished - press any key to continue...");
-                Console.ReadKey();
+                await Log("Finished - press enter to continue...");
+                Console.ReadLine();
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
-                Console.WriteLine(e.StackTrace);
-                Console.ReadKey();
+                await Log(e.Message);
+                await Log(e.StackTrace);
+                await Log("Press enter to continue...");
+                Console.ReadLine();
             }
         }
 
         static async Task ProcessPayments(int maxPeriod)
         {
-            Console.WriteLine("Process 1617 and 1718?");
-            Console.WriteLine("Press 1 to process or 0 to ignore...");
+            await Log("Process 1617 and 1718?");
+            await Log("Press 1 to process or 0 to ignore...");
             var process = Console.ReadKey().Key == ConsoleKey.D1;
 
-            var periods = new List<int> {1,2,3,4,5,6,7,8,9,10,11,12,13,14};
-            var academicYears = new List<int> { 1617, 1718, 1819};
+            var periods = new List<int> {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14};
+            var academicYears = new List<int> {1617, 1718, 1819};
+
+            var periodsToIgnore = ConfigurationManager.AppSettings["PeriodsToIgnore"]
+                .Split(',')
+                .Select(int.Parse)
+                .ToList();
 
             var properties = typeof(Payment).GetProperties();
             var mappings = new List<SqlBulkCopyColumnMapping>();
@@ -97,31 +111,40 @@ namespace SFA.DAS.Payments.Migration
             }
 
             var v1PaymentsSql = UpdateTableAndSchemaNames(V1Sql.Payments);
-            Console.WriteLine($"Using SQL:\n{v1PaymentsSql}");
 
-            using (var connection =
-                new SqlConnection(ConfigurationManager.ConnectionStrings["V1"].ConnectionString))
+            foreach (var academicYear in academicYears)
             {
-                foreach (var academicYear in academicYears)
+                if ((academicYear == 1617 || academicYear == 1718) && !process)
                 {
-                    if ((academicYear == 1617 || academicYear == 1718) && !process)
+                    continue;
+                }
+
+                foreach (var period in periods)
+                {
+                    if (academicYear == 1819 && period > maxPeriod)
                     {
+                        break;
+                    }
+
+                    if (periodsToIgnore.Contains(period))
+                    {
+                        await Log($"Ignoring period {period}");
                         continue;
                     }
-                    foreach (var period in periods)
+
+                    using (var connection =
+                        new SqlConnection(ConfigurationManager.ConnectionStrings["V1"].ConnectionString))
                     {
-                        if (academicYear == 1819 && period > maxPeriod)
-                        {
-                            break;
-                        }
 
                         var collectionPeriodName = $"{academicYear}-R{period:D2}";
 
-                        var payments = await connection
-                            .QueryAsync<Payment>(v1PaymentsSql, new { period = collectionPeriodName }, commandTimeout: 3600)
-                            .ConfigureAwait(false);
+                        var payments = (await connection
+                            .QueryAsync<Payment>(v1PaymentsSql, new {period = collectionPeriodName},
+                                commandTimeout: 3600)
+                            .ConfigureAwait(false))
+                            .ToList();
 
-                        Console.WriteLine($"Retrieved payments for {collectionPeriodName}");
+                        await Log($"Retrieved {payments.Count} payments for {collectionPeriodName}");
 
                         using (var v2Connection =
                             new SqlConnection(ConfigurationManager.ConnectionStrings["V2"].ConnectionString))
@@ -132,6 +155,7 @@ namespace SFA.DAS.Payments.Migration
                             {
                                 await v2Connection.OpenAsync();
                             }
+
                             bulkCopy.DestinationTableName = "Payments2.Payment";
                             bulkCopy.BatchSize = 5000;
                             bulkCopy.BulkCopyTimeout = 3600;
@@ -145,8 +169,10 @@ namespace SFA.DAS.Payments.Migration
                             await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
                         }
 
-                        Console.WriteLine($"Saved payments for {collectionPeriodName}");
+                        await Log($"Saved payments for {collectionPeriodName}");
                     }
+
+                    GC.Collect();
                 }
             }
         }
@@ -214,7 +240,7 @@ namespace SFA.DAS.Payments.Migration
                     }
                 }
 
-                Console.WriteLine($"Loaded {apprenticeships.Count} commitments");
+                await Log($"Loaded {apprenticeships.Count} commitments");
 
                 using (var v2Connection =
                     new SqlConnection(ConfigurationManager.ConnectionStrings["V2"].ConnectionString))
@@ -225,7 +251,7 @@ namespace SFA.DAS.Payments.Migration
                     using (var reader = ObjectReader.Create(apprenticeships))
                     {
                         await v2Connection.ExecuteAsync(V2Sql.DeleteData, commandTimeout: 3600).ConfigureAwait(false);
-                        Console.WriteLine("Deleted old data");
+                        await Log("Deleted old data");
 
                         bulkCopy.DestinationTableName = "Payments2.Apprenticeship";
                         bulkCopy.BatchSize = 5000;
@@ -256,7 +282,7 @@ namespace SFA.DAS.Payments.Migration
                         await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
                     }
 
-                    Console.WriteLine("Saved apprenticeships");
+                    await Log("Saved apprenticeships");
 
                     using (var bulkCopy = new SqlBulkCopy(v2Connection))
                     using (var reader = ObjectReader.Create(apprenticeshipPriceEpisodes))
@@ -275,7 +301,7 @@ namespace SFA.DAS.Payments.Migration
                         await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
                     }
 
-                    Console.WriteLine("Saved apprenticeship price episodes");
+                    await Log("Saved apprenticeship price episodes");
                 }
             }
         }
@@ -301,7 +327,7 @@ namespace SFA.DAS.Payments.Migration
                     });
                 }
 
-                Console.WriteLine("Finished loading v1 accounts");
+                await Log("Finished loading v1 accounts");
 
                 using (var v2Connection =
                     new SqlConnection(ConfigurationManager.ConnectionStrings["V2"].ConnectionString))
@@ -331,10 +357,10 @@ namespace SFA.DAS.Payments.Migration
                         .ConfigureAwait(false);
                 }
 
-                Console.WriteLine("Finished writing v2 levy accounts");
+                await Log("Finished writing v2 levy accounts");
             }
 
-            Console.WriteLine("Finished - press any key to exit");
+            await Log("Finished - press any key to exit");
             Console.ReadKey();
         }
     }
