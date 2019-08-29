@@ -34,7 +34,7 @@
                      LearnRefNumber [LearnerReferenceNumber],
                      Ukprn,
                      IlrSubmissionDateTime,
-                     PriceEpisodeIdentifier,
+                     COALESCE(PriceEpisodeIdentifier, '') [PriceEpisodeIdentifier],
                      StandardCode [LearningAimStandardCode],
                      ProgrammeType [LearningAimProgrammeType],
                      FrameworkCode [LearningAimFrameworkCode],
