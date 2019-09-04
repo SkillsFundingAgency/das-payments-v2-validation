@@ -2,46 +2,60 @@
 {
     public static class Sql
     {
-        // DAS_PeriodEnd (DEDS)
-        public const string Datalocks1819R12 = @"
+        // DS_SILR1819_Collection (DEDS)
+        public const string Datalocks1819 = @"
+            WITH R13Datalocks AS (
+	            SELECT M.Ukprn, M.LearnRefNumber, Uln, AimSeqNumber, Payable
+                FROM [DS_SILR1819_Collection].Datalock.PriceEpisodePeriodMatch M
+                JOIN [DS_SILR1819_Collection].Valid.Learner L
+	                ON M.Ukprn = L.UKPRN
+	                AND M.LearnRefNumber = L.LearnRefNumber
+
+                WHERE M.CollectionPeriodName = '1819-R13'
+                AND Period = 12
+                AND TransactionTypesFlag = 1
+
+                GROUP BY M.Ukprn, M.LearnRefNumber, Uln, AimSeqNumber, Payable
+            )
+
+
+
             SELECT Uln, Ukprn, LearnRefNumber, AimSeqNumber
-            FROM PaymentsDue.NonPayableEarnings E
+            FROM [DAS_PeriodEnd].PaymentsDue.NonPayableEarnings E
 
             WHERE CollectionPeriodName = '1819-R12'
             AND DeliveryYear = 2019
             AND DeliveryMonth = 7
             AND (PaymentFailureReason = 0 OR PaymentFailureReason = 2)
             AND ApprenticeshipContractType = 1
+
+            AND NOT EXISTS (
+	            SELECT *
+	            FROM R13Datalocks R13
+	            WHERE R13.Ukprn = E.Ukprn
+	            AND R13.ULN = E.Uln
+	            AND R13.LearnRefNumber = E.LearnRefNumber
+	            AND R13.AimSeqNumber = E.AimSeqNumber
+	            AND R13.Payable = 1
+            )
+
             GROUP BY Uln, Ukprn, LearnRefNumber, AimSeqNumber
 
+
+            UNION
+
+
+            SELECT Uln, Ukprn, LearnRefNumber, AimSeqNumber
+            FROM R13Datalocks
+            WHERE Payable = 0
             ";
 
-        // DS_SILR1819_Collection (DEDS)
-        public const string Datalocks1819R13 = @"
-            SELECT M.Ukprn, M.LearnRefNumber, Uln, AimSeqNumber
-            FROM Datalock.PriceEpisodePeriodMatch M
-            JOIN Valid.Learner L
-	            ON M.Ukprn = L.UKPRN
-	            AND M.LearnRefNumber = L.LearnRefNumber
-
-            WHERE M.CollectionPeriodName = '1819-R13'
-            AND Period = 12
-            AND Payable = 0
-            AND TransactionTypesFlag = 1
-
-            GROUP BY M.Ukprn, M.LearnRefNumber, Uln, AimSeqNumber
-            ";
-
-        // DasPayments
+        // Das_CommitmentsReferenceData
         public const string Commitments1920 = @"
-            SELECT StandardCode, ProgrammeType, FrameworkCode, PathwayCode, StartDate, Ukprn, Uln, Ape.Cost [Amount]
-            FROM Payments2.Apprenticeship A
-            JOIN Payments2.ApprenticeshipPriceEpisode APE
-            ON A.Id = APE.ApprenticeshipId
-
-            WHERE Ape.Removed = 0
-            AND A.Status = 1
-
+            SELECT StandardCode, ProgrammeType, FrameworkCode, PathwayCode, 
+                    EffectiveFromDate [StartDate], Ukprn, Uln, AgreedCost [Amount]
+                FROM DasCommitments C1
+                WHERE PaymentStatus = 1
             ";
 
         // ILR1920Data
@@ -82,7 +96,9 @@
 		                0 [TransactionType14],
 		                COALESCE(APEP.PriceEpisodeLSFCash, 0) [TransactionType15],
 		                COALESCE([APEP].[PriceEpisodeLearnerAdditionalPayment], 0) [TransactionType16],
-		                CASE WHEN APE.PriceEpisodeContractType = 'Contract for services with the employer' THEN 1 ELSE 2 END [ApprenticeshipContractType],
+		                CASE WHEN APE.PriceEpisodeContractType = 'Contract for services with the employer' OR
+                                    APE.PriceEpisodeContractType = 'Levy Contract'
+                            THEN 1 ELSE 2 END [ApprenticeshipContractType],
 		                PriceEpisodeTotalTNPPrice [TotalPrice],
 		                0 [MathsAndEnglish]
 	                FROM Rulebase.AEC_ApprenticeshipPriceEpisode_Period APEP
@@ -149,7 +165,9 @@
 		                COALESCE(MathEngBalPayment, 0) [TransactionType14],
 		                COALESCE(LearnSuppFundCash, 0) [TransactionType15],
 		                0 [TransactionType16],
-		                CASE WHEN LDP.LearnDelContType = 'Contract for services with the employer' THEN 1 ELSE 2 END [ApprenticeshipContractType],
+		                CASE WHEN LDP.LearnDelContType = 'Contract for services with the employer' OR
+                                    LDP.LearnDelContType = 'Levy Contract'
+                            THEN 1 ELSE 2 END [ApprenticeshipContractType],
 		                0 [TotalPrice],
 		                1 [MathsAndEnglish]
 	                FROM Rulebase.AEC_LearningDelivery_Period LDP
@@ -182,18 +200,8 @@
                 )
 
 
-                SELECT SUM(
-                        [[TRANSACTIONTYPES]]
-                        
-                        ) [Amount], 
-                    LearnRefNumber, Ukprn, EpisodeEffectiveTNPStartDate, 
-	                ULN, ProgrammeType, FrameworkCode, PathwayCode, StandardCode, SfaContributionPercentage, FundingLineType, AimSeqNumber, TotalPrice, 
-                    MathsAndEnglish, ApprenticeshipContractType
+                SELECT *
                 FROM AllAct1Earnings
-
-                GROUP BY LearnRefNumber, Ukprn, EpisodeEffectiveTNPStartDate, 
-	                ULN, ProgrammeType, FrameworkCode, PathwayCode, StandardCode, SfaContributionPercentage, FundingLineType, 
-                    AimSeqNumber, TotalPrice, MathsAndEnglish, ApprenticeshipContractType
             ";
     }
 }
