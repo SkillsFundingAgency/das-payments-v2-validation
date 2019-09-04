@@ -172,25 +172,28 @@
                 , AllAct1Earnings AS (
 	                SELECT * 
 	                FROM RawEarnings
-	                WHERE ApprenticeshipContractType = 1
+	                --WHERE ApprenticeshipContractType = 1
 
 	                UNION
 
 	                SELECT * 
 	                FROM RawEarningsMathsAndEnglish
-	                WHERE ApprenticeshipContractType = 1
+	                --WHERE ApprenticeshipContractType = 1
                 )
 
 
-                SELECT SUM(TransactionType01 + TransactionType02 + TransactionType03 + TransactionType04 + TransactionType05 + TransactionType06 + 
-	                TransactionType07 + TransactionType08 + TransactionType09 + TransactionType10 + TransactionType11 + TransactionType12 + TransactionType13 +
-	                TransactionType14 + TransactionType15 + TransactionType16) [Amount], LearnRefNumber, Ukprn, EpisodeEffectiveTNPStartDate, 
-	                ULN, ProgrammeType, FrameworkCode, PathwayCode, StandardCode, SfaContributionPercentage, FundingLineType, AimSeqNumber, TotalPrice, MathsAndEnglish
+                SELECT SUM(
+                        [[TRANSACTIONTYPES]]
+                        
+                        ) [Amount], 
+                    LearnRefNumber, Ukprn, EpisodeEffectiveTNPStartDate, 
+	                ULN, ProgrammeType, FrameworkCode, PathwayCode, StandardCode, SfaContributionPercentage, FundingLineType, AimSeqNumber, TotalPrice, 
+                    MathsAndEnglish, ApprenticeshipContractType
                 FROM AllAct1Earnings
 
                 GROUP BY LearnRefNumber, Ukprn, EpisodeEffectiveTNPStartDate, 
-	                ULN, ProgrammeType, FrameworkCode, PathwayCode, StandardCode, SfaContributionPercentage, FundingLineType, AimSeqNumber, TotalPrice, MathsAndEnglish
-
+	                ULN, ProgrammeType, FrameworkCode, PathwayCode, StandardCode, SfaContributionPercentage, FundingLineType, 
+                    AimSeqNumber, TotalPrice, MathsAndEnglish, ApprenticeshipContractType
             ";
     }
 }

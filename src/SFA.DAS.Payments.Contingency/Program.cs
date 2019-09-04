@@ -23,10 +23,51 @@ namespace SFA.DAS.Payments.Contingency
                 List<Datalock> datalocks1819R13;
                 List<Commitment> commitments;
 
+                var earningsSql = Sql.Earnings;
+                var selection = 0;
+
+                while (selection < 1 || selection > 3)
+                {
+                    Console.WriteLine("Please choose the source data:");
+                    Console.WriteLine("1. Transaction types 1 - 16");
+                    Console.WriteLine("2. Transaction types 1 - 3");
+                    Console.WriteLine("3. Transaction types 4 - 16");
+                    var entry = Console.ReadLine();
+                    int.TryParse(entry, out selection);
+
+                    switch (selection)
+                    {
+                        case 1: // Everything
+                            earningsSql = earningsSql.Replace("[[TRANSACTIONTYPES]]",
+                                @"TransactionType01 + TransactionType02 + TransactionType03 
+                                        + TransactionType04 + TransactionType05 + TransactionType06 +
+                                        TransactionType07 + TransactionType08 + TransactionType09 + TransactionType10 + 
+                                        TransactionType11 + TransactionType12 + TransactionType13 +
+                                        TransactionType14 + TransactionType15 + TransactionType16");
+                            break;
+                        case 2: // 1 - 3
+                            earningsSql = earningsSql.Replace("[[TRANSACTIONTYPES]]",
+                                @"TransactionType01 + TransactionType02 + TransactionType03");
+                            break;
+                        case 3: // 4-16
+                            earningsSql = earningsSql.Replace("[[TRANSACTIONTYPES]]",
+                                @"TransactionType04 + TransactionType05 + TransactionType06 + 
+	                                    TransactionType07 + TransactionType08 + TransactionType09 + TransactionType10 + 
+                                        TransactionType11 + TransactionType12 + TransactionType13 +
+	                                    TransactionType14 + TransactionType15 + TransactionType16");
+                            break;
+                        default:
+                            Console.WriteLine("Please enter a number from 1-3");
+                            break;
+                    }
+                }
+                
+                Console.WriteLine("Processing...");
+
                 // Load data
                 using (var connection = new SqlConnection(ConfigurationManager.ConnectionStrings["ILR1920DataStore"].ConnectionString))
                 {
-                    earnings = (await connection.QueryAsync<Earning>(Sql.Earnings, commandTimeout: 3600).ConfigureAwait(false)).ToList();
+                    earnings = (await connection.QueryAsync<Earning>(earningsSql, commandTimeout: 3600).ConfigureAwait(false)).ToList();
                 }
                 Console.WriteLine($"Loaded {earnings.Count} earnings");
 
@@ -59,12 +100,15 @@ namespace SFA.DAS.Payments.Contingency
                 WriteToTable(sheet, earnings);
                 Console.WriteLine("Written earnings page");
 
+                // Extract ACT1 earnings for datalock processing
+                var act1Earnings = earnings.Where(x => x.ApprenticeshipContractType == 1).ToList();
+                var act2Earnings = earnings.Where(x => x.ApprenticeshipContractType != 1);
 
                 // Get 1819 datalocks
                 // Merge R12 and R13 datalocks
                 var datalocks = datalocks1819R12.Union(datalocks1819R13).Distinct().ToDictionary(x => (x.Ukprn, x.LearnRefNumber, x.AimSeqNumber));
-                var earningsWithDatalocks = earnings.Where(x => datalocks.ContainsKey((x.Ukprn, x.LearnRefNumber, x.AimSeqNumber))).ToList();
-                var earningsWithoutDatalocks = earnings.Where(x => !datalocks.ContainsKey((x.Ukprn, x.LearnRefNumber, x.AimSeqNumber))).ToList();
+                var earningsWithDatalocks = act1Earnings.Where(x => datalocks.ContainsKey((x.Ukprn, x.LearnRefNumber, x.AimSeqNumber))).ToList();
+                var earningsWithoutDatalocks = act1Earnings.Where(x => !datalocks.ContainsKey((x.Ukprn, x.LearnRefNumber, x.AimSeqNumber))).ToList();
 
                 // Write to '1819 Datalocks' tab
                 sheet = excel.Worksheet("1819 Datalocks");
@@ -116,7 +160,8 @@ namespace SFA.DAS.Payments.Contingency
 
                 // Write a summary tab
                 sheet = excel.Worksheet("Final Amounts");
-                WriteToTable(sheet, finalEarningsWithoutDatalocks);
+                var paidEarnings = finalEarningsWithoutDatalocks.Union(act2Earnings).ToList();
+                WriteToTable(sheet, paidEarnings);
 
 
                 var datalockedUlns = earningsWithDatalocks.Select(x => x.Uln).Distinct().ToList();
@@ -130,9 +175,8 @@ namespace SFA.DAS.Payments.Contingency
                 sheet.Cell(2, "A").Value = earnings.Select(x => x.Uln).Distinct().Count();
                 sheet.Cell(2, "B").Value = earnings.Sum(x => x.Amount);
                 sheet.Cell(2, "C").Value = earningsWithDatalocks.Union(finalEarningsWithDatalocks).Sum(x => x.Amount);
-                sheet.Cell(2, "D").Value = earningsWithDatalocks.Union(finalEarningsWithDatalocks).Select(x => x.Uln)
-                    .Distinct().Count();
-                sheet.Cell(2, "E").Value = finalEarningsWithoutDatalocks.Select(x => x.Uln).Distinct().Count();
+                sheet.Cell(2, "D").Value = datalockedUlns.Count;
+                sheet.Cell(2, "E").Value = paidEarnings.Select(x => x.Uln).Distinct().Count();
 
                 excel.SaveAs($"Output-{DateTime.Now:yyyy-MM-dd-hh-mm}.xlsx", true, true);
 

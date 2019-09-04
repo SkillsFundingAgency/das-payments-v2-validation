@@ -18,5 +18,6 @@ namespace SFA.DAS.Payments.Contingency.DTO
         public int AimSeqNumber { get; set; }
         public decimal TotalPrice { get; set; }
         public bool MathsAndEnglish { get; set; }
+        public int ApprenticeshipContractType { get; set; }
     }
 }
