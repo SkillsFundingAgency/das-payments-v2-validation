@@ -22,32 +22,6 @@ namespace SFA.DAS.Payments.Contingency
                 List<Datalock> datalocks1819;
                 List<Commitment> commitments;
 
-                var act1CofundingSetting = ConfigurationManager.AppSettings["act1-cofunding"];
-                var act1CofundingMultiplier = 0.95m;
-
-                if (string.IsNullOrEmpty(act1CofundingSetting))
-                {
-                    Console.WriteLine("act1-cofunding setting not found, using 95% for ACT1 co-funding");
-                }
-                else
-                {
-                    var act1CoFundingMultiplier = decimal.Parse(act1CofundingSetting);
-                    Console.WriteLine($"Using {act1CoFundingMultiplier * 100}% for ACT1 co-funding");
-                }
-                Console.WriteLine("NOTE that values for transaction types 1-3 have been reduced due to co-funding %");
-                
-                var selection = 0;
-
-                while (selection < 1 || selection > 3)
-                {
-                    Console.WriteLine("Please choose the source data:");
-                    Console.WriteLine("1. Transaction types 1 - 16");
-                    Console.WriteLine("2. Transaction types 1 - 3");
-                    Console.WriteLine("3. Transaction types 4 - 16");
-                    var entry = Console.ReadLine();
-                    int.TryParse(entry, out selection);
-                }
-                
                 Console.WriteLine("Processing...");
 
                 // Load data
@@ -73,13 +47,7 @@ namespace SFA.DAS.Payments.Contingency
                 // Apply co-funding multiplier
                 earnings.ForEach(x =>
                 {
-                    if (x.ApprenticeshipContractType == 1)
-                    {
-                        x.TransactionType01 *= act1CofundingMultiplier;
-                        x.TransactionType02 *= act1CofundingMultiplier;
-                        x.TransactionType03 *= act1CofundingMultiplier;
-                    }
-                    else
+                    if (x.ApprenticeshipContractType == 2)
                     {
                         x.TransactionType01 *= x.SfaContributionPercentage;
                         x.TransactionType02 *= x.SfaContributionPercentage;
@@ -88,19 +56,8 @@ namespace SFA.DAS.Payments.Contingency
                 });
 
                 // Set the 'Amount'
-                switch (selection)
-                {
-                    case 1: // all
-                        earnings.ForEach(x => x.Amount = x.AllTransactions);
-                        break;
-                    case 2: // 1 - 3
-                        earnings.ForEach(x => x.Amount = x.OneToThree);
-                        break;
-                    case 3: // 4 - 16
-                        earnings.ForEach(x => x.Amount = x.Incentives);
-                        break;
-                }
-
+                earnings.ForEach(x => x.Amount = x.AllTransactions);
+                
 
                 // Get all earnings
                 // Write earnings to 'Earnings' tab
@@ -134,6 +91,9 @@ namespace SFA.DAS.Payments.Contingency
                     (x.Ukprn, x.Uln, x.FrameworkCode, x.PathwayCode, x.ProgrammeType, x.StandardCode));
                 var finalEarningsWithDatalocks = new List<Earning>();
                 var finalEarningsWithoutDatalocks = new List<Earning>();
+                var finalEarningsWithPartialDatalocks = new List<Earning>();
+                var finalEarningsWithoutPartialDatalocks = new List<Earning>();
+                var searchablePartCommitments = commitments.ToLookup(x => (x.Ukprn, x.Uln));
 
                 foreach (var earning in earningsWithoutDatalocks)
                 {
@@ -148,8 +108,8 @@ namespace SFA.DAS.Payments.Contingency
                         
                         var matchedCommitments = searchableCommitments[
                             (earning.Ukprn, earning.Uln, earning.FrameworkCode, earning.PathwayCode, earning.ProgrammeType, earning.StandardCode)];
-                        if (matchedCommitments.Any(x => x.Amount == earning.TotalPrice //&& 
-                                                        //x.StartDate <= earning.EpisodeEffectiveTNPStartDate
+                        if (matchedCommitments.Any(x => x.Amount == earning.TotalPrice && 
+                                                        x.StartDate <= earning.EpisodeEffectiveTNPStartDate
                                                         ))
                         {
                             finalEarningsWithoutDatalocks.Add(earning);
@@ -164,16 +124,38 @@ namespace SFA.DAS.Payments.Contingency
                         finalEarningsWithDatalocks.Add(earning);
                     }
                 }
-
                 // Write the remainder of the datalocks to '1920 Datalocks' tab
-                sheet = excel.Worksheet("1920 Datalocks");
+                sheet = excel.Worksheet("1920 Datalocks (Full)");
                 WriteToTable(sheet, finalEarningsWithDatalocks);
-                Console.WriteLine($"Found {finalEarningsWithoutDatalocks.Count} remaining earnings with {finalEarningsWithDatalocks.Count} 1920 datalocks");
+                Console.WriteLine($"Found {finalEarningsWithoutDatalocks.Count} remaining earnings with {finalEarningsWithDatalocks.Count} 1920 datalocks (full match)");
+
+
+                foreach (var earning in earningsWithoutDatalocks)
+                {
+                    if (searchablePartCommitments.Contains((earning.Ukprn, earning.Uln)))
+                    {
+                        finalEarningsWithoutPartialDatalocks.Add(earning);
+                    }
+                    else
+                    {
+                        finalEarningsWithPartialDatalocks.Add(earning);
+                    }
+                }
+                // Write the remainder of the datalocks to '1920 Datalocks' tab
+                sheet = excel.Worksheet("1920 Datalocks (Partial)");
+                WriteToTable(sheet, finalEarningsWithPartialDatalocks);
+                Console.WriteLine($"Found {finalEarningsWithoutPartialDatalocks.Count} remaining earnings with {finalEarningsWithPartialDatalocks.Count} 1920 datalocks (partial match)");
+
 
 
                 // Write a summary tab
-                sheet = excel.Worksheet("Final Amounts");
+                sheet = excel.Worksheet("Final Amounts (Full)");
                 var paidEarnings = finalEarningsWithoutDatalocks.Union(act2Earnings).ToList();
+                WriteToTable(sheet, paidEarnings);
+
+                // Write a summary tab
+                sheet = excel.Worksheet("Final Amounts (Partial)");
+                paidEarnings = finalEarningsWithoutPartialDatalocks.Union(act2Earnings).ToList();
                 WriteToTable(sheet, paidEarnings);
 
 
@@ -190,34 +172,28 @@ namespace SFA.DAS.Payments.Contingency
                 sheet.Cell(2, "C").Value = earningsWithDatalocks.Union(finalEarningsWithDatalocks).Sum(x => x.Amount);
                 sheet.Cell(2, "D").Value = datalockedUlns.Count;
                 sheet.Cell(2, "E").Value = paidEarnings.Select(x => x.Uln).Distinct().Count();
+                sheet.Cell(2, "F").Value = finalEarningsWithDatalocks.Select(x => x.Uln).Distinct().Count();
+                sheet.Cell(2, "G").Value = finalEarningsWithPartialDatalocks.Select(x => x.Uln).Distinct().Count();
+                sheet.Cell(2, "H").Value = finalEarningsWithDatalocks.Sum(x => x.Amount);
+                sheet.Cell(2, "I").Value = finalEarningsWithPartialDatalocks.Sum(x => x.Amount);
 
                 // Raw earnings
-                //sheet = excel.Worksheet("Raw Earnings");
-                //WriteRawResults(sheet, earnings);
+                sheet = excel.Worksheet("Raw Earnings");
+                WriteRawResults(sheet, earnings);
 
-
-                using (var stream = new MemoryStream())
-                using (var file = File.OpenWrite($"Earning-Output-{DateTime.Now:yyyy-MM-dd-hh-mm}.xlsx"))
-                {
-                    excel.SaveAs(stream, true, true);
-                    Console.WriteLine("Saved to memory");
-                    stream.Seek(0, SeekOrigin.Begin);
-                    stream.CopyTo(file);
-                }
-                Console.WriteLine("Finished writing earnings output");
-
-
-                // Reset XL
-                excel = new XLWorkbook(Path.Combine("Template", "Contingency.xlsx"));
 
                 sheet = excel.Worksheet("Raw 1819 Datalocks");
                 WriteRawResults(sheet, earningsWithDatalocks);
 
-                sheet = excel.Worksheet("Raw 1920 Datalocks");
+                sheet = excel.Worksheet("Raw 1920 Datalocks (Full)");
                 WriteRawResults(sheet, finalEarningsWithDatalocks);
 
+                sheet = excel.Worksheet("Raw 1920 Datalocks (Partial)");
+                WriteRawResults(sheet, finalEarningsWithPartialDatalocks);
+
+
                 using (var stream = new MemoryStream())
-                using (var file = File.OpenWrite($"Datalock-Output-{DateTime.Now:yyyy-MM-dd-hh-mm}.xlsx"))
+                using (var file = File.OpenWrite($"Contingency-Output-{DateTime.Now:yyyy-MM-dd-hh-mm}.xlsx"))
                 {
                     excel.SaveAs(stream, true, true);
                     Console.WriteLine("Saved to memory");
@@ -238,13 +214,15 @@ namespace SFA.DAS.Payments.Contingency
         static void WriteRawResults(IXLWorksheet sheet, List<Earning> earnings)
         {
             var row = 2;
-            foreach (var earning in earnings)
+            foreach (var earning in earnings.OrderBy(x => x.Ukprn).ThenBy(x => x.Uln))
             {
                 sheet.Cell(row, "A").Value = earning.Ukprn;
                 sheet.Cell(row, "B").Value = earning.Uln;
                 sheet.Cell(row, "C").Value = earning.FundingLineType;
 
                 sheet.Cell(row, "D").Value = earning.Amount;
+                sheet.Cell(row, "E").Value = earning.OneToThree;
+                sheet.Cell(row, "F").Value = earning.Incentives;
                 row++;
             }
         }
@@ -252,12 +230,14 @@ namespace SFA.DAS.Payments.Contingency
         static void WriteToTable(IXLWorksheet sheet, List<Earning> earnings)
         {
             var row = 2;
-            var groupedEarnings = earnings.GroupBy(x => new { x.Ukprn, x.FundingLineType });
+            var groupedEarnings = earnings.GroupBy(x => new { x.Ukprn, x.FundingLineType }).OrderBy(x => x.Key.Ukprn);
             foreach (var groupedEarning in groupedEarnings)
             {
                 sheet.Cell(row, "A").Value = groupedEarning.Key.Ukprn;
                 sheet.Cell(row, "B").Value = groupedEarning.Key.FundingLineType;
                 sheet.Cell(row, "C").Value = groupedEarning.Sum(x => x.Amount);
+                sheet.Cell(row, "D").Value = groupedEarning.Sum(x => x.OneToThree);
+                sheet.Cell(row, "E").Value = groupedEarning.Sum(x => x.Incentives);
                 row++;
             }
         }
