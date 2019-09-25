@@ -10,6 +10,7 @@ namespace SFA.DAS.Payments.Migration.DTO
         public DateTime? EndDate { get; set; }
         public decimal Cost { get; set; }
         public bool Removed { get; set; }
+        public DateTime CreationDate { get; set; }
     }
 }
 

@@ -22,6 +22,8 @@ namespace SFA.DAS.Payments.Migration.DTO
         public DateTime? StopDate { get; set; }
         public int Status { get; set; }
         public bool IsLevyPayer { get; set; }
+        public int ApprenticeshipEmployerType { get; set; }
+        public DateTime CreationDate { get; set; }
     }
 }
 
