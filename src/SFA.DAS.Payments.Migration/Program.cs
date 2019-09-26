@@ -225,6 +225,8 @@ namespace SFA.DAS.Payments.Migration
                         Id = firstCommitment.CommitmentId,
                         IsLevyPayer = true,
                         AgreedOnDate = new DateTime(1950, 1, 1).AddDays(firstCommitment.Priority),
+                        ApprenticeshipEmployerType = 1,
+                        CreationDate = DateTime.Now,
                     });
 
                     foreach (var commitment in commitmentGroup)
@@ -236,6 +238,7 @@ namespace SFA.DAS.Payments.Migration
                             EndDate = commitment.EffectiveToDate,
                             Removed = false,
                             StartDate = commitment.EffectiveFromDate,
+                            CreationDate = DateTime.Now,
                         });
                     }
                 }
@@ -278,6 +281,8 @@ namespace SFA.DAS.Payments.Migration
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("Id", "Id"));
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("IsLevyPayer", "IsLevyPayer"));
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("AgreedOnDate", "AgreedOnDate"));
+                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("ApprenticeshipEmployerType", "ApprenticeshipEmployerType"));
+                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("CreationDate", "CreationDate"));
 
                         await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
                     }
@@ -297,6 +302,7 @@ namespace SFA.DAS.Payments.Migration
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("EndDate", "EndDate"));
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("Removed", "Removed"));
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("StartDate", "StartDate"));
+                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("CreationDate", "CreationDate"));
 
                         await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
                     }
@@ -333,6 +339,9 @@ namespace SFA.DAS.Payments.Migration
                     new SqlConnection(ConfigurationManager.ConnectionStrings["V2"].ConnectionString))
                 {
                     await v2Connection.OpenAsync().ConfigureAwait(false);
+
+                    await v2Connection.ExecuteAsync(V2Sql.DeleteAccounts, commandTimeout: 3600);
+                    await Log("Deleted accounts");
 
                     using (var bulkCopy = new SqlBulkCopy(v2Connection))
                     using (var reader = ObjectReader.Create(accounts))

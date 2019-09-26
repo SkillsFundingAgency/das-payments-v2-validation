@@ -24,5 +24,9 @@
                 SET IsLevyPayer = 0
                 WHERE AccountId IN @accountIds
             ";
+
+        public const string DeleteAccounts = @"
+                DELETE Payments2.LevyAccount
+            ";
     }
 }
