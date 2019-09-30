@@ -12,7 +12,7 @@ using SFA.DAS.Payments.Contingency.DTO;
 
 namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
 {
-    class UsingLiveDatalocksAct2 : IProduceContingencyPayments
+    class Act2FromEarnings : IProduceContingencyPayments
     {
         public async Task GenerateContingencyPayments()
         {

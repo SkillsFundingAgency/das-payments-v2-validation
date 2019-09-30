@@ -19,7 +19,7 @@ namespace SFA.DAS.Payments.Contingency
                     new R13Payments(),
                     new UsingLiveDatalocksAct1Tt1To3(),
                     new UsingLiveDatalocksAct1Tt4To16(),
-                    new UsingLiveDatalocksAct2(),
+                    new Act2FromEarnings(),
                 };
 
                 foreach (var contingencyStrategy in contingencyStrategies)

@@ -70,7 +70,7 @@
   <ItemGroup>
     <Compile Include="CongingencyStrategies\IProduceContingencyPayments.cs" />
     <Compile Include="CongingencyStrategies\R13Payments.cs" />
-    <Compile Include="CongingencyStrategies\UsingLiveDatalocksAct2.cs" />
+    <Compile Include="CongingencyStrategies\Act2FromEarnings.cs" />
     <Compile Include="CongingencyStrategies\UsingLiveDatalocksAct1Tt4To16.cs" />
     <Compile Include="Constants\Sql.cs" />
     <Compile Include="DTO\Commitment.cs" />
