@@ -5,7 +5,7 @@ namespace SFA.DAS.Payments.Migration.Constants
 {
     public static class CollectionPeriods
     {
-        public static Dictionary<int, DateTime> CollectionPeriodDates = new Dictionary<int, DateTime>
+        public static Dictionary<int, DateTime> CollectionPeriodDates => new Dictionary<int, DateTime>
         {
             {1, new DateTime(2018, 9, 6, 22, 00, 00) },
             {2, new DateTime(2018, 10, 4, 22, 00, 00) },
@@ -19,7 +19,7 @@ namespace SFA.DAS.Payments.Migration.Constants
             {10, new DateTime(2019, 6, 6, 22, 00, 00) },
             {11, new DateTime(2019, 7, 4, 22, 00, 00) },
             {12, new DateTime(2019, 8, 6, 22, 00, 00) },
-            {13, new DateTime(2019, 10, 15, 22, 00, 00) },
+            {13, new DateTime(2019, 9, 5, 23, 30, 00) },
             {14, new DateTime(2019, 11, 15, 22, 00, 00) },
         };
     }
