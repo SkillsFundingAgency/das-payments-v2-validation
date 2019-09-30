@@ -128,7 +128,7 @@
 		                or APEP.PriceEpisodeSecondDisadvantagePayment != 0
 		                or APEP.PriceEpisodeLSFCash != 0
 		                )
-		                AND APEP.Period = 1
+		                AND APEP.Period IN (1, 2)
                 )
 
                 , RawEarningsMathsAndEnglish AS (
@@ -184,7 +184,7 @@
 		                or LearnSuppFundCash != 0
 		                )
 		                and LD.LearnAimRef != 'ZPROG001'
-		                AND Period = 1
+		                AND Period IN (1, 2)
                 )
 
                 , AllAct1Earnings AS (
@@ -199,9 +199,34 @@
 	                --WHERE ApprenticeshipContractType = 1
                 )
 
-
                 SELECT *
                 FROM AllAct1Earnings
             ";
+
+        public const string V2Datalocks = @"
+                SELECT [Ukprn]
+                  ,[LearnerUln] [Uln]
+                  ,[LearnerReferenceNumber] [LearnRefNumber]
+                  ,[LearningAimReference] [LearnAimRef]
+                  ,[LearningAimProgrammeType] [ProgrammeType]
+                  ,[LearningAimStandardCode] [StandardCode]
+                  ,[LearningAimFrameworkCode] [FrameworkCode]
+                  ,[LearningAimPathwayCode] [PathwayCode]
+                  ,[DeliveryPeriod]
+                FROM Payments2.DataLockFailure
+                WHERE TransactionType = 1
+            ";
+
+        public const string R13Payments = @"
+                SELECT Ukprn, LearnerUln [Uln],
+                    ContractType, 
+                    LearningAimFundingLineType [FundingLineType],
+                    Amount,
+                    TransactionType
+                FROM Payments2.Payment
+                WHERE AcademicYear = 1819
+                AND CollectionPeriod = 13
+            ";
     }
 }
+

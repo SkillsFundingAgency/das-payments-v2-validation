@@ -68,10 +68,18 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CongingencyStrategies\IProduceContingencyPayments.cs" />
+    <Compile Include="CongingencyStrategies\R13Payments.cs" />
+    <Compile Include="CongingencyStrategies\UsingLiveDatalocksAct2.cs" />
+    <Compile Include="CongingencyStrategies\UsingLiveDatalocksAct1Tt4To16.cs" />
     <Compile Include="Constants\Sql.cs" />
     <Compile Include="DTO\Commitment.cs" />
     <Compile Include="DTO\Datalock.cs" />
     <Compile Include="DTO\Earning.cs" />
+    <Compile Include="DTO\Payment.cs" />
+    <Compile Include="DTO\V2Datalock.cs" />
+    <Compile Include="CongingencyStrategies\UsingLiveDatalocksAct1Tt1To3.cs" />
+    <Compile Include="CongingencyStrategies\R01Style.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
