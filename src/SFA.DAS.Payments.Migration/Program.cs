@@ -99,6 +99,7 @@ namespace SFA.DAS.Payments.Migration
 
             var periodsToIgnore = ConfigurationManager.AppSettings["PeriodsToIgnore"]
                 .Split(',')
+                .Where(x => !string.IsNullOrEmpty(x))
                 .Select(int.Parse)
                 .ToList();
 
@@ -202,6 +203,8 @@ namespace SFA.DAS.Payments.Migration
                 var commitmentsById = commitments.GroupBy(x => x.CommitmentId);
                 var apprenticeships = new List<Apprenticeship>();
                 var apprenticeshipPriceEpisodes = new List<ApprenticeshipPriceEpisode>();
+                var apprenticeshipPause = new List<ApprenticeshipPause>();
+
 
                 foreach (var commitmentGroup in commitmentsById)
                 {
@@ -240,6 +243,11 @@ namespace SFA.DAS.Payments.Migration
                             StartDate = commitment.EffectiveFromDate,
                             CreationDate = DateTime.Now,
                         });
+                    }
+
+                    if (firstCommitment.PaymentStatus == 2)
+                    {
+                        apprenticeshipPause.Add(new ApprenticeshipPause{ApprenticeshipId = firstCommitment.CommitmentId});
                     }
                 }
 
@@ -303,6 +311,19 @@ namespace SFA.DAS.Payments.Migration
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("Removed", "Removed"));
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("StartDate", "StartDate"));
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("CreationDate", "CreationDate"));
+
+                        await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
+                    }
+
+                    using (var bulkCopy = new SqlBulkCopy(v2Connection))
+                    using (var reader = ObjectReader.Create(apprenticeshipPause))
+                    {
+                        bulkCopy.DestinationTableName = "Payments2.ApprenticeshipPause";
+                        bulkCopy.BatchSize = 5000;
+                        bulkCopy.BulkCopyTimeout = 3600;
+
+                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("ApprenticeshipId", "ApprenticeshipId"));
+                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("PauseDate", "PauseDate"));
 
                         await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
                     }

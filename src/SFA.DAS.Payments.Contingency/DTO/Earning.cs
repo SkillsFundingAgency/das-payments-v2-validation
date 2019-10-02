@@ -44,5 +44,6 @@ namespace SFA.DAS.Payments.Contingency.DTO
         public decimal TotalPrice { get; set; }
         public bool MathsAndEnglish { get; set; }
         public int ApprenticeshipContractType { get; set; }
+        public int Period { get; set; }
     }
 }

@@ -80,6 +80,7 @@
     <Compile Include="Constants\V1Sql.cs" />
     <Compile Include="Constants\V2Sql.cs" />
     <Compile Include="DTO\Apprenticeship.cs" />
+    <Compile Include="DTO\ApprenticeshipPause.cs" />
     <Compile Include="DTO\ApprenticeshipPriceEpisode.cs" />
     <Compile Include="DTO\Commitment.cs" />
     <Compile Include="DTO\LevyAccount.cs" />
