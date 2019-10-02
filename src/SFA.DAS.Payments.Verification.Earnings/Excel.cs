@@ -6,7 +6,7 @@ using System.Linq;
 using ClosedXML.Excel;
 using FastMember;
 
-namespace SFA.DAS.Payments.Verification
+namespace SFA.DAS.Payments.Verification.Earnings
 {
     static class Excel
     {
@@ -31,18 +31,18 @@ namespace SFA.DAS.Payments.Verification
             document.SaveAs(stream);
             stream.Seek(0, SeekOrigin.Begin);
 
-            Log.Write("Completed writing worksheet");
             return stream;
         }
 
         static DataTable TransformToDataTable(this object source, Type type)
         {
             var output = new DataTable();
-            var properties = type.GetProperties();
+            var properties = type.GetProperties().Where(x => x.CanWrite).ToList();
             var accessor = TypeAccessor.Create(type);
 
             foreach (var property in properties)
             {
+                //Log.Write($"Including property: {property.Name}");
                 output.Columns.Add(property.Name);
             }
 
