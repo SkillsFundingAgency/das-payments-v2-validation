@@ -40,7 +40,7 @@
 	                ON E.EventId = P.EarningEventId
                 WHERE P.AcademicYear = 1920
                     AND P.CollectionPeriod IN (2)
-                ORDER BY P.Id
+                ORDER BY R.EventId
                 OFFSET @offset ROWS
                 FETCH NEXT @pageSize ROWS ONLY
                 ";

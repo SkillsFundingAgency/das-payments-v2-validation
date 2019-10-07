@@ -149,8 +149,9 @@ namespace SFA.DAS.Payments.Migration
         private static async Task ProcessV1Payments()
         {
             var mapper = new PaymentMapper();
+            var processedRequiredPayments = new HashSet<Guid>();
 
-            using(var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled))
+            //using(var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled))
             using(var v2Connection = new SqlConnection(ConfigurationManager.ConnectionStrings["V2"].ConnectionString))
             using (var v1Connection = new SqlConnection(ConfigurationManager.ConnectionStrings["V1"].ConnectionString))
             {
@@ -172,7 +173,7 @@ namespace SFA.DAS.Payments.Migration
                     await Log($"Loaded {paymentsAndEarnings.Count} records from page {offset / pageSize}");
 
                     // Map
-                    var outputResults = mapper.MapV2Payments(paymentsAndEarnings);
+                    var outputResults = mapper.MapV2Payments(paymentsAndEarnings, processedRequiredPayments);
 
                     var requiredPayments = outputResults.requiredPayments;
                     var payments = outputResults.payments;
@@ -229,7 +230,7 @@ namespace SFA.DAS.Payments.Migration
                     offset += pageSize;
                 } while (paymentsAndEarnings.Count > 0);
 
-                scope.Complete();
+                //scope.Complete();
             }
         }
 
