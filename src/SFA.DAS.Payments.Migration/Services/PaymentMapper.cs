@@ -19,15 +19,15 @@ namespace SFA.DAS.Payments.Migration.Services
             {
                 LegacyRequiredPaymentModel requiredPayment;
 
-                if (legacyRequiredPayments.ContainsKey(paymentModel.RequiredPaymentId))
+                if (legacyRequiredPayments.ContainsKey(paymentModel.RequiredPaymentEventId))
                 {
-                    requiredPayment = legacyRequiredPayments[paymentModel.RequiredPaymentId];
+                    requiredPayment = legacyRequiredPayments[paymentModel.RequiredPaymentEventId];
                 }
                 else
                 {
                     requiredPayment = new LegacyRequiredPaymentModel
                     {
-                        Id = paymentModel.RequiredPaymentId,
+                        Id = paymentModel.RequiredPaymentEventId,
                         AccountId = paymentModel.AccountId,
                         AccountVersionId = string.Empty,
                         AimSeqNumber = paymentModel.LearningAimSequenceNumber,
@@ -66,8 +66,8 @@ namespace SFA.DAS.Payments.Migration.Services
                     var earning = new LegacyEarningModel
                     {
                         StartDate = paymentModel.StartDate,
-                        RequiredPaymentId = paymentModel.RequiredPaymentId,
-                        ActualEndDate = paymentModel.ActualEndDate,
+                        RequiredPaymentId = paymentModel.RequiredPaymentEventId,
+                        ActualEnddate = paymentModel.ActualEndDate,
                         CompletionAmount = paymentModel.CompletionAmount,
                         PlannedEndDate = paymentModel.PlannedEndDate ?? DateTime.MinValue,
                         CompletionStatus = paymentModel.CompletionStatus,
@@ -98,7 +98,7 @@ namespace SFA.DAS.Payments.Migration.Services
 
         private int YearFromPeriod(short academicYear, byte collectionPeriod)
         {
-            var ilrStartYear = academicYear / 100 * 100;
+            var ilrStartYear = (academicYear / 100) + 2000;
 
             if (collectionPeriod > 5)
             {
@@ -110,7 +110,7 @@ namespace SFA.DAS.Payments.Migration.Services
 
         private int MonthFromPeriod(byte collectionPeriod)
         {
-            if (collectionPeriod > 5)
+            if (collectionPeriod <= 5)
             {
                 return collectionPeriod + 7;
             }

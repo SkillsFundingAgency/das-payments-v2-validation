@@ -4,7 +4,7 @@ namespace SFA.DAS.Payments.Migration.DTO
 {
     public class V2PaymentAndEarning
     {
-        public Guid RequiredPaymentId { get; set; }
+        public Guid RequiredPaymentEventId { get; set; }
         public int? LearningAimSequenceNumber { get; set; }
         public decimal? AmountDue { get; set; }
 

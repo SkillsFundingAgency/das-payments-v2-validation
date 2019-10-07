@@ -58,7 +58,7 @@ namespace SFA.DAS.Payments.Migration
                 }
 
                 await Log("What data do you want to migrate");
-                await Log("Please enter 1-Commitments, 2-Accounts, 3-Payments, 4-EAS, 5-V1 Payments, 9-All");
+                await Log("Please enter 1-Commitments, 2-Accounts, 3-Payments, 4-EAS, 5-V1 Payments, 6-Complete R02, 9-All");
                 var typeinput = Console.ReadLine();
                 if (!int.TryParse(typeinput, out var typeinputAsInteger))
                 {
@@ -90,6 +90,11 @@ namespace SFA.DAS.Payments.Migration
                     await ProcessV1Payments();
                 }
 
+                if (typeinputAsInteger == 6)
+                {
+                    await CompleteR02();
+                }
+
                 await Log("Finished - press enter to continue...");
                 Console.ReadLine();
             }
@@ -102,6 +107,45 @@ namespace SFA.DAS.Payments.Migration
             }
         }
 
+        private static async Task CompleteR02()
+        {
+            var trigger = CreateTrigger();
+            var triggerList = new List<LegacyPeriodModel> { trigger };
+
+            using (var connection = new SqlConnection(ConfigurationManager.ConnectionStrings["V1"].ConnectionString))
+            using (var bulkCopy = new SqlBulkCopy(connection))
+            {
+                await connection.OpenAsync().ConfigureAwait(false);
+                bulkCopy.BatchSize = 1000;
+                bulkCopy.BulkCopyTimeout = 30;
+
+                bulkCopy.DestinationTableName = "[Payments].[Periods]";
+                PopulateBulkCopy(bulkCopy, typeof(LegacyPeriodModel));
+
+                using (var reader = ObjectReader.Create(triggerList))
+                {
+                    await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
+                }
+            }
+        }
+
+        private static LegacyPeriodModel CreateTrigger()
+        {
+            var now = DateTime.Now;
+
+            var trigger = new LegacyPeriodModel
+            {
+                AccountDataValidAt = now,
+                CommitmentDataValidAt = now,
+                CompletionDateTime = now,
+                PeriodName = "1920-R02",
+                CalendarMonth = 9,
+                CalendarYear = 2019,
+            };
+
+            return trigger;
+        }
+
         private static async Task ProcessV1Payments()
         {
             var mapper = new PaymentMapper();
@@ -110,6 +154,8 @@ namespace SFA.DAS.Payments.Migration
             using(var v2Connection = new SqlConnection(ConfigurationManager.ConnectionStrings["V2"].ConnectionString))
             using (var v1Connection = new SqlConnection(ConfigurationManager.ConnectionStrings["V1"].ConnectionString))
             {
+                await v1Connection.OpenAsync().ConfigureAwait(false);
+
                 // Per page
                 var pageSize = 10000;
                 var offset = 0;
@@ -132,10 +178,22 @@ namespace SFA.DAS.Payments.Migration
                     var payments = outputResults.payments;
                     var earnings = outputResults.earnings;
 
+                    var minDate = new DateTime(2000, 1, 1);
+                    requiredPayments.ForEach(x =>
+                    {
+                        if (x.LearningStartDate < minDate) x.LearningStartDate = null;
+                    });
+
+                    earnings.ForEach(x =>
+                    {
+                        if (x.ActualEnddate < minDate) x.ActualEnddate = null;
+                        if (x.PlannedEndDate < minDate) x.PlannedEndDate = minDate;
+                        if (x.StartDate < minDate) x.StartDate = minDate;
+                    });
+
                     // Write to V1
                     using (var bulkCopy = new SqlBulkCopy(v1Connection))
                     {
-                        await v1Connection.OpenAsync().ConfigureAwait(false);
                         bulkCopy.BatchSize = 1000;
                         bulkCopy.BulkCopyTimeout = 3600;
 
