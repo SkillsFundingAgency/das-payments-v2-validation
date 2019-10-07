@@ -8,8 +8,9 @@ namespace SFA.DAS.Payments.Migration.Services
 {
     public class PaymentMapper 
     {
+        private static HashSet<Guid> ProcessedRequiredPayments = new HashSet<Guid>();
         public (List<LegacyPaymentModel> payments, List<LegacyRequiredPaymentModel> requiredPayments, List<LegacyEarningModel> earnings)
-            MapV2Payments(List<V2PaymentAndEarning> payments, HashSet<Guid> processedRequiredPayments)
+            MapV2Payments(List<V2PaymentAndEarning> payments)
         {
             var legacyPayments = new List<LegacyPaymentModel>();
             var legacyRequiredPayments = new Dictionary<Guid, LegacyRequiredPaymentModel>();
@@ -61,15 +62,12 @@ namespace SFA.DAS.Payments.Migration.Services
                         Uln = paymentModel.LearnerUln,
                     };
 
-                    if (!processedRequiredPayments.Contains(requiredPayment.Id))
+                    if (!ProcessedRequiredPayments.Contains(requiredPayment.Id))
                     {
                         legacyRequiredPayments.Add(requiredPayment.Id, requiredPayment);
+                        ProcessedRequiredPayments.Add(requiredPayment.Id);
                     }
-                    else
-                    {
-                        processedRequiredPayments.Add(requiredPayment.Id);
-                    }
-
+                    
                     var earning = new LegacyEarningModel
                     {
                         StartDate = paymentModel.StartDate,
