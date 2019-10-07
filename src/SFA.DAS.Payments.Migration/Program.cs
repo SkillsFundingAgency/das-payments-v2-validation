@@ -7,11 +7,15 @@ using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Transactions;
 using Dapper;
 using FastMember;
 using SFA.DAS.Payments.Migration.Constants;
 using SFA.DAS.Payments.Migration.DTO;
+using SFA.DAS.Payments.Migration.Services;
+using SFA.DAS.Payments.ProviderPayments.Model.V1;
 using SFA.DAS.Payments.Verification.Constants;
+using IsolationLevel = System.Transactions.IsolationLevel;
 
 namespace SFA.DAS.Payments.Migration
 {
@@ -54,7 +58,7 @@ namespace SFA.DAS.Payments.Migration
                 }
 
                 await Log("What data do you want to migrate");
-                await Log("Please enter 1-Commitments, 2-Accounts, 3-Payments, 4-All");
+                await Log("Please enter 1-Commitments, 2-Accounts, 3-Payments, 4-EAS, 5-V1 Payments, 9-All");
                 var typeinput = Console.ReadLine();
                 if (!int.TryParse(typeinput, out var typeinputAsInteger))
                 {
@@ -62,18 +66,28 @@ namespace SFA.DAS.Payments.Migration
                 }
 
 
-                if (typeinputAsInteger == 1 || typeinputAsInteger == 4)
+                if (typeinputAsInteger == 1 || typeinputAsInteger == 9)
                 {
                     await ProcessCommitmentsData(period);
                 }
-                if (typeinputAsInteger == 2 || typeinputAsInteger == 4)
+                if (typeinputAsInteger == 2 || typeinputAsInteger == 9)
                 {
                     await ProcessAccountsData(period);
                 }
 
-                if (typeinputAsInteger == 3 || typeinputAsInteger == 4)
+                if (typeinputAsInteger == 3 || typeinputAsInteger == 9)
                 {
                     await ProcessPayments(period);
+                }
+
+                if (typeinputAsInteger == 4 || typeinputAsInteger == 9)
+                {
+                    await ProcessEas();
+                }
+
+                if (typeinputAsInteger == 5)
+                {
+                    await ProcessV1Payments();
                 }
 
                 await Log("Finished - press enter to continue...");
@@ -85,6 +99,132 @@ namespace SFA.DAS.Payments.Migration
                 await Log(e.StackTrace);
                 await Log("Press enter to continue...");
                 Console.ReadLine();
+            }
+        }
+
+        private static async Task ProcessV1Payments()
+        {
+            var mapper = new PaymentMapper();
+
+            using(var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled))
+            using(var v2Connection = new SqlConnection(ConfigurationManager.ConnectionStrings["V2"].ConnectionString))
+            using (var v1Connection = new SqlConnection(ConfigurationManager.ConnectionStrings["V1"].ConnectionString))
+            {
+                // Per page
+                var pageSize = 10000;
+                var offset = 0;
+
+                List<V2PaymentAndEarning> paymentsAndEarnings;
+
+                do
+                {
+                    // Load from v2
+                    paymentsAndEarnings = (await v2Connection.QueryAsync<V2PaymentAndEarning>(V2Sql.PaymentsAndEarnings,
+                            new {offset, pageSize},
+                            commandTimeout: 3600))
+                        .ToList();
+                    await Log($"Loaded {paymentsAndEarnings.Count} records from page {offset / pageSize}");
+
+                    // Map
+                    var outputResults = mapper.MapV2Payments(paymentsAndEarnings);
+
+                    var requiredPayments = outputResults.requiredPayments;
+                    var payments = outputResults.payments;
+                    var earnings = outputResults.earnings;
+
+                    // Write to V1
+                    using (var bulkCopy = new SqlBulkCopy(v1Connection))
+                    {
+                        await v1Connection.OpenAsync().ConfigureAwait(false);
+                        bulkCopy.BatchSize = 1000;
+                        bulkCopy.BulkCopyTimeout = 3600;
+
+                        bulkCopy.DestinationTableName = "[PaymentsDue].[RequiredPayments]";
+                        PopulateBulkCopy(bulkCopy, typeof(LegacyRequiredPaymentModel));
+
+                        using (var reader = ObjectReader.Create(requiredPayments))
+                        {
+                            await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
+                        }
+
+                        bulkCopy.DestinationTableName = "[Payments].[Payments]";
+                        bulkCopy.ColumnMappings.Clear();
+                        PopulateBulkCopy(bulkCopy, typeof(LegacyPaymentModel));
+
+                        using (var reader = ObjectReader.Create(payments))
+                        {
+                            await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
+                        }
+
+                        bulkCopy.DestinationTableName = "[PaymentsDue].[Earnings]";
+                        bulkCopy.ColumnMappings.Clear();
+                        PopulateBulkCopy(bulkCopy, typeof(LegacyEarningModel));
+
+                        using (var reader = ObjectReader.Create(earnings))
+                        {
+                            await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
+                        }
+                    }
+                        
+
+
+                    offset += pageSize;
+                } while (paymentsAndEarnings.Count > 0);
+
+                scope.Complete();
+            }
+        }
+
+        private static void PopulateBulkCopy(SqlBulkCopy bulkCopy, Type entityType)
+        {
+            var columns = entityType.GetProperties();
+            foreach (var propertyInfo in columns)
+            {
+                bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping(propertyInfo.Name, propertyInfo.Name));
+            }
+        }
+
+        static async Task ProcessEas()
+        {
+            var properties = typeof(EasRecord).GetProperties();
+            var mappings = new List<SqlBulkCopyColumnMapping>();
+
+            foreach (var propertyInfo in properties)
+            {
+                mappings.Add(new SqlBulkCopyColumnMapping(propertyInfo.Name, propertyInfo.Name));
+            }
+
+            await Log("Processing EAS migration");
+            using (var connection =
+                new SqlConnection(ConfigurationManager.ConnectionStrings["V1"].ConnectionString))
+            {
+                var records = (await connection
+                        .QueryAsync<EasRecord>(V1Sql.EasRecords, commandTimeout: 3600)
+                        .ConfigureAwait(false))
+                    .ToList();
+
+                using (var v2Connection =
+                    new SqlConnection(ConfigurationManager.ConnectionStrings["V2"].ConnectionString))
+                using (var bulkCopy = new SqlBulkCopy(v2Connection))
+                using (var reader = ObjectReader.Create(records))
+                {
+                    if (v2Connection.State != ConnectionState.Open)
+                    {
+                        await v2Connection.OpenAsync();
+                    }
+
+                    bulkCopy.DestinationTableName = "Payments2.ProviderAdjustmentPayments";
+                    bulkCopy.BatchSize = 5000;
+                    bulkCopy.BulkCopyTimeout = 3600;
+
+                    foreach (var sqlBulkCopyColumnMapping in mappings)
+                    {
+                        bulkCopy.ColumnMappings.Add(sqlBulkCopyColumnMapping);
+                    }
+
+
+                    await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
+                }
             }
         }
 
@@ -253,6 +393,11 @@ namespace SFA.DAS.Payments.Migration
 
                 await Log($"Loaded {apprenticeships.Count} commitments");
 
+                using(var scope = new TransactionScope(TransactionScopeOption.Required, new TransactionOptions
+                {
+                    IsolationLevel = IsolationLevel.Serializable,
+                    Timeout = TimeSpan.FromMinutes(15)
+                }, TransactionScopeAsyncFlowOption.Enabled))
                 using (var v2Connection =
                     new SqlConnection(ConfigurationManager.ConnectionStrings["V2"].ConnectionString))
                 {
@@ -294,7 +439,6 @@ namespace SFA.DAS.Payments.Migration
 
                         await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
                     }
-
                     await Log("Saved apprenticeships");
 
                     using (var bulkCopy = new SqlBulkCopy(v2Connection))
@@ -314,6 +458,7 @@ namespace SFA.DAS.Payments.Migration
 
                         await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
                     }
+                    await Log("Saved apprenticeship price episodes");
 
                     using (var bulkCopy = new SqlBulkCopy(v2Connection))
                     using (var reader = ObjectReader.Create(apprenticeshipPause))
@@ -327,8 +472,10 @@ namespace SFA.DAS.Payments.Migration
 
                         await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
                     }
+                    await Log("Saved apprenticeship pauses");
 
-                    await Log("Saved apprenticeship price episodes");
+                    scope.Complete();
+                    await Log("Committed transaction");
                 }
             }
         }
@@ -389,9 +536,6 @@ namespace SFA.DAS.Payments.Migration
 
                 await Log("Finished writing v2 levy accounts");
             }
-
-            await Log("Finished - press any key to exit");
-            Console.ReadKey();
         }
     }
 }

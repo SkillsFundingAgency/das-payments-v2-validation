@@ -2,6 +2,11 @@
 {
     public static class V1Sql
     {
+        public const string EasRecords = @"
+                SELECT *
+                FROM ProviderAdjustments.Payments
+            ";
+
         public const string Commitments = @"
                 WITH CommitmentsToReturn AS (
 	                SELECT MAX(CAST(SUBSTRING(VersionId, 0, CHARINDEX('-', VersionId)) AS INT)) [Event ID], CommitmentId 

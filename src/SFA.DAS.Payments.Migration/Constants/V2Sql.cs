@@ -28,5 +28,21 @@
         public const string DeleteAccounts = @"
                 DELETE Payments2.LevyAccount
             ";
+
+        public const string PaymentsAndEarnings = @"
+                SELECT R.EventId [RequiredPaymentEventId], P.*, E.LearningAimSequenceNumber, R.Amount [AmountDue]
+                  FROM [Payments2].[Payment] P
+                JOIN Payments2.FundingSourceEvent F
+	                ON F.EventId = P.FundingSourceEventId
+                JOIN Payments2.RequiredPaymentEvent R
+	                ON R.EventId = F.RequiredPaymentEventId
+                JOIN Payments2.EarningEvent E
+	                ON E.EventId = P.EarningEventId
+                WHERE P.AcademicYear = 1920
+                    AND P.CollectionPeriod IN (2)
+                ORDER BY P.Id
+                OFFSET @offset ROWS
+                FETCH NEXT @pageSize ROWS ONLY
+                ";
     }
 }

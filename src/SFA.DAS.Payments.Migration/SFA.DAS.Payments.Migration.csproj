@@ -66,6 +66,7 @@
       <Private>True</Private>
       <Private>True</Private>
     </Reference>
+    <Reference Include="System.Transactions" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -83,11 +84,18 @@
     <Compile Include="DTO\ApprenticeshipPause.cs" />
     <Compile Include="DTO\ApprenticeshipPriceEpisode.cs" />
     <Compile Include="DTO\Commitment.cs" />
+    <Compile Include="DTO\EasRecord.cs" />
+    <Compile Include="DTO\LegacyEarningModel.cs" />
+    <Compile Include="DTO\LegacyPaymentModel.cs" />
+    <Compile Include="DTO\LegacyPeriodModel.cs" />
+    <Compile Include="DTO\LegacyRequiredPaymentModel.cs" />
     <Compile Include="DTO\LevyAccount.cs" />
     <Compile Include="DTO\Payment.cs" />
+    <Compile Include="DTO\V2PaymentAndEarning.cs" />
     <Compile Include="DTO\V1Account.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Services\PaymentMapper.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="AccountData\R01.xlsx">
@@ -96,5 +104,6 @@
     <None Include="App.config" />
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
