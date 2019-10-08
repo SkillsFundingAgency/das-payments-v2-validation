@@ -6,9 +6,10 @@ using SFA.DAS.Payments.ProviderPayments.Model.V1;
 
 namespace SFA.DAS.Payments.Migration.Services
 {
-    public class PaymentMapper 
+    public class PaymentMapper
     {
-        private static HashSet<Guid> ProcessedRequiredPayments = new HashSet<Guid>();
+        private static readonly HashSet<Guid> ProcessedRequiredPayments = new HashSet<Guid>();
+
         public (List<LegacyPaymentModel> payments, List<LegacyRequiredPaymentModel> requiredPayments, List<LegacyEarningModel> earnings)
             MapV2Payments(List<V2PaymentAndEarning> payments)
         {
@@ -18,84 +19,76 @@ namespace SFA.DAS.Payments.Migration.Services
 
             foreach (var paymentModel in payments)
             {
-                LegacyRequiredPaymentModel requiredPayment;
-
-                if (legacyRequiredPayments.ContainsKey(paymentModel.RequiredPaymentEventId))
+                var requiredPayment = new LegacyRequiredPaymentModel
                 {
-                    requiredPayment = legacyRequiredPayments[paymentModel.RequiredPaymentEventId];
-                }
-                else
-                {
-                    requiredPayment = new LegacyRequiredPaymentModel
-                    {
-                        Id = paymentModel.RequiredPaymentEventId,
-                        AccountId = paymentModel.AccountId,
-                        AccountVersionId = string.Empty,
-                        AimSeqNumber = paymentModel.LearningAimSequenceNumber,
-                        AmountDue = paymentModel.AmountDue,
-                        ApprenticeshipContractType = (int)paymentModel.ContractType,
-                        CollectionPeriodMonth = MonthFromPeriod(paymentModel.CollectionPeriod),
-                        CollectionPeriodName =
-                            $"{paymentModel.AcademicYear}-R{paymentModel.CollectionPeriod:D2}",
-                        CollectionPeriodYear = YearFromPeriod(paymentModel.AcademicYear,
-                            paymentModel.CollectionPeriod),
-                        // TODO: Fix this when available
-                        CommitmentId = 0,
-                        CommitmentVersionId = string.Empty,
-                        UseLevyBalance = false,
-                        DeliveryMonth = MonthFromPeriod(paymentModel.DeliveryPeriod),
-                        DeliveryYear = YearFromPeriod(paymentModel.AcademicYear,
-                            paymentModel.DeliveryPeriod),
-                        FrameworkCode = paymentModel.LearningAimFrameworkCode,
-                        FundingLineType = paymentModel.LearningAimFundingLineType,
-                        IlrSubmissionDateTime = paymentModel.IlrSubmissionDateTime,
-                        LearnAimRef = paymentModel.LearningAimReference,
-                        LearnRefNumber = paymentModel.LearnerReferenceNumber,
-                        LearningStartDate = paymentModel.StartDate,
-                        PathwayCode = paymentModel.LearningAimPathwayCode,
-                        PriceEpisodeIdentifier = paymentModel.PriceEpisodeIdentifier,
-                        ProgrammeType = paymentModel.LearningAimProgrammeType,
-                        SfaContributionPercentage = paymentModel.SfaContributionPercentage,
-                        StandardCode = paymentModel.LearningAimStandardCode,
-                        TransactionType = (int)paymentModel.TransactionType,
-                        Ukprn = paymentModel.Ukprn,
-                        Uln = paymentModel.LearnerUln,
-                    };
-
-                    if (!ProcessedRequiredPayments.Contains(requiredPayment.Id))
-                    {
-                        legacyRequiredPayments.Add(requiredPayment.Id, requiredPayment);
-                        ProcessedRequiredPayments.Add(requiredPayment.Id);
-                    }
-                    
-                    var earning = new LegacyEarningModel
-                    {
-                        StartDate = paymentModel.StartDate,
-                        RequiredPaymentId = paymentModel.RequiredPaymentEventId,
-                        ActualEnddate = paymentModel.ActualEndDate,
-                        CompletionAmount = paymentModel.CompletionAmount,
-                        PlannedEndDate = paymentModel.PlannedEndDate ?? DateTime.MinValue,
-                        CompletionStatus = paymentModel.CompletionStatus,
-                        MonthlyInstallment = paymentModel.InstalmentAmount ?? 0m,
-                        TotalInstallments = (paymentModel.NumberOfInstalments ?? 0),
-                    };
-                    legacyEarnings.Add(earning);
-                }
-
-                var payment = new LegacyPaymentModel
-                {
-                    RequiredPaymentId = requiredPayment.Id,
-                    CollectionPeriodMonth = requiredPayment.CollectionPeriodMonth,
-                    CollectionPeriodYear = requiredPayment.CollectionPeriodYear,
-                    TransactionType = requiredPayment.TransactionType ?? 0,
-                    DeliveryYear = requiredPayment.DeliveryYear ?? 0,
-                    CollectionPeriodName = requiredPayment.CollectionPeriodName,
-                    DeliveryMonth = requiredPayment.DeliveryMonth ?? 0,
-                    Amount = paymentModel.Amount,
-                    FundingSource = (int)paymentModel.FundingSource,
-                    PaymentId = Guid.NewGuid(),
+                    Id = paymentModel.RequiredPaymentEventId,
+                    AccountId = paymentModel.AccountId,
+                    AccountVersionId = string.Empty,
+                    AimSeqNumber = paymentModel.LearningAimSequenceNumber,
+                    AmountDue = paymentModel.AmountDue,
+                    ApprenticeshipContractType = (int)paymentModel.ContractType,
+                    CollectionPeriodMonth = MonthFromPeriod(paymentModel.CollectionPeriod),
+                    CollectionPeriodName =
+                        $"{paymentModel.AcademicYear}-R{paymentModel.CollectionPeriod:D2}",
+                    CollectionPeriodYear = YearFromPeriod(paymentModel.AcademicYear,
+                        paymentModel.CollectionPeriod),
+                    // TODO: Fix this when available
+                    CommitmentId = paymentModel.ApprenticeshipId,
+                    CommitmentVersionId = string.Empty,
+                    UseLevyBalance = false,
+                    DeliveryMonth = MonthFromPeriod(paymentModel.DeliveryPeriod),
+                    DeliveryYear = YearFromPeriod(paymentModel.AcademicYear,
+                        paymentModel.DeliveryPeriod),
+                    FrameworkCode = paymentModel.LearningAimFrameworkCode,
+                    FundingLineType = paymentModel.LearningAimFundingLineType,
+                    IlrSubmissionDateTime = paymentModel.IlrSubmissionDateTime,
+                    LearnAimRef = paymentModel.LearningAimReference,
+                    LearnRefNumber = paymentModel.LearnerReferenceNumber,
+                    LearningStartDate = paymentModel.StartDate,
+                    PathwayCode = paymentModel.LearningAimPathwayCode,
+                    PriceEpisodeIdentifier = paymentModel.PriceEpisodeIdentifier,
+                    ProgrammeType = paymentModel.LearningAimProgrammeType,
+                    SfaContributionPercentage = paymentModel.SfaContributionPercentage,
+                    StandardCode = paymentModel.LearningAimStandardCode,
+                    TransactionType = (int)paymentModel.TransactionType,
+                    Ukprn = paymentModel.Ukprn,
+                    Uln = paymentModel.LearnerUln,
                 };
-                legacyPayments.Add(payment);
+
+                if (!ProcessedRequiredPayments.Contains(requiredPayment.Id))
+                {
+                    legacyRequiredPayments.Add(requiredPayment.Id, requiredPayment);
+                    ProcessedRequiredPayments.Add(requiredPayment.Id);
+
+                    var payment = new LegacyPaymentModel
+                    {
+                        RequiredPaymentId = requiredPayment.Id,
+                        CollectionPeriodMonth = requiredPayment.CollectionPeriodMonth,
+                        CollectionPeriodYear = requiredPayment.CollectionPeriodYear,
+                        TransactionType = requiredPayment.TransactionType ?? 0,
+                        DeliveryYear = requiredPayment.DeliveryYear ?? 0,
+                        CollectionPeriodName = requiredPayment.CollectionPeriodName,
+                        DeliveryMonth = requiredPayment.DeliveryMonth ?? 0,
+                        Amount = paymentModel.Amount,
+                        FundingSource = (int)paymentModel.FundingSource,
+                        PaymentId = Guid.NewGuid(),
+                    };
+                    legacyPayments.Add(payment);
+                }
+
+                var earning = new LegacyEarningModel
+                {
+                    StartDate = paymentModel.StartDate,
+                    RequiredPaymentId = paymentModel.RequiredPaymentEventId,
+                    ActualEnddate = paymentModel.ActualEndDate,
+                    CompletionAmount = paymentModel.CompletionAmount,
+                    PlannedEndDate = paymentModel.PlannedEndDate ?? DateTime.MinValue,
+                    CompletionStatus = paymentModel.CompletionStatus,
+                    MonthlyInstallment = paymentModel.InstalmentAmount ?? 0m,
+                    TotalInstallments = (paymentModel.NumberOfInstalments ?? 0),
+                };
+                legacyEarnings.Add(earning);
+                
             }
 
             return (legacyPayments, legacyRequiredPayments.Values.ToList(), legacyEarnings);

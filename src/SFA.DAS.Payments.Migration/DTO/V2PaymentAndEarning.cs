@@ -43,5 +43,6 @@ namespace SFA.DAS.Payments.Migration.DTO
         public decimal? InstalmentAmount { get; set; }
         public short? NumberOfInstalments { get; set; }
         public string AgreementId { get; set; }
+        public long? ApprenticeshipId { get; set; }
     }
 }

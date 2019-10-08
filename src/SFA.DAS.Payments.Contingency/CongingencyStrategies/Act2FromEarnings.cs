@@ -35,6 +35,8 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
             }
             Console.WriteLine($"Loaded {v2Datalocks.Count} V2 datalocks");
 
+            var rawEarnings = earnings.ToList();
+
             // Filter out all ACT1 earnings
             earnings = earnings
                 .Where(x => x.ApprenticeshipContractType == 2)
@@ -65,8 +67,11 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
             // Write a summary tab
             var sheet = excel.Worksheet("Final Amounts (Full)");
             Program.WriteToTable(sheet, earnings);
-            
-            
+
+            // Write earnings tab
+            sheet = excel.Worksheet("Earnings");
+            Program.WriteToTable(sheet, rawEarnings);
+
             // Summary
             sheet = excel.Worksheet("Summary");
             sheet.Cell(2, "A").Value = earnings.Select(x => x.Uln).Distinct().Count();
