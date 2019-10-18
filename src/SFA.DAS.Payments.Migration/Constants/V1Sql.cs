@@ -61,6 +61,8 @@
 	                ON P.RequiredPaymentId = R.Id
                 LEFT JOIN [DAS_PeriodEnd].TransferPayments.AccountTransfers T
                     ON R.Id = T.RequiredPaymentId
+                LEFT JOIN [DAS_PeriodEnd].PaymentsDue.Earnings E
+                    ON R.Id = E.RequiredPaymentId
                 WHERE R.CollectionPeriodName = @period
             ";
     }

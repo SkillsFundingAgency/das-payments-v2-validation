@@ -60,35 +60,34 @@ namespace SFA.DAS.Payments.Migration.Services
                     legacyRequiredPayments.Add(requiredPayment.Id, requiredPayment);
                     ProcessedRequiredPayments.Add(requiredPayment.Id);
 
-                    var payment = new LegacyPaymentModel
+                    var earning = new LegacyEarningModel
                     {
-                        RequiredPaymentId = requiredPayment.Id,
-                        CollectionPeriodMonth = requiredPayment.CollectionPeriodMonth,
-                        CollectionPeriodYear = requiredPayment.CollectionPeriodYear,
-                        TransactionType = requiredPayment.TransactionType ?? 0,
-                        DeliveryYear = requiredPayment.DeliveryYear ?? 0,
-                        CollectionPeriodName = requiredPayment.CollectionPeriodName,
-                        DeliveryMonth = requiredPayment.DeliveryMonth ?? 0,
-                        Amount = paymentModel.Amount,
-                        FundingSource = (int)paymentModel.FundingSource,
-                        PaymentId = Guid.NewGuid(),
+                        StartDate = paymentModel.StartDate,
+                        RequiredPaymentId = paymentModel.RequiredPaymentEventId,
+                        ActualEnddate = paymentModel.ActualEndDate,
+                        CompletionAmount = paymentModel.CompletionAmount,
+                        PlannedEndDate = paymentModel.PlannedEndDate ?? DateTime.MinValue,
+                        CompletionStatus = paymentModel.CompletionStatus,
+                        MonthlyInstallment = paymentModel.InstalmentAmount ?? 0m,
+                        TotalInstallments = (paymentModel.NumberOfInstalments ?? 0),
                     };
-                    legacyPayments.Add(payment);
+                    legacyEarnings.Add(earning);
                 }
 
-                var earning = new LegacyEarningModel
+                var payment = new LegacyPaymentModel
                 {
-                    StartDate = paymentModel.StartDate,
-                    RequiredPaymentId = paymentModel.RequiredPaymentEventId,
-                    ActualEnddate = paymentModel.ActualEndDate,
-                    CompletionAmount = paymentModel.CompletionAmount,
-                    PlannedEndDate = paymentModel.PlannedEndDate ?? DateTime.MinValue,
-                    CompletionStatus = paymentModel.CompletionStatus,
-                    MonthlyInstallment = paymentModel.InstalmentAmount ?? 0m,
-                    TotalInstallments = (paymentModel.NumberOfInstalments ?? 0),
+                    RequiredPaymentId = requiredPayment.Id,
+                    CollectionPeriodMonth = requiredPayment.CollectionPeriodMonth,
+                    CollectionPeriodYear = requiredPayment.CollectionPeriodYear,
+                    TransactionType = requiredPayment.TransactionType ?? 0,
+                    DeliveryYear = requiredPayment.DeliveryYear ?? 0,
+                    CollectionPeriodName = requiredPayment.CollectionPeriodName,
+                    DeliveryMonth = requiredPayment.DeliveryMonth ?? 0,
+                    Amount = paymentModel.Amount,
+                    FundingSource = (int)paymentModel.FundingSource,
+                    PaymentId = Guid.NewGuid(),
                 };
-                legacyEarnings.Add(earning);
-                
+                legacyPayments.Add(payment);
             }
 
             return (legacyPayments, legacyRequiredPayments.Values.ToList(), legacyEarnings);

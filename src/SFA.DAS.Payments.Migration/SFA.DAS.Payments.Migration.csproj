@@ -77,6 +77,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Constants\CollectionPeriods.cs" />
+    <Compile Include="Constants\CommitmentsSql.cs" />
     <Compile Include="Constants\Config.cs" />
     <Compile Include="Constants\V1Sql.cs" />
     <Compile Include="Constants\V2Sql.cs" />
@@ -90,6 +91,7 @@
     <Compile Include="DTO\LegacyPeriodModel.cs" />
     <Compile Include="DTO\LegacyRequiredPaymentModel.cs" />
     <Compile Include="DTO\LevyAccount.cs" />
+    <Compile Include="DTO\NonLevyCommitment.cs" />
     <Compile Include="DTO\Payment.cs" />
     <Compile Include="DTO\V2PaymentAndEarning.cs" />
     <Compile Include="DTO\V1Account.cs" />

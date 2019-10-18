@@ -35,12 +35,18 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
             }
             Console.WriteLine($"Loaded {v2Datalocks.Count} V2 datalocks");
 
-            var rawEarnings = earnings.ToList();
+            var excel = new XLWorkbook(Path.Combine("Template", "Contingency.xlsx"));
 
             // Filter out all ACT1 earnings
             earnings = earnings
                 .Where(x => x.ApprenticeshipContractType == 2)
                 .ToList();
+            
+            var rawEarnings = earnings.ToList();
+            rawEarnings.ForEach(x => x.Amount = x.AllTransactions);
+            // Write earnings tab
+            var sheet = excel.Worksheet("Earnings");
+            Program.WriteToTable(sheet, rawEarnings);
 
 
             // Apply co-funding multiplier
@@ -60,18 +66,14 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
 
             // Get all earnings
             // Write earnings to 'Earnings' tab
-            var excel = new XLWorkbook(Path.Combine("Template", "Contingency.xlsx"));
-
+            
             Console.WriteLine($"Found {earnings.Count} ACT2 earnings");
 
             // Write a summary tab
-            var sheet = excel.Worksheet("Final Amounts (Full)");
+            sheet = excel.Worksheet("Final Amounts (Full)");
             Program.WriteToTable(sheet, earnings);
 
-            // Write earnings tab
-            sheet = excel.Worksheet("Earnings");
-            Program.WriteToTable(sheet, rawEarnings);
-
+            
             // Summary
             sheet = excel.Worksheet("Summary");
             sheet.Cell(2, "A").Value = earnings.Select(x => x.Uln).Distinct().Count();

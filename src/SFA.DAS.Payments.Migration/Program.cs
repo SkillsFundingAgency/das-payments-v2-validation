@@ -390,9 +390,19 @@ namespace SFA.DAS.Payments.Migration
 
         static async Task ProcessCommitmentsData(int period)
         {
-            using (var connection =
-                new SqlConnection(ConfigurationManager.ConnectionStrings["V1Commitments"].ConnectionString))
+            using (var commitmentsConnection = new SqlConnection(ConfigurationManager.ConnectionStrings["Commitments"].ConnectionString))
+            using (var v1AccountsConnection = new SqlConnection(ConfigurationManager.ConnectionStrings["V1Accounts"].ConnectionString))
+            using (var connection = new SqlConnection(ConfigurationManager.ConnectionStrings["V1Commitments"].ConnectionString))
             {
+                var nonLevyCommitments = await commitmentsConnection.QueryAsync<NonLevyCommitment>(
+                        CommitmentsSql.NonLevyCommitments,
+                        commandTimeout: 3600);
+                var nonLevyCommitmentIds = new HashSet<long>(nonLevyCommitments.Select(x => x.Id));
+
+                var accounts = await v1AccountsConnection.QueryAsync<LevyAccount>(V1Sql.Accounts, commandTimeout: 3600);
+                var nonLevyAccounts = new HashSet<long>(accounts.Where(x => x.IsLevyPayer).Select(x => x.AccountId));
+
+
                 var collectionPeriodDate = CollectionPeriods.CollectionPeriodDates[period];
                 var commitments = await connection
                     .QueryAsync<Commitment>(V1Sql.Commitments, new { inputDate = collectionPeriodDate })
@@ -407,6 +417,17 @@ namespace SFA.DAS.Payments.Migration
                 foreach (var commitmentGroup in commitmentsById)
                 {
                     var firstCommitment = commitmentGroup.First();
+                    DateTime agreedOnDate;
+                    if (firstCommitment.TransferSendingEmployerAccountId.HasValue &&
+                        firstCommitment.TransferSendingEmployerAccountId != 0 &&
+                        firstCommitment.TransferApprovalDate.HasValue)
+                    {
+                        agreedOnDate = firstCommitment.TransferApprovalDate.Value;
+                    }
+                    else
+                    {
+                        agreedOnDate = new DateTime(1950, 1, 1).AddDays(firstCommitment.Priority);
+                    }
                     apprenticeships.Add(new Apprenticeship
                     {
                         AccountId = firstCommitment.AccountId,
@@ -424,9 +445,9 @@ namespace SFA.DAS.Payments.Migration
                         Ukprn = firstCommitment.Ukprn,
                         Uln = firstCommitment.Uln,
                         Id = firstCommitment.CommitmentId,
-                        IsLevyPayer = true,
-                        AgreedOnDate = new DateTime(1950, 1, 1).AddDays(firstCommitment.Priority),
-                        ApprenticeshipEmployerType = 1,
+                        IsLevyPayer = (nonLevyAccounts.Contains(firstCommitment.AccountId)) ? false : true,
+                        AgreedOnDate = agreedOnDate,
+                        ApprenticeshipEmployerType = (nonLevyCommitmentIds.Contains(firstCommitment.CommitmentId)) ? 1 : 0,
                         CreationDate = DateTime.Now,
                     });
 
@@ -587,9 +608,20 @@ namespace SFA.DAS.Payments.Migration
                     }
 
                     // Update the IsLevyPayer flag on the commitments
-                    var accountIds = accounts.Where(x => x.IsLevyPayer == false).Select(x => x.AccountId);
-                    await v2Connection.ExecuteAsync(V2Sql.UpdateLevyPayerFlag, new { accountIds })
-                        .ConfigureAwait(false);
+                    var accountIds = accounts.Where(x => x.IsLevyPayer == false).Select(x => x.AccountId).ToList();
+
+                    var page = 0;
+                    var pageSize = 1000;
+                    List<long> accountIdsToProcess;
+                    do
+                    {
+                        accountIdsToProcess = accountIds.Skip(page * pageSize).Take(pageSize).ToList();
+                        await v2Connection.ExecuteAsync(V2Sql.UpdateLevyPayerFlag,
+                                new {accountIds = accountIdsToProcess})
+                            .ConfigureAwait(false);
+                        page++;
+                    } while (accountIdsToProcess.Any());
+
                 }
 
                 await Log("Finished writing v2 levy accounts");
