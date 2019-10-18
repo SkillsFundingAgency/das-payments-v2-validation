@@ -331,10 +331,8 @@ namespace SFA.DAS.Payments.Migration
                         continue;
                     }
 
-                    using (var connection =
-                        new SqlConnection(ConfigurationManager.ConnectionStrings["V1"].ConnectionString))
+                    using (var connection = new SqlConnection(ConfigurationManager.ConnectionStrings["V1"].ConnectionString))
                     {
-
                         var collectionPeriodName = $"{academicYear}-R{period:D2}";
 
                         var payments = (await connection

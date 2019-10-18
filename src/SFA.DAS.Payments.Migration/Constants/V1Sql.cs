@@ -55,14 +55,25 @@
                      FundingSource,
                      P.Amount,
                      CAST(SUBSTRING(R.CollectionPeriodName, 7, 2) AS INT) [CollectionPeriod],
-                     T.SendingAccountId [TransferSendingAccountId]
-	            FROM [DAS_PeriodEnd].Payments.Payments P
+                     T.SendingAccountId [TransferSendingAccountId],
+			         E.StartDate [EarningsStartDate],
+			         E.PlannedEndDate [EarningsPlannedEndDate],
+			         E.ActualEnddate [EarningsActualEndDate],
+			         E.CompletionStatus [EarningsCompletionStatus],
+			         E.CompletionAmount [EarningsCompletionAmount],
+			         E.MonthlyInstallment [EarningsInstalmentAmount],
+			         E.TotalInstallments [EarningsNumberOfInstalments]
+	
+                FROM [DAS_PeriodEnd].Payments.Payments P
 	            JOIN [DAS_PeriodEnd].PaymentsDue.RequiredPayments R
 	                ON P.RequiredPaymentId = R.Id
                 LEFT JOIN [DAS_PeriodEnd].TransferPayments.AccountTransfers T
                     ON R.Id = T.RequiredPaymentId
                 LEFT JOIN [DAS_PeriodEnd].PaymentsDue.Earnings E
                     ON R.Id = E.RequiredPaymentId
+                LEFT JOIN [DAS_PeriodEnd].PaymentsDue.Earnings E
+                        ON R.Id = E.RequiredPaymentId
+
                 WHERE R.CollectionPeriodName = @period
             ";
     }
