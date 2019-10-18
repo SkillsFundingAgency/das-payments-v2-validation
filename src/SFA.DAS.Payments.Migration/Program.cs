@@ -386,17 +386,25 @@ namespace SFA.DAS.Payments.Migration
                 ;
         }
 
+        static readonly HashSet<long> NonLevyAccountIds = new HashSet<long>
+        {
+            29152,
+            29182,
+            29202,
+            29264,
+            29378,
+            29826,
+            29829,
+            29932,
+            30292,
+            30400
+        };
+            
         static async Task ProcessCommitmentsData(int period)
         {
-            using (var commitmentsConnection = new SqlConnection(ConfigurationManager.ConnectionStrings["Commitments"].ConnectionString))
             using (var v1AccountsConnection = new SqlConnection(ConfigurationManager.ConnectionStrings["V1Accounts"].ConnectionString))
             using (var connection = new SqlConnection(ConfigurationManager.ConnectionStrings["V1Commitments"].ConnectionString))
             {
-                var nonLevyCommitments = await commitmentsConnection.QueryAsync<NonLevyCommitment>(
-                        CommitmentsSql.NonLevyCommitments,
-                        commandTimeout: 3600);
-                var nonLevyCommitmentIds = new HashSet<long>(nonLevyCommitments.Select(x => x.Id));
-
                 var accounts = await v1AccountsConnection.QueryAsync<LevyAccount>(V1Sql.Accounts, commandTimeout: 3600);
                 var nonLevyAccounts = new HashSet<long>(accounts.Where(x => x.IsLevyPayer).Select(x => x.AccountId));
 
@@ -445,7 +453,7 @@ namespace SFA.DAS.Payments.Migration
                         Id = firstCommitment.CommitmentId,
                         IsLevyPayer = (nonLevyAccounts.Contains(firstCommitment.AccountId)) ? false : true,
                         AgreedOnDate = agreedOnDate,
-                        ApprenticeshipEmployerType = (nonLevyCommitmentIds.Contains(firstCommitment.CommitmentId)) ? 1 : 0,
+                        ApprenticeshipEmployerType = (NonLevyAccountIds.Contains(firstCommitment.AccountId)) ? 0 : 1,
                         CreationDate = DateTime.Now,
                     });
 
