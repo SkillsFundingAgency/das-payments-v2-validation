@@ -41,11 +41,11 @@ namespace SFA.DAS.Payments.Migration.DTO
         public decimal Amount { get; set; }
 
         public long? TransferSenderAccountId { get; set; }
-        public DateTimeOffset CreationDate { get; set; } = DateTime.Now;
+        public DateTimeOffset CreationDate { get; set; } = DateTimeOffset.Now;
 
         public DateTime EarningsStartDate { get; set; }
-        public DateTime EarningsPlannedEndDate { get; set; }
-        public DateTime EarningsActualEndDate { get; set; }
+        public DateTime? EarningsPlannedEndDate { get; set; }
+        public DateTime? EarningsActualEndDate { get; set; }
         public int EarningsCompletionStatus { get; set; }
         public decimal EarningsCompletionAmount { get; set; }
         public decimal EarningsInstalmentAmount { get; set; }
