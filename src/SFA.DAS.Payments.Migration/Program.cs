@@ -341,6 +341,27 @@ namespace SFA.DAS.Payments.Migration
                             .ConfigureAwait(false))
                             .ToList();
 
+                        var minSqlDate = new DateTime(1800, 1, 1);
+                        var maxSqlDate = new DateTime(9000, 1, 1);
+
+                        payments.ForEach(x =>
+                        {
+                            if (x.EarningsStartDate < minSqlDate)
+                                x.EarningsStartDate = minSqlDate;
+                            if (x.EarningsStartDate > maxSqlDate)
+                                x.EarningsStartDate = maxSqlDate;
+
+                            if (x.EarningsActualEndDate < minSqlDate)
+                                x.EarningsActualEndDate = minSqlDate;
+                            if (x.EarningsActualEndDate > maxSqlDate)
+                                x.EarningsActualEndDate = maxSqlDate;
+
+                            if (x.EarningsPlannedEndDate < minSqlDate)
+                                x.EarningsPlannedEndDate = minSqlDate;
+                            if (x.EarningsPlannedEndDate > maxSqlDate)
+                                x.EarningsPlannedEndDate = maxSqlDate;
+                        });
+
                         await Log($"Retrieved {payments.Count} payments for {collectionPeriodName}");
 
                         using (var v2Connection =
