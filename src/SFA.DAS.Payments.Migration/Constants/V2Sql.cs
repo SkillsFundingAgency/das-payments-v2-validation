@@ -19,6 +19,13 @@
                 SET IDENTITY_INSERT Payments2.ApprenticeshipPriceEpisode OFF;
             ";
 
+        public const string DeletePayments = @"
+                DELETE 
+                FROM Payments2.Payment
+                WHERE AcademicYear = @academicYear
+                AND CollectionPeriod = @collectionPeriod
+            ";
+
         public const string UpdateLevyPayerFlag = @"
                 UPDATE Payments2.Apprenticeship
                 SET IsLevyPayer = 0
@@ -39,7 +46,7 @@
                 JOIN Payments2.EarningEvent E
 	                ON E.EventId = P.EarningEventId
                 WHERE P.AcademicYear = 1920
-                    AND P.CollectionPeriod IN (2)
+                    AND P.CollectionPeriod IN (3)
                 ORDER BY R.EventId
                 OFFSET @offset ROWS
                 FETCH NEXT @pageSize ROWS ONLY

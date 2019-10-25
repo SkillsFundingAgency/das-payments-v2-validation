@@ -5,6 +5,7 @@
         public const string EasRecords = @"
                 SELECT *
                 FROM ProviderAdjustments.Payments
+                WHERE CollectionPeriodName = '1819-R14'
             ";
 
         public const string Commitments = @"
@@ -56,13 +57,14 @@
                      P.Amount,
                      CAST(SUBSTRING(R.CollectionPeriodName, 7, 2) AS INT) [CollectionPeriod],
                      T.SendingAccountId [TransferSendingAccountId],
-			         E.StartDate [EarningsStartDate],
+			         R.LearningStartDate [EarningsStartDate],
 			         E.PlannedEndDate [EarningsPlannedEndDate],
 			         E.ActualEnddate [EarningsActualEndDate],
 			         E.CompletionStatus [EarningsCompletionStatus],
 			         E.CompletionAmount [EarningsCompletionAmount],
 			         E.MonthlyInstallment [EarningsInstalmentAmount],
-			         E.TotalInstallments [EarningsNumberOfInstalments]
+			         E.TotalInstallments [EarningsNumberOfInstalments],
+                     R.LearningStartDate [LearningStartDate]
 	
                 FROM [DAS_PeriodEnd].Payments.Payments P
 	            JOIN [DAS_PeriodEnd].PaymentsDue.RequiredPayments R

@@ -138,8 +138,8 @@ namespace SFA.DAS.Payments.Migration
                 AccountDataValidAt = now,
                 CommitmentDataValidAt = now,
                 CompletionDateTime = now,
-                PeriodName = "1920-R02",
-                CalendarMonth = 9,
+                PeriodName = "1920-R03",
+                CalendarMonth = 10,
                 CalendarYear = 2019,
             };
 
@@ -318,22 +318,22 @@ namespace SFA.DAS.Payments.Migration
                     continue;
                 }
 
-                foreach (var period in periods)
+                foreach (var collectionPeriod in periods)
                 {
-                    if (academicYear == 1819 && period > maxPeriod)
+                    if (academicYear == 1819 && collectionPeriod > maxPeriod)
                     {
                         break;
                     }
 
-                    if (periodsToIgnore.Contains(period))
+                    if (periodsToIgnore.Contains(collectionPeriod))
                     {
-                        await Log($"Ignoring period {period}");
+                        await Log($"Ignoring period {collectionPeriod}");
                         continue;
                     }
 
                     using (var connection = new SqlConnection(ConfigurationManager.ConnectionStrings["V1"].ConnectionString))
                     {
-                        var collectionPeriodName = $"{academicYear}-R{period:D2}";
+                        var collectionPeriodName = $"{academicYear}-R{collectionPeriod:D2}";
 
                         var payments = (await connection
                             .QueryAsync<Payment>(v1PaymentsSql, new {period = collectionPeriodName},
@@ -364,11 +364,19 @@ namespace SFA.DAS.Payments.Migration
 
                         await Log($"Retrieved {payments.Count} payments for {collectionPeriodName}");
 
+                        using (var scope = new TransactionScope(
+                            TransactionScopeOption.Required, 
+                            TimeSpan.FromMinutes(5), 
+                            TransactionScopeAsyncFlowOption.Enabled))
                         using (var v2Connection =
                             new SqlConnection(ConfigurationManager.ConnectionStrings["V2"].ConnectionString))
                         using (var bulkCopy = new SqlBulkCopy(v2Connection))
                         using (var reader = ObjectReader.Create(payments))
                         {
+                            await v2Connection.OpenAsync();
+                            await v2Connection.ExecuteAsync(V2Sql.DeletePayments, new {academicYear, collectionPeriod}, commandTimeout:3600);
+                            await Log("Deleted existing payments");
+
                             if (v2Connection.State != ConnectionState.Open)
                             {
                                 await v2Connection.OpenAsync();
@@ -385,6 +393,8 @@ namespace SFA.DAS.Payments.Migration
 
 
                             await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
+
+                            scope.Complete();
                         }
 
                         await Log($"Saved payments for {collectionPeriodName}");

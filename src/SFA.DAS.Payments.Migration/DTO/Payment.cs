@@ -50,6 +50,7 @@ namespace SFA.DAS.Payments.Migration.DTO
         public decimal EarningsCompletionAmount { get; set; }
         public decimal EarningsInstalmentAmount { get; set; }
         public int EarningsNumberOfInstalments { get; set; }
+        public DateTime? LearningStartDate { get; set; }
 
         public byte ApprenticeshipEmployerType { get; set; } = 0;
 
