@@ -11,7 +11,7 @@
 	                ON M.Ukprn = L.UKPRN
 	                AND M.LearnRefNumber = L.LearnRefNumber
 
-                WHERE M.CollectionPeriodName = '1819-R13'
+                WHERE M.CollectionPeriodName = '1819-R14'
                 AND Period = 12
                 AND TransactionTypesFlag = 1
 
@@ -215,6 +215,8 @@
                   ,[DeliveryPeriod]
                 FROM Payments2.DataLockFailure
                 WHERE TransactionType = 1
+                AND AcademicYear = 1920
+                AND CollectionPeriod = 3
             ";
 
         public const string R13Payments = @"

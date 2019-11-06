@@ -16,7 +16,7 @@ namespace SFA.DAS.Payments.Contingency
             {
                 var contingencyStrategies = new List<IProduceContingencyPayments>
                 {
-                    new R13Payments(),
+                    //new R13Payments(),
                     new UsingLiveDatalocksAct1Tt1To3(),
                     new UsingLiveDatalocksAct1Tt4To16(),
                     new Act2FromEarnings(),
