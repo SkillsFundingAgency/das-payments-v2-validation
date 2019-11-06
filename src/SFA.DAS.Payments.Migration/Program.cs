@@ -37,9 +37,13 @@ namespace SFA.DAS.Payments.Migration
                 var period = 0;
                 while (period == 0)
                 {
-                    await Log("Please enter the period to initialise");
+                    await Log("Please enter the period to initialise or 'T' to test the connections");
                     await Log("");
                     var input = Console.ReadLine();
+                    if (input.Equals("T", StringComparison.OrdinalIgnoreCase))
+                    {
+                        await TestConnections();
+                    }
                     if (!int.TryParse(input, out var inputAsInteger))
                     {
                         await Log("Please enter a number between 1 and 14");
@@ -105,6 +109,39 @@ namespace SFA.DAS.Payments.Migration
                 await Log("Press enter to continue...");
                 Console.ReadLine();
             }
+        }
+
+        private static async Task TestConnections()
+        {
+            await TestConnection("V1", "V1 Payments + Eas");
+            await TestConnection("V2", "V2 (Payments/Eas/Commitments/Accounts)");
+            await TestConnection("V1Commitments", "V1 Commitments");
+            await TestConnection("V1Accounts", "V1 Accounts");
+        }
+
+        private static async Task TestConnection(string connectionString, string friendlyName)
+        {
+            await Log($"Testing: {friendlyName}");
+            try
+            {
+                using (var connection =
+                    new SqlConnection(ConfigurationManager.ConnectionStrings[connectionString].ConnectionString))
+                {
+                    await connection.OpenAsync();
+                }
+
+                Console.ForegroundColor = ConsoleColor.Green;
+                await Log($"Connection successful for {friendlyName}");
+                Console.ForegroundColor = ConsoleColor.White;
+            }
+            catch (Exception e)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                await Log($"Connection failed for {friendlyName}");
+                Console.ForegroundColor = ConsoleColor.White;
+            }
+
+            await Log("");
         }
 
         private static async Task CompleteR02()
