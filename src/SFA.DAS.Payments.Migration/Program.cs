@@ -260,7 +260,12 @@ namespace SFA.DAS.Payments.Migration
                         .QueryAsync<EasRecord>(V1Sql.EasRecords, commandTimeout: 3600)
                         .ConfigureAwait(false))
                     .ToList();
+                await Log($"Loaded {records.Count} V1 EAS payments");
 
+                using (var scope = new TransactionScope(
+                    TransactionScopeOption.Required,
+                    TimeSpan.FromMinutes(10),
+                    TransactionScopeAsyncFlowOption.Enabled))
                 using (var v2Connection =
                     new SqlConnection(ConfigurationManager.ConnectionStrings["V2"].ConnectionString))
                 using (var bulkCopy = new SqlBulkCopy(v2Connection))
@@ -270,7 +275,10 @@ namespace SFA.DAS.Payments.Migration
                     {
                         await v2Connection.OpenAsync();
                     }
-
+                    
+                    var deleted = await v2Connection.ExecuteAsync(V2Sql.DeleteEasPayments, commandTimeout: 3600);
+                    await Log($"Deleted {deleted} V2 EAS records");
+                    
                     bulkCopy.DestinationTableName = "Payments2.ProviderAdjustmentPayments";
                     bulkCopy.BatchSize = 5000;
                     bulkCopy.BulkCopyTimeout = 3600;
@@ -279,9 +287,12 @@ namespace SFA.DAS.Payments.Migration
                     {
                         bulkCopy.ColumnMappings.Add(sqlBulkCopyColumnMapping);
                     }
-
-
+                    
                     await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
+                    await Log("Inserted payments in V2");
+
+                    scope.Complete();
+                    await Log("Completed EAS migration");
                 }
             }
         }
@@ -522,7 +533,7 @@ namespace SFA.DAS.Payments.Migration
                     using (var bulkCopy = new SqlBulkCopy(v2Connection))
                     using (var reader = ObjectReader.Create(apprenticeships))
                     {
-                        await v2Connection.ExecuteAsync(V2Sql.DeleteData, commandTimeout: 3600).ConfigureAwait(false);
+                        await v2Connection.ExecuteAsync(V2Sql.DeleteCommitments, commandTimeout: 3600).ConfigureAwait(false);
                         await Log("Deleted old data");
 
                         bulkCopy.DestinationTableName = "Payments2.Apprenticeship";

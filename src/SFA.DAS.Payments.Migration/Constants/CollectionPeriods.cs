@@ -20,7 +20,7 @@ namespace SFA.DAS.Payments.Migration.Constants
             {11, new DateTime(2019, 7, 4, 22, 00, 00) },
             {12, new DateTime(2019, 8, 6, 22, 00, 00) },
             {13, new DateTime(2019, 9, 5, 23, 30, 00) },
-            {14, new DateTime(2019, 11, 15, 22, 00, 00) },
+            {14, new DateTime(2020, 11, 15, 22, 00, 00) },
         };
     }
 }

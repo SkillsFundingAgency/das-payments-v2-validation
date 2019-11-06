@@ -2,13 +2,16 @@
 {
     public static class V2Sql
     {
-        public const string DeleteData = @"
+        public const string DeleteCommitments = @"
 
                 DELETE Payments2.ApprenticeshipPause
                 DELETE Payments2.ApprenticeshipDuplicate
                 DELETE Payments2.ApprenticeshipPriceEpisode
                 DELETE Payments2.Apprenticeship
-                DELETE Payments2.LevyAccount
+            ";
+
+        public const string DeleteEasPayments = @"
+                DELETE Payments2.ProviderAdjustmentPayments
             ";
 
         public const string IdentityInsertOn = @"
