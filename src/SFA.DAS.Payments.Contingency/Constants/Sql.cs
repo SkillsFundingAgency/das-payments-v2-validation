@@ -128,7 +128,7 @@
 		                or APEP.PriceEpisodeSecondDisadvantagePayment != 0
 		                or APEP.PriceEpisodeLSFCash != 0
 		                )
-		                AND APEP.Period IN (1, 2)
+		                AND APEP.Period IN (1, 2, 3)
                 )
 
                 , RawEarningsMathsAndEnglish AS (
@@ -184,7 +184,7 @@
 		                or LearnSuppFundCash != 0
 		                )
 		                and LD.LearnAimRef != 'ZPROG001'
-		                AND Period IN (1, 2)
+		                AND Period IN (1, 2, 3)
                 )
 
                 , AllAct1Earnings AS (

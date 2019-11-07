@@ -19,7 +19,7 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
             List<Earning> earnings;
             List<V2Datalock> v2Datalocks;
 
-            Console.WriteLine("Processing...");
+            Console.WriteLine("Processing ACT1 TT1-3 ...");
 
             // Load data
             using (var connection = new SqlConnection(ConfigurationManager.ConnectionStrings["ILR1920DataStore"].ConnectionString))
