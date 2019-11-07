@@ -5,7 +5,6 @@
         public const string EasRecords = @"
                 SELECT *
                 FROM ProviderAdjustments.Payments
-                WHERE CollectionPeriodName = '1819-R14'
             ";
 
         public const string Commitments = @"
