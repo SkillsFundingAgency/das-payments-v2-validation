@@ -138,11 +138,11 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
 
 
             // Raw earnings
-            sheet = excel.Worksheet("Raw Earnings");
-            Program.WriteRawResults(sheet, earnings);
+            //sheet = excel.Worksheet("Raw Earnings");
+            //Program.WriteRawResults(sheet, earnings);
 
-            sheet = excel.Worksheet("Raw 1920 Datalocks (Full)");
-            Program.WriteRawResults(sheet, finalEarningsWithDatalocks);
+            //sheet = excel.Worksheet("Raw 1920 Datalocks (Full)");
+            //Program.WriteRawResults(sheet, finalEarningsWithDatalocks);
 
             
 

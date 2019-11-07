@@ -485,9 +485,8 @@ namespace SFA.DAS.Payments.Migration
             using (var connection = new SqlConnection(ConfigurationManager.ConnectionStrings["V1Commitments"].ConnectionString))
             {
                 var accounts = await v1AccountsConnection.QueryAsync<LevyAccount>(V1Sql.Accounts, commandTimeout: 3600);
-                var nonLevyAccounts = new HashSet<long>(accounts.Where(x => x.IsLevyPayer).Select(x => x.AccountId));
-
-
+                var nonLevyAccounts = new HashSet<long>(accounts.Where(x => !x.IsLevyPayer).Select(x => x.AccountId));
+                
                 var collectionPeriodDate = CollectionPeriods.CollectionPeriodDates[period];
                 var commitments = await connection
                     .QueryAsync<Commitment>(V1Sql.Commitments, new { inputDate = collectionPeriodDate })
@@ -497,8 +496,7 @@ namespace SFA.DAS.Payments.Migration
                 var apprenticeships = new List<Apprenticeship>();
                 var apprenticeshipPriceEpisodes = new List<ApprenticeshipPriceEpisode>();
                 var apprenticeshipPause = new List<ApprenticeshipPause>();
-
-
+                
                 foreach (var commitmentGroup in commitmentsById)
                 {
                     var firstCommitment = commitmentGroup.First();
