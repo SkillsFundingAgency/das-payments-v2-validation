@@ -62,7 +62,7 @@ namespace SFA.DAS.Payments.Migration
                 }
 
                 await Log("What data do you want to migrate");
-                await Log("Please enter 1-Commitments, 2-Accounts, 3-Payments, 4-EAS, 5-V1 Payments, 6-Complete R02, 9-All");
+                await Log("Please enter 1-Commitments, 2-Accounts, 3-Payments, 4-EAS, 5-V1 Payments, 6-Complete R03, 9-All");
                 var typeinput = Console.ReadLine();
                 if (!int.TryParse(typeinput, out var typeinputAsInteger))
                 {
@@ -96,7 +96,7 @@ namespace SFA.DAS.Payments.Migration
 
                 if (typeinputAsInteger == 6)
                 {
-                    await CompleteR02();
+                    await CompleteR03();
                 }
 
                 await Log("Finished - press enter to continue...");
@@ -144,7 +144,7 @@ namespace SFA.DAS.Payments.Migration
             await Log("");
         }
 
-        private static async Task CompleteR02()
+        private static async Task CompleteR03()
         {
             var trigger = CreateTrigger();
             var triggerList = new List<LegacyPeriodModel> { trigger };
