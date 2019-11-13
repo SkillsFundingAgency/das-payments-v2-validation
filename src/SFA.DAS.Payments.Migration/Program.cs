@@ -62,8 +62,8 @@ namespace SFA.DAS.Payments.Migration
                 }
 
                 await Log("What data do you want to migrate");
-                await Log("Please enter 1-Commitments, 2-Accounts, 3-Payments, 4-EAS, " +
-                          "5-V1 Payments, 6-Complete R03, 7-Failed Transfer Payments->V1,  9-All");
+                await Log("Please enter 1-Commitments, 2-Accounts, 3-V1 Payments->V2, 4-EAS, " +
+                          "5-V2 Payments->V1, 6-Complete R03, 7-Failed Transfer Payments->V1,  9-All");
                 var typeinput = Console.ReadLine();
                 if (!int.TryParse(typeinput, out var typeinputAsInteger))
                 {
@@ -215,7 +215,7 @@ namespace SFA.DAS.Payments.Migration
                     await Log($"Loaded {paymentsAndEarnings.Count} records from page {offset / pageSize}");
 
                     // Map
-                    var outputResults = mapper.MapV2Payments(paymentsAndEarnings);
+                    var outputResults = mapper.MapV2Payments(paymentsAndEarnings, new HashSet<Guid>());
 
                     var requiredPayments = outputResults.requiredPayments;
                     var payments = outputResults.payments;
@@ -294,7 +294,7 @@ namespace SFA.DAS.Payments.Migration
                 await Log($"Loaded {paymentsAndEarnings.Count} records");
 
                 // Map
-                var outputResults = mapper.MapV2Payments(paymentsAndEarnings);
+                var outputResults = mapper.MapV2Payments(paymentsAndEarnings, new HashSet<Guid>{Guid.Parse("f1a39005-3e13-41af-b427-b4c6e21daa37") });
 
                 var requiredPayments = outputResults.requiredPayments;
                 var payments = outputResults.payments;
