@@ -62,7 +62,8 @@ namespace SFA.DAS.Payments.Migration
                 }
 
                 await Log("What data do you want to migrate");
-                await Log("Please enter 1-Commitments, 2-Accounts, 3-Payments, 4-EAS, 5-V1 Payments, 6-Complete R03, 9-All");
+                await Log("Please enter 1-Commitments, 2-Accounts, 3-Payments, 4-EAS, " +
+                          "5-V1 Payments, 6-Complete R03, 7-Failed Transfer Payments->V1,  9-All");
                 var typeinput = Console.ReadLine();
                 if (!int.TryParse(typeinput, out var typeinputAsInteger))
                 {
@@ -97,6 +98,11 @@ namespace SFA.DAS.Payments.Migration
                 if (typeinputAsInteger == 6)
                 {
                     await CompleteR03();
+                }
+
+                if (typeinputAsInteger == 7)
+                {
+                    await ProcessFailedV1Payments();
                 }
 
                 await Log("Finished - press enter to continue...");
@@ -261,6 +267,94 @@ namespace SFA.DAS.Payments.Migration
                         }
                     }
                         
+
+
+                    offset += pageSize;
+                } while (paymentsAndEarnings.Count > 0);
+
+                //scope.Complete();
+            }
+        }
+
+        private static async Task ProcessFailedV1Payments()
+        {
+            var mapper = new PaymentMapper();
+
+            //using(var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled))
+            using (var v2Connection = new SqlConnection(ConfigurationManager.ConnectionStrings["V2"].ConnectionString))
+            using (var v1Connection = new SqlConnection(ConfigurationManager.ConnectionStrings["V1"].ConnectionString))
+            {
+                await v1Connection.OpenAsync().ConfigureAwait(false);
+
+                // Per page
+                var pageSize = 100000;
+                var offset = 0;
+
+                List<V2PaymentAndEarning> paymentsAndEarnings;
+
+                do
+                {
+                    // Load from v2
+                    paymentsAndEarnings = (await v2Connection.QueryAsync<V2PaymentAndEarning>(
+                            V2Sql.PaymentsAndEarningsForFailedTransfers,
+                            new { offset, pageSize },
+                            commandTimeout: 3600))
+                        .ToList();
+                    await Log($"Loaded {paymentsAndEarnings.Count} records from page {offset / pageSize}");
+
+                    // Map
+                    var outputResults = mapper.MapV2Payments(paymentsAndEarnings);
+
+                    var requiredPayments = outputResults.requiredPayments;
+                    var payments = outputResults.payments;
+                    var earnings = outputResults.earnings;
+
+                    var minDate = new DateTime(2000, 1, 1);
+                    requiredPayments.ForEach(x =>
+                    {
+                        if (x.LearningStartDate < minDate) x.LearningStartDate = null;
+                    });
+
+                    earnings.ForEach(x =>
+                    {
+                        if (x.ActualEnddate < minDate) x.ActualEnddate = null;
+                        if (x.PlannedEndDate < minDate) x.PlannedEndDate = minDate;
+                        if (x.StartDate < minDate) x.StartDate = minDate;
+                    });
+
+                    // Write to V1
+                    using (var bulkCopy = new SqlBulkCopy(v1Connection))
+                    {
+                        bulkCopy.BatchSize = 5000;
+                        bulkCopy.BulkCopyTimeout = 3600;
+
+                        bulkCopy.DestinationTableName = "[PaymentsDue].[RequiredPayments]";
+                        PopulateBulkCopy(bulkCopy, typeof(LegacyRequiredPaymentModel));
+
+                        using (var reader = ObjectReader.Create(requiredPayments))
+                        {
+                            await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
+                        }
+
+                        bulkCopy.DestinationTableName = "[Payments].[Payments]";
+                        bulkCopy.ColumnMappings.Clear();
+                        PopulateBulkCopy(bulkCopy, typeof(LegacyPaymentModel));
+
+                        using (var reader = ObjectReader.Create(payments))
+                        {
+                            await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
+                        }
+
+                        bulkCopy.DestinationTableName = "[PaymentsDue].[Earnings]";
+                        bulkCopy.ColumnMappings.Clear();
+                        PopulateBulkCopy(bulkCopy, typeof(LegacyEarningModel));
+
+                        using (var reader = ObjectReader.Create(earnings))
+                        {
+                            await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
+                        }
+                    }
+
 
 
                     offset += pageSize;
