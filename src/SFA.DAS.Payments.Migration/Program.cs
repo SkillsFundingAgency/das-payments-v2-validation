@@ -194,7 +194,7 @@ namespace SFA.DAS.Payments.Migration
             var mapper = new PaymentMapper();
 
             //using(var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled))
-            using(var v2Connection = new SqlConnection(ConfigurationManager.ConnectionStrings["V2"].ConnectionString))
+            using (var v2Connection = new SqlConnection(ConfigurationManager.ConnectionStrings["V2"].ConnectionString))
             using (var v1Connection = new SqlConnection(ConfigurationManager.ConnectionStrings["V1"].ConnectionString))
             {
                 await v1Connection.OpenAsync().ConfigureAwait(false);
@@ -209,7 +209,7 @@ namespace SFA.DAS.Payments.Migration
                 {
                     // Load from v2
                     paymentsAndEarnings = (await v2Connection.QueryAsync<V2PaymentAndEarning>(V2Sql.PaymentsAndEarnings,
-                            new {offset, pageSize},
+                            new { offset, pageSize },
                             commandTimeout: 3600))
                         .ToList();
                     await Log($"Loaded {paymentsAndEarnings.Count} records from page {offset / pageSize}");
@@ -266,7 +266,7 @@ namespace SFA.DAS.Payments.Migration
                             await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
                         }
                     }
-                        
+
 
 
                     offset += pageSize;
@@ -280,87 +280,71 @@ namespace SFA.DAS.Payments.Migration
         {
             var mapper = new PaymentMapper();
 
-            //using(var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled))
             using (var v2Connection = new SqlConnection(ConfigurationManager.ConnectionStrings["V2"].ConnectionString))
             using (var v1Connection = new SqlConnection(ConfigurationManager.ConnectionStrings["V1"].ConnectionString))
             {
                 await v1Connection.OpenAsync().ConfigureAwait(false);
 
-                // Per page
-                var pageSize = 100000;
-                var offset = 0;
-
                 List<V2PaymentAndEarning> paymentsAndEarnings;
 
-                do
+                paymentsAndEarnings = (await v2Connection.QueryAsync<V2PaymentAndEarning>(
+                        V2Sql.PaymentsAndEarningsForFailedTransfers,
+                        commandTimeout: 3600))
+                    .ToList();
+                await Log($"Loaded {paymentsAndEarnings.Count} records");
+
+                // Map
+                var outputResults = mapper.MapV2Payments(paymentsAndEarnings);
+
+                var requiredPayments = outputResults.requiredPayments;
+                var payments = outputResults.payments;
+                var earnings = outputResults.earnings;
+
+                var minDate = new DateTime(2000, 1, 1);
+                requiredPayments.ForEach(x =>
                 {
-                    // Load from v2
-                    paymentsAndEarnings = (await v2Connection.QueryAsync<V2PaymentAndEarning>(
-                            V2Sql.PaymentsAndEarningsForFailedTransfers,
-                            new { offset, pageSize },
-                            commandTimeout: 3600))
-                        .ToList();
-                    await Log($"Loaded {paymentsAndEarnings.Count} records from page {offset / pageSize}");
+                    if (x.LearningStartDate < minDate) x.LearningStartDate = null;
+                });
 
-                    // Map
-                    var outputResults = mapper.MapV2Payments(paymentsAndEarnings);
+                earnings.ForEach(x =>
+                {
+                    if (x.ActualEnddate < minDate) x.ActualEnddate = null;
+                    if (x.PlannedEndDate < minDate) x.PlannedEndDate = minDate;
+                    if (x.StartDate < minDate) x.StartDate = minDate;
+                });
 
-                    var requiredPayments = outputResults.requiredPayments;
-                    var payments = outputResults.payments;
-                    var earnings = outputResults.earnings;
+                // Write to V1
+                using (var bulkCopy = new SqlBulkCopy(v1Connection))
+                {
+                    bulkCopy.BatchSize = 5000;
+                    bulkCopy.BulkCopyTimeout = 3600;
 
-                    var minDate = new DateTime(2000, 1, 1);
-                    requiredPayments.ForEach(x =>
+                    bulkCopy.DestinationTableName = "[PaymentsDue].[RequiredPayments]";
+                    PopulateBulkCopy(bulkCopy, typeof(LegacyRequiredPaymentModel));
+
+                    using (var reader = ObjectReader.Create(requiredPayments))
                     {
-                        if (x.LearningStartDate < minDate) x.LearningStartDate = null;
-                    });
-
-                    earnings.ForEach(x =>
-                    {
-                        if (x.ActualEnddate < minDate) x.ActualEnddate = null;
-                        if (x.PlannedEndDate < minDate) x.PlannedEndDate = minDate;
-                        if (x.StartDate < minDate) x.StartDate = minDate;
-                    });
-
-                    // Write to V1
-                    using (var bulkCopy = new SqlBulkCopy(v1Connection))
-                    {
-                        bulkCopy.BatchSize = 5000;
-                        bulkCopy.BulkCopyTimeout = 3600;
-
-                        bulkCopy.DestinationTableName = "[PaymentsDue].[RequiredPayments]";
-                        PopulateBulkCopy(bulkCopy, typeof(LegacyRequiredPaymentModel));
-
-                        using (var reader = ObjectReader.Create(requiredPayments))
-                        {
-                            await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
-                        }
-
-                        bulkCopy.DestinationTableName = "[Payments].[Payments]";
-                        bulkCopy.ColumnMappings.Clear();
-                        PopulateBulkCopy(bulkCopy, typeof(LegacyPaymentModel));
-
-                        using (var reader = ObjectReader.Create(payments))
-                        {
-                            await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
-                        }
-
-                        bulkCopy.DestinationTableName = "[PaymentsDue].[Earnings]";
-                        bulkCopy.ColumnMappings.Clear();
-                        PopulateBulkCopy(bulkCopy, typeof(LegacyEarningModel));
-
-                        using (var reader = ObjectReader.Create(earnings))
-                        {
-                            await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
-                        }
+                        await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
                     }
 
+                    bulkCopy.DestinationTableName = "[Payments].[Payments]";
+                    bulkCopy.ColumnMappings.Clear();
+                    PopulateBulkCopy(bulkCopy, typeof(LegacyPaymentModel));
 
+                    using (var reader = ObjectReader.Create(payments))
+                    {
+                        await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
+                    }
 
-                    offset += pageSize;
-                } while (paymentsAndEarnings.Count > 0);
+                    bulkCopy.DestinationTableName = "[PaymentsDue].[Earnings]";
+                    bulkCopy.ColumnMappings.Clear();
+                    PopulateBulkCopy(bulkCopy, typeof(LegacyEarningModel));
 
-                //scope.Complete();
+                    using (var reader = ObjectReader.Create(earnings))
+                    {
+                        await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
+                    }
+                }
             }
         }
 
@@ -406,10 +390,10 @@ namespace SFA.DAS.Payments.Migration
                     {
                         await v2Connection.OpenAsync();
                     }
-                    
+
                     var deleted = await v2Connection.ExecuteAsync(V2Sql.DeleteEasPayments, commandTimeout: 3600);
                     await Log($"Deleted {deleted} V2 EAS records");
-                    
+
                     bulkCopy.DestinationTableName = "Payments2.ProviderAdjustmentPayments";
                     bulkCopy.BatchSize = 5000;
                     bulkCopy.BulkCopyTimeout = 3600;
@@ -418,7 +402,7 @@ namespace SFA.DAS.Payments.Migration
                     {
                         bulkCopy.ColumnMappings.Add(sqlBulkCopyColumnMapping);
                     }
-                    
+
                     await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
                     await Log("Inserted payments in V2");
 
@@ -434,8 +418,8 @@ namespace SFA.DAS.Payments.Migration
             await Log("Press 1 to process or 0 to ignore...");
             var process = Console.ReadKey().Key == ConsoleKey.D1;
 
-            var periods = new List<int> {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14};
-            var academicYears = new List<int> {1617, 1718, 1819};
+            var periods = new List<int> { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 };
+            var academicYears = new List<int> { 1617, 1718, 1819 };
 
             var periodsToIgnore = ConfigurationManager.AppSettings["PeriodsToIgnore"]
                 .Split(',')
@@ -478,7 +462,7 @@ namespace SFA.DAS.Payments.Migration
                         var collectionPeriodName = $"{academicYear}-R{collectionPeriod:D2}";
 
                         var payments = (await connection
-                            .QueryAsync<Payment>(v1PaymentsSql, new {period = collectionPeriodName},
+                            .QueryAsync<Payment>(v1PaymentsSql, new { period = collectionPeriodName },
                                 commandTimeout: 3600)
                             .ConfigureAwait(false))
                             .ToList();
@@ -507,8 +491,8 @@ namespace SFA.DAS.Payments.Migration
                         await Log($"Retrieved {payments.Count} payments for {collectionPeriodName}");
 
                         using (var scope = new TransactionScope(
-                            TransactionScopeOption.Required, 
-                            TimeSpan.FromMinutes(5), 
+                            TransactionScopeOption.Required,
+                            TimeSpan.FromMinutes(5),
                             TransactionScopeAsyncFlowOption.Enabled))
                         using (var v2Connection =
                             new SqlConnection(ConfigurationManager.ConnectionStrings["V2"].ConnectionString))
@@ -516,7 +500,7 @@ namespace SFA.DAS.Payments.Migration
                         using (var reader = ObjectReader.Create(payments))
                         {
                             await v2Connection.OpenAsync();
-                            await v2Connection.ExecuteAsync(V2Sql.DeletePayments, new {academicYear, collectionPeriod}, commandTimeout:3600);
+                            await v2Connection.ExecuteAsync(V2Sql.DeletePayments, new { academicYear, collectionPeriod }, commandTimeout: 3600);
                             await Log("Deleted existing payments");
 
                             if (v2Connection.State != ConnectionState.Open)
@@ -572,7 +556,7 @@ namespace SFA.DAS.Payments.Migration
             30292,
             30400
         };
-            
+
         static async Task ProcessCommitmentsData(int period)
         {
             using (var v1AccountsConnection = new SqlConnection(ConfigurationManager.ConnectionStrings["V1Accounts"].ConnectionString))
@@ -580,7 +564,7 @@ namespace SFA.DAS.Payments.Migration
             {
                 var accounts = await v1AccountsConnection.QueryAsync<LevyAccount>(V1Sql.Accounts, commandTimeout: 3600);
                 var nonLevyAccounts = new HashSet<long>(accounts.Where(x => !x.IsLevyPayer).Select(x => x.AccountId));
-                
+
                 var collectionPeriodDate = CollectionPeriods.CollectionPeriodDates[period];
                 var commitments = await connection
                     .QueryAsync<Commitment>(V1Sql.Commitments, new { inputDate = collectionPeriodDate })
@@ -590,7 +574,7 @@ namespace SFA.DAS.Payments.Migration
                 var apprenticeships = new List<Apprenticeship>();
                 var apprenticeshipPriceEpisodes = new List<ApprenticeshipPriceEpisode>();
                 var apprenticeshipPause = new List<ApprenticeshipPause>();
-                
+
                 foreach (var commitmentGroup in commitmentsById)
                 {
                     var firstCommitment = commitmentGroup.First();
@@ -643,13 +627,13 @@ namespace SFA.DAS.Payments.Migration
 
                     if (firstCommitment.PaymentStatus == 2)
                     {
-                        apprenticeshipPause.Add(new ApprenticeshipPause{ApprenticeshipId = firstCommitment.CommitmentId});
+                        apprenticeshipPause.Add(new ApprenticeshipPause { ApprenticeshipId = firstCommitment.CommitmentId });
                     }
                 }
 
                 await Log($"Loaded {apprenticeships.Count} commitments");
 
-                using(var scope = new TransactionScope(TransactionScopeOption.Required, new TransactionOptions
+                using (var scope = new TransactionScope(TransactionScopeOption.Required, new TransactionOptions
                 {
                     IsolationLevel = IsolationLevel.Serializable,
                     Timeout = TimeSpan.FromMinutes(15)
@@ -744,7 +728,7 @@ namespace SFA.DAS.Payments.Migration
                 // Data already deleted and identity insert is on
                 var v1Accounts = await connection.QueryAsync<V1Account>(V1Sql.Accounts);
                 var accounts = new List<LevyAccount>();
-                
+
                 foreach (var v1Account in v1Accounts)
                 {
                     accounts.Add(new LevyAccount
@@ -780,7 +764,7 @@ namespace SFA.DAS.Payments.Migration
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("IsLevyPayer", "IsLevyPayer"));
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("TransferAllowance",
                             "TransferAllowance"));
-                   
+
                         await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
                     }
 
@@ -794,7 +778,7 @@ namespace SFA.DAS.Payments.Migration
                     {
                         accountIdsToProcess = accountIds.Skip(page * pageSize).Take(pageSize).ToList();
                         await v2Connection.ExecuteAsync(V2Sql.UpdateLevyPayerFlag,
-                                new {accountIds = accountIdsToProcess})
+                                new { accountIds = accountIdsToProcess })
                             .ConfigureAwait(false);
                         page++;
                     } while (accountIdsToProcess.Any());
