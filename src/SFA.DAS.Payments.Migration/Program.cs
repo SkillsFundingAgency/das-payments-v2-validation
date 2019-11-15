@@ -9,7 +9,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Transactions;
 using Dapper;
-using DocumentFormat.OpenXml.Spreadsheet;
 using FastMember;
 using SFA.DAS.Payments.Migration.Constants;
 using SFA.DAS.Payments.Migration.DTO;
@@ -40,11 +39,17 @@ namespace SFA.DAS.Payments.Migration
                 START:
 
                 await Log("");
-                await Log("What data do you want to migrate");
-                await Log("Please enter 1-Commitments, 2-Accounts, 3-Payments, 4-EAS, " +
-                          "5-V1 Payments, 6-Complete R03, 9-All");
+                await Log("Please select what you would like to migrate:");
+                await Log("1 - Commitments");
+                await Log("2 - Accounts");
+                await Log("3 - Payments");
+                await Log("4 - EAS");
+                await Log("5 - V2 Payments -> V1");
+                await Log("6 - Complete R03");
+                await Log("7 - V2 Transfers that didn't work -> V1");
+                await Log("9 - All V1 -> V2 (1, 2, 3 & 4)");
                 await Log("T - Test Connections");
-                await Log($"Esc - exit");
+                await Log("Esc - exit");
 
                 var typeinput = Console.ReadKey();
 
@@ -110,7 +115,7 @@ namespace SFA.DAS.Payments.Migration
                 await CompleteR03();
             }
 
-            if (typeinputAsInteger == 7)
+            if (selection == 7)
             {
                 await ProcessFailedV1Payments();
             }
@@ -122,6 +127,7 @@ namespace SFA.DAS.Payments.Migration
             await TestConnection("V2", "V2 (Payments/Eas/Commitments/Accounts)");
             await TestConnection("V1Commitments", "V1 Commitments");
             await TestConnection("V1Accounts", "V1 Accounts");
+            await TestConnection("DasCommitments", "DAS Commitments");
         }
 
         private static async Task TestConnection(string connectionString, string friendlyName)
