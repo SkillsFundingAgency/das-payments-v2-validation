@@ -9,6 +9,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Transactions;
 using Dapper;
+using DocumentFormat.OpenXml.Spreadsheet;
 using FastMember;
 using SFA.DAS.Payments.Migration.Constants;
 using SFA.DAS.Payments.Migration.DTO;
@@ -32,75 +33,42 @@ namespace SFA.DAS.Payments.Migration
 
         static async Task Main(string[] args)
         {
+            Console.ForegroundColor = ConsoleColor.White;
+
             try
             {
-                var period = 0;
-                while (period == 0)
-                {
-                    await Log("Please enter the period to initialise or 'T' to test the connections");
-                    await Log("");
-                    var input = Console.ReadLine();
-                    if (input.Equals("T", StringComparison.OrdinalIgnoreCase))
-                    {
-                        await TestConnections();
-                    }
-                    if (!int.TryParse(input, out var inputAsInteger))
-                    {
-                        await Log("Please enter a number between 1 and 14");
-                    }
-                    else
-                    {
-                        if (CollectionPeriods.CollectionPeriodDates.ContainsKey(inputAsInteger))
-                        {
-                            period = inputAsInteger;
-                        }
-                        else
-                        {
-                            await Log("Please enter a number between 1 and 14");
-                        }
-                    }
-                }
+                START:
 
+                await Log("");
                 await Log("What data do you want to migrate");
-                await Log("Please enter 1-Commitments, 2-Accounts, 3-Payments, 4-EAS, 5-V1 Payments, 6-Complete R03, 9-All");
-                var typeinput = Console.ReadLine();
-                if (!int.TryParse(typeinput, out var typeinputAsInteger))
+                await Log("Please enter 1-Commitments, 2-Accounts, 3-Payments, 4-EAS, " +
+                          "5-V1 Payments, 6-Complete R03, 9-All");
+                await Log("T - Test Connections");
+                await Log($"Esc - exit");
+
+                var typeinput = Console.ReadKey();
+
+                if (typeinput.Key == ConsoleKey.Escape)
                 {
-                    await Log("Please enter a number between 1 and 4");
+                    await Log("Finished - press enter to continue...");
+                    Console.ReadLine();
+                    return;
                 }
 
-
-                if (typeinputAsInteger == 1 || typeinputAsInteger == 9)
+                if (typeinput.Key == ConsoleKey.T)
                 {
-                    await ProcessCommitmentsData(period);
-                }
-                if (typeinputAsInteger == 2 || typeinputAsInteger == 9)
-                {
-                    await ProcessAccountsData(period);
+                    await TestConnections();
+                    goto START;
                 }
 
-                if (typeinputAsInteger == 3 || typeinputAsInteger == 9)
+                if (!int.TryParse(typeinput.KeyChar.ToString(), out var typeinputAsInteger))
                 {
-                    await ProcessPayments(period);
+                    await Log("Please enter a number");
+                    goto START;
                 }
 
-                if (typeinputAsInteger == 4 || typeinputAsInteger == 9)
-                {
-                    await ProcessEas();
-                }
-
-                if (typeinputAsInteger == 5)
-                {
-                    await ProcessV1Payments();
-                }
-
-                if (typeinputAsInteger == 6)
-                {
-                    await CompleteR03();
-                }
-
-                await Log("Finished - press enter to continue...");
-                Console.ReadLine();
+                await MakeSelection(typeinputAsInteger);
+                goto START;
             }
             catch (Exception e)
             {
@@ -108,6 +76,38 @@ namespace SFA.DAS.Payments.Migration
                 await Log(e.StackTrace);
                 await Log("Press enter to continue...");
                 Console.ReadLine();
+            }
+        }
+
+        private static async Task MakeSelection(int selection)
+        {
+            if (selection == 1 || selection == 9)
+            {
+                await ProcessCommitmentsData(0);
+            }
+            if (selection == 2 || selection == 9)
+            {
+                await ProcessAccountsData(0);
+            }
+
+            if (selection == 3 || selection == 9)
+            {
+                await ProcessPayments(0);
+            }
+
+            if (selection == 4 || selection == 9)
+            {
+                await ProcessEas();
+            }
+
+            if (selection == 5)
+            {
+                await ProcessV1Payments();
+            }
+
+            if (selection == 6)
+            {
+                await CompleteR03();
             }
         }
 
