@@ -27,5 +27,11 @@ namespace SFA.DAS.Payments.Migration.DTO
         public DateTime? PausedOnDate { get; set; }
         public DateTime? WithdrawnOnDate { get; set; }
         public string LegalEntityName { get; set; }
+
+        public int ApprenticeshipEmployerType { get; set; }
+        public string AccountLegalEntityPublicHashedId { get; set; }
+
+        public int TrainingType { get; set; }
+        public string TrainingCode { get; set; }
     }
 }

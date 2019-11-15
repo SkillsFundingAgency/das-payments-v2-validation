@@ -482,15 +482,35 @@ namespace SFA.DAS.Payments.Migration
         static async Task ProcessCommitmentsData(int period)
         {
             using (var v1AccountsConnection = new SqlConnection(ConfigurationManager.ConnectionStrings["V1Accounts"].ConnectionString))
-            using (var connection = new SqlConnection(ConfigurationManager.ConnectionStrings["V1Commitments"].ConnectionString))
+            using (var connection = new SqlConnection(ConfigurationManager.ConnectionStrings["DASCommitments"].ConnectionString))
             {
                 var accounts = await v1AccountsConnection.QueryAsync<LevyAccount>(V1Sql.Accounts, commandTimeout: 3600);
                 var nonLevyAccounts = new HashSet<long>(accounts.Where(x => !x.IsLevyPayer).Select(x => x.AccountId));
                 
                 var collectionPeriodDate = CollectionPeriods.CollectionPeriodDates[period];
-                var commitments = await connection
-                    .QueryAsync<Commitment>(V1Sql.Commitments, new { inputDate = collectionPeriodDate })
-                    .ConfigureAwait(false);
+                var commitments = (await connection
+                    .QueryAsync<Commitment>(DasSql.Commitments, new { inputDate = collectionPeriodDate })
+                    .ConfigureAwait(false)).ToList();
+
+                foreach (var commitment in commitments)
+                {
+                    if (commitment.TrainingType == 0)
+                    {
+                        commitment.ProgrammeType = 25;
+                        commitment.StandardCode = int.Parse(commitment.TrainingCode);
+                    }
+                    else if (commitment.TrainingType == 1)
+                    {
+                        var portions = commitment.TrainingCode.Split('-');
+                        commitment.FrameworkCode = int.Parse(portions[0]);
+                        commitment.ProgrammeType = int.Parse(portions[1]);
+                        commitment.PathwayCode = int.Parse(portions[2]);
+                    }
+                    else
+                    {
+                        await Log($"Unknown TrainingType: {commitment.TrainingType} for CommitmentId: {commitment.CommitmentId}");
+                    }
+                }
 
                 var commitmentsById = commitments.GroupBy(x => x.CommitmentId);
                 var apprenticeships = new List<Apprenticeship>();
@@ -530,7 +550,7 @@ namespace SFA.DAS.Payments.Migration
                         Id = firstCommitment.CommitmentId,
                         IsLevyPayer = (nonLevyAccounts.Contains(firstCommitment.AccountId)) ? false : true,
                         AgreedOnDate = agreedOnDate,
-                        ApprenticeshipEmployerType = (NonLevyAccountIds.Contains(firstCommitment.AccountId)) ? 0 : 1,
+                        ApprenticeshipEmployerType = firstCommitment.ApprenticeshipEmployerType,
                         CreationDate = DateTime.Now,
                     });
 
