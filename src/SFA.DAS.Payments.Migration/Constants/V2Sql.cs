@@ -55,5 +55,26 @@
                 OFFSET @offset ROWS
                 FETCH NEXT @pageSize ROWS ONLY
                 ";
+
+        public const string PaymentsAndEarningsForFailedTransfers = @"
+                SELECT R2.EventId [RequiredPaymentEventId], P.*, 
+	                ISNULL(E.LearningAimSequenceNumber, 0) [LearningAimSequenceNumber], R2.Amount [AmountDue]
+                FROM [Payments2].[Payment] P 
+                LEFT JOIN Payments2.FundingSourceEvent F 
+	                ON F.EventId = P.FundingSourceEventId
+                LEFT JOIN Payments2.EarningEvent E 
+	                ON E.EventId = P.EarningEventId
+                LEFT JOIN Payments2.RequiredPaymentEvent R 
+    	            ON R.EventId = F.RequiredPaymentEventId
+                LEFT JOIN Payments2.RequiredPaymentEvent R2
+	                ON R2.EarningEventId = E.EventId
+	                AND R2.LearnerUln = P.LearnerUln
+	                AND R2.TransactionType = P.TransactionType
+                    AND R2.DeliveryPeriod = P.DeliveryPeriod
+                WHERE P.AcademicYear = 1920
+                    AND P.CollectionPeriod IN (3)
+	                AND R.EventId IS NULL
+                ORDER BY R2.EventId
+            ";
     }
 }

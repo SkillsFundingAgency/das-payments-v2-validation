@@ -11,8 +11,13 @@ namespace SFA.DAS.Payments.Migration.Services
         private static readonly HashSet<Guid> ProcessedRequiredPayments = new HashSet<Guid>();
 
         public (List<LegacyPaymentModel> payments, List<LegacyRequiredPaymentModel> requiredPayments, List<LegacyEarningModel> earnings)
-            MapV2Payments(List<V2PaymentAndEarning> payments)
+            MapV2Payments(List<V2PaymentAndEarning> payments, HashSet<Guid> dontCreateRequiredPaymentList)
         {
+            foreach (var guid in dontCreateRequiredPaymentList)
+            {
+                ProcessedRequiredPayments.Add(guid);
+            }
+            
             var legacyPayments = new List<LegacyPaymentModel>();
             var legacyRequiredPayments = new Dictionary<Guid, LegacyRequiredPaymentModel>();
             var legacyEarnings = new List<LegacyEarningModel>();
@@ -50,7 +55,7 @@ namespace SFA.DAS.Payments.Migration.Services
                     ProgrammeType = paymentModel.LearningAimProgrammeType,
                     SfaContributionPercentage = paymentModel.SfaContributionPercentage,
                     StandardCode = paymentModel.LearningAimStandardCode,
-                    TransactionType = (int)paymentModel.TransactionType,
+                    TransactionType = paymentModel.TransactionType,
                     Ukprn = paymentModel.Ukprn,
                     Uln = paymentModel.LearnerUln,
                 };
