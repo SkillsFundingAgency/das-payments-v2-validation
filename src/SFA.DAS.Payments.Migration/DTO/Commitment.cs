@@ -4,7 +4,7 @@ namespace SFA.DAS.Payments.Migration.DTO
 {
     class Commitment
     {
-        public long CommitmentId { get; set; }
+        public long ApprenticeshipId { get; set; }
         public long EventId { get; set; }
         public string VersionId { get; set; }
         public long Uln { get; set; }

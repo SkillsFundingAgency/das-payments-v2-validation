@@ -3,7 +3,7 @@
     static class DasSql
     {
         public static string Commitments = @"
-            SELECT  A.Id [CommitmentId], 
+            SELECT  A.Id [ApprenticeshipId], 
                 A.Uln, 
                 ProviderId [Ukprn], 
                 EmployerAccountId [AccountId], 

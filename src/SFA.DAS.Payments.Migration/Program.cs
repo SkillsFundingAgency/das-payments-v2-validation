@@ -548,20 +548,6 @@ namespace SFA.DAS.Payments.Migration
                 ;
         }
 
-        static readonly HashSet<long> NonLevyAccountIds = new HashSet<long>
-        {
-            29152,
-            29182,
-            29202,
-            29264,
-            29378,
-            29826,
-            29829,
-            29932,
-            30292,
-            30400
-        };
-
         static async Task ProcessCommitmentsData(int period)
         {
             using (var v1AccountsConnection = new SqlConnection(ConfigurationManager.ConnectionStrings["V1Accounts"].ConnectionString))
@@ -591,11 +577,12 @@ namespace SFA.DAS.Payments.Migration
                     }
                     else
                     {
-                        await Log($"Unknown TrainingType: {commitment.TrainingType} for CommitmentId: {commitment.CommitmentId}");
+                        await Log($"Unknown TrainingType: {commitment.TrainingType} for CommitmentId: {commitment.ApprenticeshipId}");
                     }
                 }
 
-                var commitmentsById = commitments.GroupBy(x => x.CommitmentId);
+                // ApprenticeshipId is what used to be called CommitmentId
+                var commitmentsById = commitments.GroupBy(x => x.ApprenticeshipId);
                 var apprenticeships = new List<Apprenticeship>();
                 var apprenticeshipPriceEpisodes = new List<ApprenticeshipPriceEpisode>();
                 var apprenticeshipPause = new List<ApprenticeshipPause>();
@@ -630,7 +617,7 @@ namespace SFA.DAS.Payments.Migration
                         TransferSendingEmployerAccountId = firstCommitment.TransferSendingEmployerAccountId,
                         Ukprn = firstCommitment.Ukprn,
                         Uln = firstCommitment.Uln,
-                        Id = firstCommitment.CommitmentId,
+                        Id = firstCommitment.ApprenticeshipId,
                         IsLevyPayer = (nonLevyAccounts.Contains(firstCommitment.AccountId)) ? false : true,
                         AgreedOnDate = agreedOnDate,
                         ApprenticeshipEmployerType = firstCommitment.ApprenticeshipEmployerType,
@@ -641,7 +628,7 @@ namespace SFA.DAS.Payments.Migration
                     {
                         apprenticeshipPriceEpisodes.Add(new ApprenticeshipPriceEpisode
                         {
-                            ApprenticeshipId = firstCommitment.CommitmentId,
+                            ApprenticeshipId = firstCommitment.ApprenticeshipId,
                             Cost = commitment.AgreedCost,
                             EndDate = commitment.EffectiveToDate,
                             Removed = false,
@@ -652,7 +639,7 @@ namespace SFA.DAS.Payments.Migration
 
                     if (firstCommitment.PaymentStatus == 2)
                     {
-                        apprenticeshipPause.Add(new ApprenticeshipPause { ApprenticeshipId = firstCommitment.CommitmentId });
+                        apprenticeshipPause.Add(new ApprenticeshipPause { ApprenticeshipId = firstCommitment.ApprenticeshipId });
                     }
                 }
 
