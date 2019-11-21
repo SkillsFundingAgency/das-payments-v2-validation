@@ -88,7 +88,7 @@ namespace SFA.DAS.Payments.Migration
         {
             if (selection == 1 || selection == 9)
             {
-                await ProcessCommitmentsData(0);
+                await ProcessCommitmentsData();
             }
             if (selection == 2 || selection == 9)
             {
@@ -548,7 +548,7 @@ namespace SFA.DAS.Payments.Migration
                 ;
         }
 
-        static async Task ProcessCommitmentsData(int period)
+        static async Task ProcessCommitmentsData()
         {
             using (var v1AccountsConnection = new SqlConnection(ConfigurationManager.ConnectionStrings["V1Accounts"].ConnectionString))
             using (var connection = new SqlConnection(ConfigurationManager.ConnectionStrings["DASCommitments"].ConnectionString))
@@ -556,9 +556,8 @@ namespace SFA.DAS.Payments.Migration
                 var accounts = await v1AccountsConnection.QueryAsync<LevyAccount>(V1Sql.Accounts, commandTimeout: 3600);
                 var nonLevyAccounts = new HashSet<long>(accounts.Where(x => !x.IsLevyPayer).Select(x => x.AccountId));
 
-                var collectionPeriodDate = CollectionPeriods.CollectionPeriodDates[period];
                 var commitments = (await connection
-                    .QueryAsync<Commitment>(DasSql.Commitments, new { inputDate = collectionPeriodDate })
+                    .QueryAsync<Commitment>(DasSql.Commitments)
                     .ConfigureAwait(false)).ToList();
 
                 foreach (var commitment in commitments)
