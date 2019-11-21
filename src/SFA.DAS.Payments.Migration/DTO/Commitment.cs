@@ -13,10 +13,10 @@ namespace SFA.DAS.Payments.Migration.DTO
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
         public decimal AgreedCost { get; set; }
-        public int? StandardCode { get; set; }
-        public int? ProgrammeType { get; set; }
-        public int? FrameworkCode { get; set; }
-        public int? PathwayCode { get; set; }
+        public int StandardCode { get; set; }
+        public int ProgrammeType { get; set; }
+        public int FrameworkCode { get; set; }
+        public int PathwayCode { get; set; }
         public int PaymentStatus { get; set; }
         public string PaymentStatusDescription { get; set; }
         public int Priority { get; set; }

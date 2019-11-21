@@ -638,7 +638,11 @@ namespace SFA.DAS.Payments.Migration
 
                     if (firstCommitment.PaymentStatus == 2)
                     {
-                        apprenticeshipPause.Add(new ApprenticeshipPause { ApprenticeshipId = firstCommitment.ApprenticeshipId });
+                        apprenticeshipPause.Add(new ApprenticeshipPause
+                        {
+                            ApprenticeshipId = firstCommitment.ApprenticeshipId,
+                            PauseDate = firstCommitment.PausedOnDate ?? new DateTime(1900,1,1),
+                        });
                     }
                 }
 
