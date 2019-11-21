@@ -21,7 +21,7 @@
                 LegalEntityName, 
                 TrainingType,
                 TrainingCode,  
-	            ApprenticeshipEmployerTypeOnApproval [ApprenticeshipEmployerType], 
+	            ISNULL(ApprenticeshipEmployerTypeOnApproval, 1) [ApprenticeshipEmployerType], 
 	            AccountLegalEntityPublicHashedId
 	            
             FROM [dbo].[Apprenticeship] A
