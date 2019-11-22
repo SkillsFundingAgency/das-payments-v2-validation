@@ -623,7 +623,7 @@ namespace SFA.DAS.Payments.Migration
                             EndDate = commitment.EffectiveToDate,
                             Removed = false,
                             StartDate = commitment.EffectiveFromDate,
-                            CreationDate = DateTime.Now,
+                            CreationDate = firstCommitment.CreatedDate,
                         });
                     }
 
@@ -682,6 +682,7 @@ namespace SFA.DAS.Payments.Migration
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("AgreedOnDate", "AgreedOnDate"));
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("ApprenticeshipEmployerType", "ApprenticeshipEmployerType"));
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("CreationDate", "CreationDate"));
+                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("AgreementId", "AgreementId"));
 
                         await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
                     }
