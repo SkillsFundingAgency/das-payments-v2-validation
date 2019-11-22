@@ -22,7 +22,9 @@
                 TrainingType,
                 TrainingCode,  
 	            ISNULL(ApprenticeshipEmployerTypeOnApproval, 1) [ApprenticeshipEmployerType], 
-	            AccountLegalEntityPublicHashedId
+	            AccountLegalEntityPublicHashedId,
+                A.AgreedOn [AgreedOnDate],
+                A.CreatedOn [CreatedDate]
 	            
             FROM [dbo].[Apprenticeship] A
             JOIN PriceHistory H

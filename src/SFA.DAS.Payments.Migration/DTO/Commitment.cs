@@ -33,5 +33,7 @@ namespace SFA.DAS.Payments.Migration.DTO
 
         public int TrainingType { get; set; }
         public string TrainingCode { get; set; }
+        public DateTime AgreedOnDate { get; set; }
+        public DateTime CreatedDate { get; set; }
     }
 }

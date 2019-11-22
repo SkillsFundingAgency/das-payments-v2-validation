@@ -589,17 +589,7 @@ namespace SFA.DAS.Payments.Migration
                 foreach (var commitmentGroup in commitmentsById)
                 {
                     var firstCommitment = commitmentGroup.First();
-                    DateTime agreedOnDate;
-                    if (firstCommitment.TransferSendingEmployerAccountId.HasValue &&
-                        firstCommitment.TransferSendingEmployerAccountId != 0 &&
-                        firstCommitment.TransferApprovalDate.HasValue)
-                    {
-                        agreedOnDate = firstCommitment.TransferApprovalDate.Value;
-                    }
-                    else
-                    {
-                        agreedOnDate = new DateTime(1950, 1, 1).AddDays(firstCommitment.Priority);
-                    }
+                    
                     apprenticeships.Add(new Apprenticeship
                     {
                         AccountId = firstCommitment.AccountId,
@@ -618,9 +608,10 @@ namespace SFA.DAS.Payments.Migration
                         Uln = firstCommitment.Uln,
                         Id = firstCommitment.ApprenticeshipId,
                         IsLevyPayer = (nonLevyAccounts.Contains(firstCommitment.AccountId)) ? false : true,
-                        AgreedOnDate = agreedOnDate,
+                        AgreedOnDate = firstCommitment.AgreedOnDate,
                         ApprenticeshipEmployerType = firstCommitment.ApprenticeshipEmployerType,
-                        CreationDate = DateTime.Now,
+                        CreationDate = firstCommitment.CreatedDate,
+                        AgreementId = firstCommitment.AccountLegalEntityPublicHashedId,
                     });
 
                     foreach (var commitment in commitmentGroup)
