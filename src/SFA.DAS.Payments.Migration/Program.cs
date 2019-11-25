@@ -36,7 +36,7 @@ namespace SFA.DAS.Payments.Migration
 
             try
             {
-                START:
+            START:
 
                 await Log("");
                 await Log("Please select what you would like to migrate:");
@@ -299,7 +299,7 @@ namespace SFA.DAS.Payments.Migration
                 await Log($"Loaded {paymentsAndEarnings.Count} records");
 
                 // Map
-                var outputResults = mapper.MapV2Payments(paymentsAndEarnings, new HashSet<Guid>{Guid.Parse("f1a39005-3e13-41af-b427-b4c6e21daa37") });
+                var outputResults = mapper.MapV2Payments(paymentsAndEarnings, new HashSet<Guid> { Guid.Parse("f1a39005-3e13-41af-b427-b4c6e21daa37") });
 
                 var requiredPayments = outputResults.requiredPayments;
                 var payments = outputResults.payments;
@@ -550,15 +550,21 @@ namespace SFA.DAS.Payments.Migration
 
         static async Task ProcessCommitmentsData()
         {
-            using (var v1AccountsConnection = new SqlConnection(ConfigurationManager.ConnectionStrings["V1Accounts"].ConnectionString))
-            using (var connection = new SqlConnection(ConfigurationManager.ConnectionStrings["DASCommitments"].ConnectionString))
+            using (var scope = new TransactionScope(TransactionScopeOption.Required, new TransactionOptions
             {
-                var accounts = await v1AccountsConnection.QueryAsync<LevyAccount>(V1Sql.Accounts, commandTimeout: 3600);
-                var nonLevyAccounts = new HashSet<long>(accounts.Where(x => !x.IsLevyPayer).Select(x => x.AccountId));
+                IsolationLevel = IsolationLevel.Serializable,
+                Timeout = TimeSpan.FromMinutes(15)
+            }, TransactionScopeAsyncFlowOption.Enabled))
+            using (var dasConnection = new SqlConnection(ConfigurationManager.ConnectionStrings["DASCommitments"].ConnectionString))
+            using (var v2Connection = new SqlConnection(ConfigurationManager.ConnectionStrings["V2"].ConnectionString))
+            {
+                var accounts = await v2Connection.QueryAsync<LevyAccount>("SELECT AccountId, IsLevyPayer FROM Payments2.LevyAccount", commandTimeout: 3600);
+                var levyAccounts = new HashSet<long>(accounts.Where(x => x.IsLevyPayer).Select(x => x.AccountId));
 
-                var commitments = (await connection
+                var commitments = (await dasConnection
                     .QueryAsync<Commitment>(DasSql.Commitments)
-                    .ConfigureAwait(false)).ToList();
+                    .ConfigureAwait(false))
+                    .ToList();
 
                 foreach (var commitment in commitments)
                 {
@@ -589,7 +595,7 @@ namespace SFA.DAS.Payments.Migration
                 foreach (var commitmentGroup in commitmentsById)
                 {
                     var firstCommitment = commitmentGroup.First();
-                    
+
                     apprenticeships.Add(new Apprenticeship
                     {
                         AccountId = firstCommitment.AccountId,
@@ -607,7 +613,7 @@ namespace SFA.DAS.Payments.Migration
                         Ukprn = firstCommitment.Ukprn,
                         Uln = firstCommitment.Uln,
                         Id = firstCommitment.ApprenticeshipId,
-                        IsLevyPayer = (nonLevyAccounts.Contains(firstCommitment.AccountId)) ? false : true,
+                        IsLevyPayer = levyAccounts.Contains(firstCommitment.AccountId),
                         AgreedOnDate = firstCommitment.AgreedOnDate,
                         ApprenticeshipEmployerType = firstCommitment.ApprenticeshipEmployerType,
                         CreationDate = firstCommitment.CreatedDate,
@@ -632,98 +638,107 @@ namespace SFA.DAS.Payments.Migration
                         apprenticeshipPause.Add(new ApprenticeshipPause
                         {
                             ApprenticeshipId = firstCommitment.ApprenticeshipId,
-                            PauseDate = firstCommitment.PausedOnDate ?? new DateTime(1900,1,1),
+                            PauseDate = firstCommitment.PausedOnDate ?? new DateTime(1900, 1, 1),
                         });
                     }
                 }
 
                 await Log($"Loaded {apprenticeships.Count} commitments");
 
-                using (var scope = new TransactionScope(TransactionScopeOption.Required, new TransactionOptions
+                var providerPriority = (await dasConnection
+                    .QueryAsync<ProviderPriority>("SELECT * FROM CustomProviderPaymentPriority"))
+                    .ToList();
+                await Log($"Loaded {providerPriority.Count} provider priority records");
+
+                await v2Connection.OpenAsync().ConfigureAwait(false);
+
+                using (var bulkCopy = new SqlBulkCopy(v2Connection))
+                using (var reader = ObjectReader.Create(apprenticeships))
                 {
-                    IsolationLevel = IsolationLevel.Serializable,
-                    Timeout = TimeSpan.FromMinutes(15)
-                }, TransactionScopeAsyncFlowOption.Enabled))
-                using (var v2Connection =
-                    new SqlConnection(ConfigurationManager.ConnectionStrings["V2"].ConnectionString))
-                {
-                    await v2Connection.OpenAsync().ConfigureAwait(false);
+                    await v2Connection.ExecuteAsync(V2Sql.DeleteCommitments, commandTimeout: 3600).ConfigureAwait(false);
+                    await Log("Deleted old data");
 
-                    using (var bulkCopy = new SqlBulkCopy(v2Connection))
-                    using (var reader = ObjectReader.Create(apprenticeships))
-                    {
-                        await v2Connection.ExecuteAsync(V2Sql.DeleteCommitments, commandTimeout: 3600).ConfigureAwait(false);
-                        await Log("Deleted old data");
+                    bulkCopy.DestinationTableName = "Payments2.Apprenticeship";
+                    bulkCopy.BatchSize = 5000;
+                    bulkCopy.BulkCopyTimeout = 3600;
 
-                        bulkCopy.DestinationTableName = "Payments2.Apprenticeship";
-                        bulkCopy.BatchSize = 5000;
-                        bulkCopy.BulkCopyTimeout = 3600;
+                    bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("AccountId", "AccountId"));
+                    bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("EstimatedEndDate",
+                        "EstimatedEndDate"));
+                    bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("EstimatedStartDate",
+                        "EstimatedStartDate"));
+                    bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("FrameworkCode", "FrameworkCode"));
+                    bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("LegalEntityName",
+                        "LegalEntityName"));
+                    bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("PathwayCode", "PathwayCode"));
+                    bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("ProgrammeType", "ProgrammeType"));
+                    bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("Priority", "Priority"));
+                    bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("StandardCode", "StandardCode"));
+                    bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("Status", "Status"));
+                    bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("StopDate", "StopDate"));
+                    bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("TransferSendingEmployerAccountId",
+                        "TransferSendingEmployerAccountId"));
+                    bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("Ukprn", "Ukprn"));
+                    bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("Uln", "Uln"));
+                    bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("Id", "Id"));
+                    bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("IsLevyPayer", "IsLevyPayer"));
+                    bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("AgreedOnDate", "AgreedOnDate"));
+                    bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("ApprenticeshipEmployerType", "ApprenticeshipEmployerType"));
+                    bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("CreationDate", "CreationDate"));
+                    bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("AgreementId", "AgreementId"));
 
-                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("AccountId", "AccountId"));
-                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("EstimatedEndDate",
-                            "EstimatedEndDate"));
-                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("EstimatedStartDate",
-                            "EstimatedStartDate"));
-                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("FrameworkCode", "FrameworkCode"));
-                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("LegalEntityName",
-                            "LegalEntityName"));
-                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("PathwayCode", "PathwayCode"));
-                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("ProgrammeType", "ProgrammeType"));
-                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("Priority", "Priority"));
-                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("StandardCode", "StandardCode"));
-                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("Status", "Status"));
-                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("StopDate", "StopDate"));
-                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("TransferSendingEmployerAccountId",
-                            "TransferSendingEmployerAccountId"));
-                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("Ukprn", "Ukprn"));
-                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("Uln", "Uln"));
-                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("Id", "Id"));
-                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("IsLevyPayer", "IsLevyPayer"));
-                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("AgreedOnDate", "AgreedOnDate"));
-                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("ApprenticeshipEmployerType", "ApprenticeshipEmployerType"));
-                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("CreationDate", "CreationDate"));
-                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("AgreementId", "AgreementId"));
-
-                        await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
-                    }
-                    await Log("Saved apprenticeships");
-
-                    using (var bulkCopy = new SqlBulkCopy(v2Connection))
-                    using (var reader = ObjectReader.Create(apprenticeshipPriceEpisodes))
-                    {
-                        bulkCopy.DestinationTableName = "Payments2.ApprenticeshipPriceEpisode";
-                        bulkCopy.BatchSize = 5000;
-                        bulkCopy.BulkCopyTimeout = 3600;
-
-                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("ApprenticeshipId",
-                            "ApprenticeshipId"));
-                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("Cost", "Cost"));
-                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("EndDate", "EndDate"));
-                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("Removed", "Removed"));
-                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("StartDate", "StartDate"));
-                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("CreationDate", "CreationDate"));
-
-                        await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
-                    }
-                    await Log("Saved apprenticeship price episodes");
-
-                    using (var bulkCopy = new SqlBulkCopy(v2Connection))
-                    using (var reader = ObjectReader.Create(apprenticeshipPause))
-                    {
-                        bulkCopy.DestinationTableName = "Payments2.ApprenticeshipPause";
-                        bulkCopy.BatchSize = 5000;
-                        bulkCopy.BulkCopyTimeout = 3600;
-
-                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("ApprenticeshipId", "ApprenticeshipId"));
-                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("PauseDate", "PauseDate"));
-
-                        await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
-                    }
-                    await Log("Saved apprenticeship pauses");
-
-                    scope.Complete();
-                    await Log("Committed transaction");
+                    await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
                 }
+                await Log("Saved apprenticeships");
+
+                using (var bulkCopy = new SqlBulkCopy(v2Connection))
+                using (var reader = ObjectReader.Create(apprenticeshipPriceEpisodes))
+                {
+                    bulkCopy.DestinationTableName = "Payments2.ApprenticeshipPriceEpisode";
+                    bulkCopy.BatchSize = 5000;
+                    bulkCopy.BulkCopyTimeout = 3600;
+
+                    bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("ApprenticeshipId",
+                        "ApprenticeshipId"));
+                    bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("Cost", "Cost"));
+                    bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("EndDate", "EndDate"));
+                    bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("Removed", "Removed"));
+                    bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("StartDate", "StartDate"));
+                    bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("CreationDate", "CreationDate"));
+
+                    await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
+                }
+                await Log("Saved apprenticeship price episodes");
+
+                using (var bulkCopy = new SqlBulkCopy(v2Connection))
+                using (var reader = ObjectReader.Create(apprenticeshipPause))
+                {
+                    bulkCopy.DestinationTableName = "Payments2.ApprenticeshipPause";
+                    bulkCopy.BatchSize = 5000;
+                    bulkCopy.BulkCopyTimeout = 3600;
+
+                    bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("ApprenticeshipId", "ApprenticeshipId"));
+                    bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("PauseDate", "PauseDate"));
+
+                    await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
+                }
+                await Log("Saved apprenticeship pauses");
+
+                using (var bulkCopy = new SqlBulkCopy(v2Connection))
+                using (var reader = ObjectReader.Create(providerPriority))
+                {
+                    bulkCopy.DestinationTableName = "Payments2.EmployerProviderPriority";
+                    bulkCopy.BatchSize = 5000;
+                    bulkCopy.BulkCopyTimeout = 3600;
+                    bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("EmployerAccountId", "EmployerAccountId"));
+                    bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("ProviderId", "Ukprn"));
+                    bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("PriorityOrder", "Order"));
+
+                    await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
+                }
+
+                scope.Complete();
+                await Log("Committed transaction");
             }
         }
 

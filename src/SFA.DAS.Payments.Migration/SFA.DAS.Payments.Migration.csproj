@@ -94,6 +94,7 @@
     <Compile Include="DTO\LevyAccount.cs" />
     <Compile Include="DTO\NonLevyCommitment.cs" />
     <Compile Include="DTO\Payment.cs" />
+    <Compile Include="DTO\ProviderPriority.cs" />
     <Compile Include="DTO\V2PaymentAndEarning.cs" />
     <Compile Include="DTO\V1Account.cs" />
     <Compile Include="Program.cs" />
