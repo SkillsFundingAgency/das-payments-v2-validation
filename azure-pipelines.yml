@@ -29,14 +29,15 @@ steps:
     restoreSolution: '$(solution)'
 
 - task: VSBuild@1
-  enabled: false
   inputs:
     solution: '$(solution)'
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
+    msbuildArgs: '/p:OutDir=$(Build.ArtifactStagingDirectory)'
 
 
 - task: MSBuild@1
+  enabled: false
   inputs:
     solution: '**/*.sln'
     platform: '$(buildPlatform)'
