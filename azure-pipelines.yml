@@ -10,12 +10,14 @@ resources:
 #trigger:
 #- master
 
+#pool:
+#  name: DCT
+#  demands:
+#  - IsBuildServer
+#  - msbuild
 pool:
-  name: DCT
-  demands:
-  - IsBuildServer
-  - msbuild
-  
+  vmImage: 'windows-latest'  
+
 variables:
   solution: '**/*.sln'
   buildPlatform: 'Any CPU'
