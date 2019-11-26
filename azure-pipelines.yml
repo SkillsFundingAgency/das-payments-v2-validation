@@ -11,8 +11,11 @@ resources:
 #- master
 
 pool:
-  vmImage: 'windows-latest'
-
+  name: DCT
+  demands:
+  - IsBuildServer
+  - msbuild
+  
 variables:
   solution: '**/*.sln'
   buildPlatform: 'Any CPU'
@@ -37,7 +40,7 @@ steps:
   inputs:
     solution: '**/*.sln'
     platform: '$(buildPlatform)'
-    msbuildArguments: 'OutDir=$(Build.ArtifactStagingDirectory)'
+    msbuildArguments: '/p:OutDir=$(Build.ArtifactStagingDirectory)'
 
 - task: VSTest@2
   inputs:
