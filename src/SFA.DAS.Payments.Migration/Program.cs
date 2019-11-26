@@ -553,10 +553,10 @@ namespace SFA.DAS.Payments.Migration
             HashSet<long> levyAccounts;
             using (var v2Connection = new SqlConnection(ConfigurationManager.ConnectionStrings["V2"].ConnectionString))
             {
-                var accounts = await v2Connection.QueryAsync<LevyAccount>(
-                    "SELECT AccountId, IsLevyPayer FROM Payments2.LevyAccount",
+                var accounts = await v2Connection.QueryAsync<long>(
+                    "SELECT AccountId FROM Payments2.LevyAccount WHERE IsLevyPayer = 1",
                     commandTimeout: 3600);
-                levyAccounts = new HashSet<long>(accounts.Where(x => x.IsLevyPayer).Select(x => x.AccountId));
+                levyAccounts = new HashSet<long>(accounts);
             }
 
             using (var dasConnection = new SqlConnection(ConfigurationManager.ConnectionStrings["DASCommitments"].ConnectionString))
