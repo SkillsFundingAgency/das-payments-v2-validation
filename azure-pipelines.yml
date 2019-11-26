@@ -10,8 +10,13 @@ resources:
 #trigger:
 #- master
 
+#pool:
+#  name: DCT
+#  demands:
+#  - IsBuildServer
+#  - msbuild
 pool:
-  vmImage: 'windows-latest'
+  vmImage: 'windows-latest'  
 
 variables:
   solution: '**/*.sln'
@@ -30,9 +35,25 @@ steps:
     solution: '$(solution)'
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
+    msbuildArgs: '/p:OutDir=$(Build.ArtifactStagingDirectory)'
+
+
+- task: MSBuild@1
+  enabled: false
+  inputs:
+    solution: '**/*.sln'
+    platform: '$(buildPlatform)'
+    msbuildArguments: '/p:OutDir=$(Build.ArtifactStagingDirectory)'
 
 
 - task: VSTest@2
   inputs:
     platform: '$(buildPlatform)'
     configuration: '$(buildConfiguration)'
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    ArtifactName: 'drop'
+    publishLocation: 'Container'
+
