@@ -659,6 +659,8 @@ namespace SFA.DAS.Payments.Migration
                 {
                     await v2Connection.OpenAsync().ConfigureAwait(false);
 
+                    await v2Connection.ExecuteAsync("DELETE Payments2.EmployerProviderPriority", commandTimeout: 3600);
+
                     using (var bulkCopy = new SqlBulkCopy(v2Connection))
                     using (var reader = ObjectReader.Create(apprenticeships))
                     {
