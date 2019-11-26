@@ -4,7 +4,7 @@ namespace SFA.DAS.Payments.Migration.DTO
 {
     class Commitment
     {
-        public long CommitmentId { get; set; }
+        public long ApprenticeshipId { get; set; }
         public long EventId { get; set; }
         public string VersionId { get; set; }
         public long Uln { get; set; }
@@ -13,10 +13,10 @@ namespace SFA.DAS.Payments.Migration.DTO
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
         public decimal AgreedCost { get; set; }
-        public int? StandardCode { get; set; }
-        public int? ProgrammeType { get; set; }
-        public int? FrameworkCode { get; set; }
-        public int? PathwayCode { get; set; }
+        public int StandardCode { get; set; }
+        public int ProgrammeType { get; set; }
+        public int FrameworkCode { get; set; }
+        public int PathwayCode { get; set; }
         public int PaymentStatus { get; set; }
         public string PaymentStatusDescription { get; set; }
         public int Priority { get; set; }
@@ -27,5 +27,13 @@ namespace SFA.DAS.Payments.Migration.DTO
         public DateTime? PausedOnDate { get; set; }
         public DateTime? WithdrawnOnDate { get; set; }
         public string LegalEntityName { get; set; }
+
+        public int ApprenticeshipEmployerType { get; set; }
+        public string AccountLegalEntityPublicHashedId { get; set; }
+
+        public int TrainingType { get; set; }
+        public string TrainingCode { get; set; }
+        public DateTime AgreedOnDate { get; set; }
+        public DateTime CreatedDate { get; set; }
     }
 }

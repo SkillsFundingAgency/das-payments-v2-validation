@@ -32,81 +32,48 @@ namespace SFA.DAS.Payments.Migration
 
         static async Task Main(string[] args)
         {
+            Console.ForegroundColor = ConsoleColor.White;
+
             try
             {
-                var period = 0;
-                while (period == 0)
+            START:
+
+                await Log("");
+                await Log("Please select what you would like to migrate:");
+                await Log("1 - Commitments");
+                await Log("2 - Accounts");
+                await Log("3 - Payments");
+                await Log("4 - EAS");
+                await Log("5 - V2 Payments -> V1");
+                await Log("6 - Complete R03");
+                await Log("7 - V2 Transfers that didn't work -> V1");
+                await Log("9 - All V1 -> V2 (1, 2, 3 & 4)");
+                await Log("T - Test Connections");
+                await Log("Esc - exit");
+
+                var typeinput = Console.ReadKey();
+
+                if (typeinput.Key == ConsoleKey.Escape)
                 {
-                    await Log("Please enter the period to initialise or 'T' to test the connections");
-                    await Log("");
-                    var input = Console.ReadLine();
-                    if (input.Equals("T", StringComparison.OrdinalIgnoreCase))
-                    {
-                        await TestConnections();
-                    }
-                    if (!int.TryParse(input, out var inputAsInteger))
-                    {
-                        await Log("Please enter a number between 1 and 14");
-                    }
-                    else
-                    {
-                        if (CollectionPeriods.CollectionPeriodDates.ContainsKey(inputAsInteger))
-                        {
-                            period = inputAsInteger;
-                        }
-                        else
-                        {
-                            await Log("Please enter a number between 1 and 14");
-                        }
-                    }
+                    await Log("Finished - press enter to continue...");
+                    Console.ReadLine();
+                    return;
                 }
 
-                await Log("What data do you want to migrate");
-                await Log("Please enter 1-Commitments, 2-Accounts, 3-V1 Payments->V2, 4-EAS, " +
-                          "5-V2 Payments->V1, 6-Complete R03, 7-Failed Transfer Payments->V1,  9-All");
-                var typeinput = Console.ReadLine();
-                if (!int.TryParse(typeinput, out var typeinputAsInteger))
+                if (typeinput.Key == ConsoleKey.T)
                 {
-                    await Log("Please enter a number between 1 and 4");
+                    await TestConnections();
+                    goto START;
                 }
 
-
-                if (typeinputAsInteger == 1 || typeinputAsInteger == 9)
+                if (!int.TryParse(typeinput.KeyChar.ToString(), out var typeinputAsInteger))
                 {
-                    await ProcessCommitmentsData(period);
-                }
-                if (typeinputAsInteger == 2 || typeinputAsInteger == 9)
-                {
-                    await ProcessAccountsData(period);
+                    await Log("Please enter a number");
+                    goto START;
                 }
 
-                if (typeinputAsInteger == 3 || typeinputAsInteger == 9)
-                {
-                    await ProcessPayments(period);
-                }
-
-                if (typeinputAsInteger == 4 || typeinputAsInteger == 9)
-                {
-                    await ProcessEas();
-                }
-
-                if (typeinputAsInteger == 5)
-                {
-                    await ProcessV1Payments();
-                }
-
-                if (typeinputAsInteger == 6)
-                {
-                    await CompleteR03();
-                }
-
-                if (typeinputAsInteger == 7)
-                {
-                    await ProcessFailedV1Payments();
-                }
-
-                await Log("Finished - press enter to continue...");
-                Console.ReadLine();
+                await MakeSelection(typeinputAsInteger);
+                goto START;
             }
             catch (Exception e)
             {
@@ -117,12 +84,50 @@ namespace SFA.DAS.Payments.Migration
             }
         }
 
+        private static async Task MakeSelection(int selection)
+        {
+            if (selection == 1 || selection == 9)
+            {
+                await ProcessCommitmentsData();
+            }
+            if (selection == 2 || selection == 9)
+            {
+                await ProcessAccountsData(0);
+            }
+
+            if (selection == 3 || selection == 9)
+            {
+                await ProcessPayments(0);
+            }
+
+            if (selection == 4 || selection == 9)
+            {
+                await ProcessEas();
+            }
+
+            if (selection == 5)
+            {
+                await ProcessV1Payments();
+            }
+
+            if (selection == 6)
+            {
+                await CompleteR03();
+            }
+
+            if (selection == 7)
+            {
+                await ProcessFailedV1Payments();
+            }
+        }
+
         private static async Task TestConnections()
         {
             await TestConnection("V1", "V1 Payments + Eas");
             await TestConnection("V2", "V2 (Payments/Eas/Commitments/Accounts)");
             await TestConnection("V1Commitments", "V1 Commitments");
             await TestConnection("V1Accounts", "V1 Accounts");
+            await TestConnection("DasCommitments", "DAS Commitments");
         }
 
         private static async Task TestConnection(string connectionString, string friendlyName)
@@ -294,7 +299,7 @@ namespace SFA.DAS.Payments.Migration
                 await Log($"Loaded {paymentsAndEarnings.Count} records");
 
                 // Map
-                var outputResults = mapper.MapV2Payments(paymentsAndEarnings, new HashSet<Guid>{Guid.Parse("f1a39005-3e13-41af-b427-b4c6e21daa37") });
+                var outputResults = mapper.MapV2Payments(paymentsAndEarnings, new HashSet<Guid> { Guid.Parse("f1a39005-3e13-41af-b427-b4c6e21daa37") });
 
                 var requiredPayments = outputResults.requiredPayments;
                 var payments = outputResults.payments;
@@ -543,34 +548,46 @@ namespace SFA.DAS.Payments.Migration
                 ;
         }
 
-        static readonly HashSet<long> NonLevyAccountIds = new HashSet<long>
+        static async Task ProcessCommitmentsData()
         {
-            29152,
-            29182,
-            29202,
-            29264,
-            29378,
-            29826,
-            29829,
-            29932,
-            30292,
-            30400
-        };
-
-        static async Task ProcessCommitmentsData(int period)
-        {
-            using (var v1AccountsConnection = new SqlConnection(ConfigurationManager.ConnectionStrings["V1Accounts"].ConnectionString))
-            using (var connection = new SqlConnection(ConfigurationManager.ConnectionStrings["V1Commitments"].ConnectionString))
+            HashSet<long> levyAccounts;
+            using (var v2Connection = new SqlConnection(ConfigurationManager.ConnectionStrings["V2"].ConnectionString))
             {
-                var accounts = await v1AccountsConnection.QueryAsync<LevyAccount>(V1Sql.Accounts, commandTimeout: 3600);
-                var nonLevyAccounts = new HashSet<long>(accounts.Where(x => !x.IsLevyPayer).Select(x => x.AccountId));
+                var accounts = await v2Connection.QueryAsync<long>(
+                    "SELECT AccountId FROM Payments2.LevyAccount WHERE IsLevyPayer = 1",
+                    commandTimeout: 3600);
+                levyAccounts = new HashSet<long>(accounts);
+            }
 
-                var collectionPeriodDate = CollectionPeriods.CollectionPeriodDates[period];
-                var commitments = await connection
-                    .QueryAsync<Commitment>(V1Sql.Commitments, new { inputDate = collectionPeriodDate })
-                    .ConfigureAwait(false);
+            using (var dasConnection = new SqlConnection(ConfigurationManager.ConnectionStrings["DASCommitments"].ConnectionString))
+            {
+                var commitments = (await dasConnection
+                    .QueryAsync<Commitment>(DasSql.Commitments, commandTimeout:3600)
+                    .ConfigureAwait(false))
+                    .ToList();
 
-                var commitmentsById = commitments.GroupBy(x => x.CommitmentId);
+                foreach (var commitment in commitments)
+                {
+                    if (commitment.TrainingType == 0)
+                    {
+                        commitment.ProgrammeType = 25;
+                        commitment.StandardCode = int.Parse(commitment.TrainingCode);
+                    }
+                    else if (commitment.TrainingType == 1)
+                    {
+                        var portions = commitment.TrainingCode.Split('-');
+                        commitment.FrameworkCode = int.Parse(portions[0]);
+                        commitment.ProgrammeType = int.Parse(portions[1]);
+                        commitment.PathwayCode = int.Parse(portions[2]);
+                    }
+                    else
+                    {
+                        await Log($"Unknown TrainingType: {commitment.TrainingType} for CommitmentId: {commitment.ApprenticeshipId}");
+                    }
+                }
+
+                // ApprenticeshipId is what used to be called CommitmentId
+                var commitmentsById = commitments.GroupBy(x => x.ApprenticeshipId);
                 var apprenticeships = new List<Apprenticeship>();
                 var apprenticeshipPriceEpisodes = new List<ApprenticeshipPriceEpisode>();
                 var apprenticeshipPause = new List<ApprenticeshipPause>();
@@ -578,17 +595,7 @@ namespace SFA.DAS.Payments.Migration
                 foreach (var commitmentGroup in commitmentsById)
                 {
                     var firstCommitment = commitmentGroup.First();
-                    DateTime agreedOnDate;
-                    if (firstCommitment.TransferSendingEmployerAccountId.HasValue &&
-                        firstCommitment.TransferSendingEmployerAccountId != 0 &&
-                        firstCommitment.TransferApprovalDate.HasValue)
-                    {
-                        agreedOnDate = firstCommitment.TransferApprovalDate.Value;
-                    }
-                    else
-                    {
-                        agreedOnDate = new DateTime(1950, 1, 1).AddDays(firstCommitment.Priority);
-                    }
+
                     apprenticeships.Add(new Apprenticeship
                     {
                         AccountId = firstCommitment.AccountId,
@@ -605,48 +612,58 @@ namespace SFA.DAS.Payments.Migration
                         TransferSendingEmployerAccountId = firstCommitment.TransferSendingEmployerAccountId,
                         Ukprn = firstCommitment.Ukprn,
                         Uln = firstCommitment.Uln,
-                        Id = firstCommitment.CommitmentId,
-                        IsLevyPayer = (nonLevyAccounts.Contains(firstCommitment.AccountId)) ? false : true,
-                        AgreedOnDate = agreedOnDate,
-                        ApprenticeshipEmployerType = (NonLevyAccountIds.Contains(firstCommitment.AccountId)) ? 0 : 1,
-                        CreationDate = DateTime.Now,
+                        Id = firstCommitment.ApprenticeshipId,
+                        IsLevyPayer = levyAccounts.Contains(firstCommitment.AccountId),
+                        AgreedOnDate = firstCommitment.AgreedOnDate,
+                        ApprenticeshipEmployerType = firstCommitment.ApprenticeshipEmployerType,
+                        CreationDate = firstCommitment.CreatedDate,
+                        AgreementId = firstCommitment.AccountLegalEntityPublicHashedId,
                     });
 
                     foreach (var commitment in commitmentGroup)
                     {
                         apprenticeshipPriceEpisodes.Add(new ApprenticeshipPriceEpisode
                         {
-                            ApprenticeshipId = firstCommitment.CommitmentId,
+                            ApprenticeshipId = firstCommitment.ApprenticeshipId,
                             Cost = commitment.AgreedCost,
                             EndDate = commitment.EffectiveToDate,
                             Removed = false,
                             StartDate = commitment.EffectiveFromDate,
-                            CreationDate = DateTime.Now,
+                            CreationDate = firstCommitment.CreatedDate,
                         });
                     }
 
                     if (firstCommitment.PaymentStatus == 2)
                     {
-                        apprenticeshipPause.Add(new ApprenticeshipPause { ApprenticeshipId = firstCommitment.CommitmentId });
+                        apprenticeshipPause.Add(new ApprenticeshipPause
+                        {
+                            ApprenticeshipId = firstCommitment.ApprenticeshipId,
+                            PauseDate = firstCommitment.PausedOnDate ?? new DateTime(1900, 1, 1),
+                        });
                     }
                 }
 
                 await Log($"Loaded {apprenticeships.Count} commitments");
+
+                var providerPriority = (await dasConnection
+                    .QueryAsync<ProviderPriority>("SELECT * FROM CustomProviderPaymentPriority"))
+                    .ToList();
+                await Log($"Loaded {providerPriority.Count} provider priority records");
 
                 using (var scope = new TransactionScope(TransactionScopeOption.Required, new TransactionOptions
                 {
                     IsolationLevel = IsolationLevel.Serializable,
                     Timeout = TimeSpan.FromMinutes(15)
                 }, TransactionScopeAsyncFlowOption.Enabled))
-                using (var v2Connection =
-                    new SqlConnection(ConfigurationManager.ConnectionStrings["V2"].ConnectionString))
+                using (var v2Connection = new SqlConnection(ConfigurationManager.ConnectionStrings["V2"].ConnectionString))
                 {
                     await v2Connection.OpenAsync().ConfigureAwait(false);
 
                     using (var bulkCopy = new SqlBulkCopy(v2Connection))
                     using (var reader = ObjectReader.Create(apprenticeships))
                     {
-                        await v2Connection.ExecuteAsync(V2Sql.DeleteCommitments, commandTimeout: 3600).ConfigureAwait(false);
+                        await v2Connection.ExecuteAsync(V2Sql.DeleteCommitments, commandTimeout: 3600)
+                            .ConfigureAwait(false);
                         await Log("Deleted old data");
 
                         bulkCopy.DestinationTableName = "Payments2.Apprenticeship";
@@ -654,31 +671,29 @@ namespace SFA.DAS.Payments.Migration
                         bulkCopy.BulkCopyTimeout = 3600;
 
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("AccountId", "AccountId"));
-                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("EstimatedEndDate",
-                            "EstimatedEndDate"));
-                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("EstimatedStartDate",
-                            "EstimatedStartDate"));
+                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("EstimatedEndDate","EstimatedEndDate"));
+                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("EstimatedStartDate","EstimatedStartDate"));
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("FrameworkCode", "FrameworkCode"));
-                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("LegalEntityName",
-                            "LegalEntityName"));
+                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("LegalEntityName","LegalEntityName"));
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("PathwayCode", "PathwayCode"));
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("ProgrammeType", "ProgrammeType"));
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("Priority", "Priority"));
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("StandardCode", "StandardCode"));
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("Status", "Status"));
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("StopDate", "StopDate"));
-                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("TransferSendingEmployerAccountId",
-                            "TransferSendingEmployerAccountId"));
+                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("TransferSendingEmployerAccountId","TransferSendingEmployerAccountId"));
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("Ukprn", "Ukprn"));
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("Uln", "Uln"));
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("Id", "Id"));
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("IsLevyPayer", "IsLevyPayer"));
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("AgreedOnDate", "AgreedOnDate"));
-                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("ApprenticeshipEmployerType", "ApprenticeshipEmployerType"));
+                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("ApprenticeshipEmployerType","ApprenticeshipEmployerType"));
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("CreationDate", "CreationDate"));
+                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("AgreementId", "AgreementId"));
 
                         await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
                     }
+
                     await Log("Saved apprenticeships");
 
                     using (var bulkCopy = new SqlBulkCopy(v2Connection))
@@ -688,8 +703,7 @@ namespace SFA.DAS.Payments.Migration
                         bulkCopy.BatchSize = 5000;
                         bulkCopy.BulkCopyTimeout = 3600;
 
-                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("ApprenticeshipId",
-                            "ApprenticeshipId"));
+                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("ApprenticeshipId","ApprenticeshipId"));
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("Cost", "Cost"));
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("EndDate", "EndDate"));
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("Removed", "Removed"));
@@ -698,6 +712,7 @@ namespace SFA.DAS.Payments.Migration
 
                         await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
                     }
+
                     await Log("Saved apprenticeship price episodes");
 
                     using (var bulkCopy = new SqlBulkCopy(v2Connection))
@@ -712,14 +727,29 @@ namespace SFA.DAS.Payments.Migration
 
                         await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
                     }
+
                     await Log("Saved apprenticeship pauses");
+
+                    using (var bulkCopy = new SqlBulkCopy(v2Connection))
+                    using (var reader = ObjectReader.Create(providerPriority))
+                    {
+                        bulkCopy.DestinationTableName = "Payments2.EmployerProviderPriority";
+                        bulkCopy.BatchSize = 5000;
+                        bulkCopy.BulkCopyTimeout = 3600;
+                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("EmployerAccountId", "EmployerAccountId"));
+                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("ProviderId", "Ukprn"));
+                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("PriorityOrder", "Order"));
+
+                        await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
+                        await Log("Saved priovider priorities");
+                    }
 
                     scope.Complete();
                     await Log("Committed transaction");
                 }
             }
         }
-
+        
         static async Task ProcessAccountsData(int period)
         {
             using (var connection =
