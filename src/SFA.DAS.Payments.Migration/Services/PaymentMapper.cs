@@ -80,7 +80,7 @@ namespace SFA.DAS.Payments.Migration.Services
                     legacyEarnings.Add(earning);
                 }
 
-                if (paymentModel.TransferSenderAccountId.HasValue)
+                if (paymentModel.TransferSenderAccountId.HasValue && paymentModel.ApprenticeshipId.HasValue)
                 {
                     accountTransfers.Add(new LegacyAccountTransferModel
                     {
@@ -89,6 +89,7 @@ namespace SFA.DAS.Payments.Migration.Services
                         CollectionPeriodName = $"{paymentModel.AcademicYear}-R{paymentModel.CollectionPeriod:D2}",
                         CollectionPeriodYear = YearFromPeriod(paymentModel.AcademicYear, paymentModel.CollectionPeriod),
                         TransferType = TransferType.Levy,
+                        CommitmentId = paymentModel.ApprenticeshipId.Value,
                         ReceivingAccountId = paymentModel.AccountId.Value,
                         RequiredPaymentId = paymentModel.RequiredPaymentEventId,
                         SendingAccountId = paymentModel.TransferSenderAccountId.Value
