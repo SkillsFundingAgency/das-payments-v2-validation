@@ -225,6 +225,7 @@ namespace SFA.DAS.Payments.Migration
                     var requiredPayments = outputResults.requiredPayments;
                     var payments = outputResults.payments;
                     var earnings = outputResults.earnings;
+                    var accountTransfers = outputResults.accountTransfers;
 
                     var minDate = new DateTime(2000, 1, 1);
                     requiredPayments.ForEach(x =>
@@ -267,6 +268,15 @@ namespace SFA.DAS.Payments.Migration
                         PopulateBulkCopy(bulkCopy, typeof(LegacyEarningModel));
 
                         using (var reader = ObjectReader.Create(earnings))
+                        {
+                            await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
+                        }
+
+                        bulkCopy.DestinationTableName = "[TransferPayments].[AccountTransfers]";
+                        bulkCopy.ColumnMappings.Clear();
+                        PopulateBulkCopy(bulkCopy, typeof(LegacyAccountTransferModel));
+
+                        using (var reader = ObjectReader.Create(accountTransfers))
                         {
                             await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
                         }
