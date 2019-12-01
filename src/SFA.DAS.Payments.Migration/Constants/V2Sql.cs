@@ -50,7 +50,7 @@
                 LEFT JOIN Payments2.EarningEvent E
 	                ON E.EventId = P.EarningEventId
                 WHERE P.AcademicYear = 1920
-                    AND P.CollectionPeriod IN (3)
+                    AND P.CollectionPeriod = {0}
                 ORDER BY R.EventId
                 OFFSET @offset ROWS
                 FETCH NEXT @pageSize ROWS ONLY

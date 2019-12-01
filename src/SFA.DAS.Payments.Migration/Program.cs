@@ -196,6 +196,15 @@ namespace SFA.DAS.Payments.Migration
 
         private static async Task ProcessV1Payments()
         {
+            await Log("");
+            await Log("Please enter the collection period: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 or 12");
+            var chosenPeriod = Console.ReadLine();
+            if (!int.TryParse(chosenPeriod, out var collectionPeriod) || collectionPeriod < 1 || collectionPeriod > 12)
+            {
+                await Log($"Invalid collection period: '{chosenPeriod}'.");
+                return;
+            }
+
             var mapper = new PaymentMapper();
 
             //using(var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled))
@@ -213,7 +222,7 @@ namespace SFA.DAS.Payments.Migration
                 do
                 {
                     // Load from v2
-                    paymentsAndEarnings = (await v2Connection.QueryAsync<V2PaymentAndEarning>(V2Sql.PaymentsAndEarnings,
+                    paymentsAndEarnings = (await v2Connection.QueryAsync<V2PaymentAndEarning>(string.Format(V2Sql.PaymentsAndEarnings, collectionPeriod),
                             new { offset, pageSize },
                             commandTimeout: 3600))
                         .ToList();
@@ -562,7 +571,7 @@ namespace SFA.DAS.Payments.Migration
             using (var dasConnection = new SqlConnection(ConfigurationManager.ConnectionStrings["DASCommitments"].ConnectionString))
             {
                 var commitments = (await dasConnection
-                    .QueryAsync<Commitment>(DasSql.Commitments, commandTimeout:3600)
+                    .QueryAsync<Commitment>(DasSql.Commitments, commandTimeout: 3600)
                     .ConfigureAwait(false))
                     .ToList();
 
@@ -673,23 +682,23 @@ namespace SFA.DAS.Payments.Migration
                         bulkCopy.BulkCopyTimeout = 3600;
 
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("AccountId", "AccountId"));
-                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("EstimatedEndDate","EstimatedEndDate"));
-                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("EstimatedStartDate","EstimatedStartDate"));
+                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("EstimatedEndDate", "EstimatedEndDate"));
+                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("EstimatedStartDate", "EstimatedStartDate"));
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("FrameworkCode", "FrameworkCode"));
-                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("LegalEntityName","LegalEntityName"));
+                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("LegalEntityName", "LegalEntityName"));
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("PathwayCode", "PathwayCode"));
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("ProgrammeType", "ProgrammeType"));
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("Priority", "Priority"));
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("StandardCode", "StandardCode"));
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("Status", "Status"));
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("StopDate", "StopDate"));
-                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("TransferSendingEmployerAccountId","TransferSendingEmployerAccountId"));
+                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("TransferSendingEmployerAccountId", "TransferSendingEmployerAccountId"));
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("Ukprn", "Ukprn"));
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("Uln", "Uln"));
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("Id", "Id"));
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("IsLevyPayer", "IsLevyPayer"));
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("AgreedOnDate", "AgreedOnDate"));
-                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("ApprenticeshipEmployerType","ApprenticeshipEmployerType"));
+                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("ApprenticeshipEmployerType", "ApprenticeshipEmployerType"));
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("CreationDate", "CreationDate"));
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("AgreementId", "AgreementId"));
 
@@ -705,7 +714,7 @@ namespace SFA.DAS.Payments.Migration
                         bulkCopy.BatchSize = 5000;
                         bulkCopy.BulkCopyTimeout = 3600;
 
-                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("ApprenticeshipId","ApprenticeshipId"));
+                        bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("ApprenticeshipId", "ApprenticeshipId"));
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("Cost", "Cost"));
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("EndDate", "EndDate"));
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("Removed", "Removed"));
@@ -751,7 +760,7 @@ namespace SFA.DAS.Payments.Migration
                 }
             }
         }
-        
+
         static async Task ProcessAccountsData(int period)
         {
             using (var connection =
