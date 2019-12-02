@@ -197,9 +197,9 @@ namespace SFA.DAS.Payments.Migration
         private static async Task ProcessV1Payments()
         {
             await Log("");
-            await Log("Please enter the collection period: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 or 12");
+            await Log("Please enter the collection period: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 or 14");
             var chosenPeriod = Console.ReadLine();
-            if (!int.TryParse(chosenPeriod, out var collectionPeriod) || collectionPeriod < 1 || collectionPeriod > 12)
+            if (!int.TryParse(chosenPeriod, out var collectionPeriod) || collectionPeriod < 1 || collectionPeriod > 14)
             {
                 await Log($"Invalid collection period: '{chosenPeriod}'.");
                 return;
@@ -222,8 +222,8 @@ namespace SFA.DAS.Payments.Migration
                 do
                 {
                     // Load from v2
-                    paymentsAndEarnings = (await v2Connection.QueryAsync<V2PaymentAndEarning>(string.Format(V2Sql.PaymentsAndEarnings, collectionPeriod),
-                            new { offset, pageSize },
+                    paymentsAndEarnings = (await v2Connection.QueryAsync<V2PaymentAndEarning>(V2Sql.PaymentsAndEarnings, 
+                            new { collectionPeriod, offset, pageSize },
                             commandTimeout: 3600))
                         .ToList();
                     await Log($"Loaded {paymentsAndEarnings.Count} records from page {offset / pageSize}");
