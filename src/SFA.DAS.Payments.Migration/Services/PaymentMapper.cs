@@ -10,7 +10,7 @@ namespace SFA.DAS.Payments.Migration.Services
     {
         private static readonly HashSet<Guid> ProcessedRequiredPayments = new HashSet<Guid>();
 
-        public (List<LegacyPaymentModel> payments, List<LegacyRequiredPaymentModel> requiredPayments, List<LegacyEarningModel> earnings)
+        public (List<LegacyPaymentModel> payments, List<LegacyRequiredPaymentModel> requiredPayments, List<LegacyEarningModel> earnings, List<LegacyAccountTransferModel> accountTransfers)
             MapV2Payments(List<V2PaymentAndEarning> payments, HashSet<Guid> dontCreateRequiredPaymentList)
         {
             foreach (var guid in dontCreateRequiredPaymentList)
@@ -21,6 +21,7 @@ namespace SFA.DAS.Payments.Migration.Services
             var legacyPayments = new List<LegacyPaymentModel>();
             var legacyRequiredPayments = new Dictionary<Guid, LegacyRequiredPaymentModel>();
             var legacyEarnings = new List<LegacyEarningModel>();
+            var accountTransfers = new List<LegacyAccountTransferModel>();
 
             foreach (var paymentModel in payments)
             {
@@ -79,6 +80,22 @@ namespace SFA.DAS.Payments.Migration.Services
                     legacyEarnings.Add(earning);
                 }
 
+                if (paymentModel.TransferSenderAccountId.HasValue && paymentModel.ApprenticeshipId.HasValue)
+                {
+                    accountTransfers.Add(new LegacyAccountTransferModel
+                    {
+                        Amount = paymentModel.Amount,
+                        CollectionPeriodMonth = MonthFromPeriod(paymentModel.CollectionPeriod),
+                        CollectionPeriodName = $"{paymentModel.AcademicYear}-R{paymentModel.CollectionPeriod:D2}",
+                        CollectionPeriodYear = YearFromPeriod(paymentModel.AcademicYear, paymentModel.CollectionPeriod),
+                        TransferType = TransferType.Levy,
+                        CommitmentId = paymentModel.ApprenticeshipId.Value,
+                        ReceivingAccountId = paymentModel.AccountId.Value,
+                        RequiredPaymentId = paymentModel.RequiredPaymentEventId,
+                        SendingAccountId = paymentModel.TransferSenderAccountId.Value
+                    });
+                }
+
                 var payment = new LegacyPaymentModel
                 {
                     RequiredPaymentId = requiredPayment.Id,
@@ -95,7 +112,7 @@ namespace SFA.DAS.Payments.Migration.Services
                 legacyPayments.Add(payment);
             }
 
-            return (legacyPayments, legacyRequiredPayments.Values.ToList(), legacyEarnings);
+            return (legacyPayments, legacyRequiredPayments.Values.ToList(), legacyEarnings, accountTransfers);
         }
 
         private int YearFromPeriod(short academicYear, byte collectionPeriod)

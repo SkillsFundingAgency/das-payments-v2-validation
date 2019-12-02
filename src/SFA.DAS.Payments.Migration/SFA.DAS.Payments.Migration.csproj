@@ -92,6 +92,7 @@
     <Compile Include="DTO\LegacyEarningModel.cs" />
     <Compile Include="DTO\LegacyPaymentModel.cs" />
     <Compile Include="DTO\LegacyPeriodModel.cs" />
+    <Compile Include="DTO\LegacyAccountTransferModel.cs" />
     <Compile Include="DTO\LegacyRequiredPaymentModel.cs" />
     <Compile Include="DTO\LevyAccount.cs" />
     <Compile Include="DTO\NonLevyCommitment.cs" />
