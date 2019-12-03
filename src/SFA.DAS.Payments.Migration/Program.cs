@@ -47,6 +47,7 @@ namespace SFA.DAS.Payments.Migration
                 await Log("5 - V2 Payments -> V1");
                 await Log("6 - Complete R03");
                 await Log("7 - V2 Transfers that didn't work -> V1");
+                await Log("8 - V2 Account Transfers -> V1");
                 await Log("9 - All V1 -> V2 (1, 2, 3 & 4)");
                 await Log("T - Test Connections");
                 await Log("Esc - exit");
@@ -118,6 +119,11 @@ namespace SFA.DAS.Payments.Migration
             if (selection == 7)
             {
                 await ProcessFailedV1Payments();
+            }
+
+            if (selection == 8)
+            {
+                await ProcessV1AccountTransfers();
             }
         }
 
@@ -271,6 +277,50 @@ namespace SFA.DAS.Payments.Migration
                         {
                             await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
                         }
+                    }
+                    
+                    offset += pageSize;
+                } while (paymentsAndEarnings.Count > 0);
+
+                //scope.Complete();
+            }
+        }
+
+        private static async Task ProcessV1AccountTransfers()
+        {
+            var mapper = new PaymentMapper();
+
+            //using(var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled))
+            using (var v2Connection = new SqlConnection(ConfigurationManager.ConnectionStrings["V2"].ConnectionString))
+            using (var v1Connection = new SqlConnection(ConfigurationManager.ConnectionStrings["V1"].ConnectionString))
+            {
+                await v1Connection.OpenAsync().ConfigureAwait(false);
+
+                // Per page
+                var pageSize = 100000;
+                var offset = 0;
+
+                List<V2PaymentAndEarning> paymentsAndEarnings;
+
+                do
+                {
+                    // Load from v2
+                    paymentsAndEarnings = (await v2Connection.QueryAsync<V2PaymentAndEarning>(V2Sql.PaymentsAndEarnings,
+                            new { offset, pageSize },
+                            commandTimeout: 3600))
+                        .ToList();
+                    await Log($"Loaded {paymentsAndEarnings.Count} records from page {offset / pageSize}");
+
+                    // Map
+                    var outputResults = mapper.MapV2Payments(paymentsAndEarnings, new HashSet<Guid>());
+
+                    var accountTransfers = outputResults.accountTransfers;
+
+                    // Write to V1
+                    using (var bulkCopy = new SqlBulkCopy(v1Connection))
+                    {
+                        bulkCopy.BatchSize = 1000;
+                        bulkCopy.BulkCopyTimeout = 3600;
 
                         bulkCopy.DestinationTableName = "[TransferPayments].[AccountTransfers]";
                         bulkCopy.ColumnMappings.Clear();
@@ -281,8 +331,6 @@ namespace SFA.DAS.Payments.Migration
                             await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
                         }
                     }
-
-
 
                     offset += pageSize;
                 } while (paymentsAndEarnings.Count > 0);
