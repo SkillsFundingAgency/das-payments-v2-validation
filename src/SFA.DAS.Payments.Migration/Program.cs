@@ -353,7 +353,38 @@ namespace SFA.DAS.Payments.Migration
                     offset += pageSize;
                 } while (paymentsAndEarnings.Count > 0);
 
+                await CreateAccountTransfersForMissedR03Transfers(v2Connection, mapper, v1Connection);
+
                 //scope.Complete();
+            }
+        }
+
+        private static async Task CreateAccountTransfersForMissedR03Transfers(SqlConnection v2Connection, PaymentMapper mapper, SqlConnection v1Connection)
+        {
+            var paymentsAndEarnings = (await v2Connection.QueryAsync<V2PaymentAndEarning>(
+                    V2Sql.PaymentsAndEarningsForFailedTransfers,
+                    commandTimeout: 3600))
+                .ToList();
+            await Log($"Loaded {paymentsAndEarnings.Count} records");
+
+            // Map
+            var outputResults2 = mapper.MapV2Payments(paymentsAndEarnings, new HashSet<Guid> {Guid.Parse("f1a39005-3e13-41af-b427-b4c6e21daa37")});
+            var accountTransfers2 = outputResults2.accountTransfers;
+
+            // Write to V1
+            using (var bulkCopy = new SqlBulkCopy(v1Connection))
+            {
+                bulkCopy.BatchSize = 1000;
+                bulkCopy.BulkCopyTimeout = 3600;
+
+                bulkCopy.DestinationTableName = "[TransferPayments].[AccountTransfers]";
+                bulkCopy.ColumnMappings.Clear();
+                PopulateBulkCopy(bulkCopy, typeof(LegacyAccountTransferModel));
+
+                using (var reader = ObjectReader.Create(accountTransfers2))
+                {
+                    await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
+                }
             }
         }
 
