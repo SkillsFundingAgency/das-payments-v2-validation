@@ -240,8 +240,7 @@ namespace SFA.DAS.Payments.Migration
                     var requiredPayments = outputResults.requiredPayments;
                     var payments = outputResults.payments;
                     var earnings = outputResults.earnings;
-                    var accountTransfers = outputResults.accountTransfers;
-
+                    
                     var minDate = new DateTime(2000, 1, 1);
                     requiredPayments.ForEach(x =>
                     {
