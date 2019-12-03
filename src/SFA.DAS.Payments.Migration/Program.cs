@@ -297,6 +297,15 @@ namespace SFA.DAS.Payments.Migration
 
         private static async Task ProcessV1AccountTransfers()
         {
+            await Log("");
+            await Log("Please enter the collection period: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 or 14");
+            var chosenPeriod = Console.ReadLine();
+            if (!int.TryParse(chosenPeriod, out var collectionPeriod) || collectionPeriod < 1 || collectionPeriod > 14)
+            {
+                await Log($"Invalid collection period: '{chosenPeriod}'.");
+                return;
+            }
+
             var mapper = new PaymentMapper();
 
             //using(var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled))
@@ -315,7 +324,7 @@ namespace SFA.DAS.Payments.Migration
                 {
                     // Load from v2
                     paymentsAndEarnings = (await v2Connection.QueryAsync<V2PaymentAndEarning>(V2Sql.PaymentsAndEarnings,
-                            new { offset, pageSize },
+                            new { collectionPeriod, offset, pageSize },
                             commandTimeout: 3600))
                         .ToList();
                     await Log($"Loaded {paymentsAndEarnings.Count} records from page {offset / pageSize}");
