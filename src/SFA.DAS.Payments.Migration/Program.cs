@@ -200,17 +200,27 @@ namespace SFA.DAS.Payments.Migration
             return trigger;
         }
 
+
+        private static async Task<int> GetPeriod()
+        {
+            while (true)
+            {
+                await Log("");
+                await Log("Please enter the collection period: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 or 14");
+                var chosenPeriod = Console.ReadLine();
+                if (!int.TryParse(chosenPeriod, out var collectionPeriod) || collectionPeriod < 1 || collectionPeriod > 14)
+                {
+                    await Log($"Invalid collection period: '{chosenPeriod}'.");
+                    continue;
+                }
+
+                return collectionPeriod;
+            }
+        }
+
         private static async Task ProcessV1Payments()
         {
-            await Log("");
-            await Log("Please enter the collection period: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 or 14");
-            var chosenPeriod = Console.ReadLine();
-            if (!int.TryParse(chosenPeriod, out var collectionPeriod) || collectionPeriod < 1 || collectionPeriod > 14)
-            {
-                await Log($"Invalid collection period: '{chosenPeriod}'.");
-                return;
-            }
-
+            var collectionPeriod = await GetPeriod();
             var mapper = new PaymentMapper();
 
             //using(var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled))
@@ -358,6 +368,7 @@ namespace SFA.DAS.Payments.Migration
 
         private static async Task ProcessFailedV1Payments()
         {
+            var collectionPeriod = await GetPeriod();
             var mapper = new PaymentMapper();
 
             using (var v2Connection = new SqlConnection(ConfigurationManager.ConnectionStrings["V2"].ConnectionString))
@@ -369,12 +380,18 @@ namespace SFA.DAS.Payments.Migration
 
                 paymentsAndEarnings = (await v2Connection.QueryAsync<V2PaymentAndEarning>(
                         V2Sql.PaymentsAndEarningsForFailedTransfers,
+                        new {collectionPeriod},
                         commandTimeout: 3600))
                     .ToList();
                 await Log($"Loaded {paymentsAndEarnings.Count} records");
 
+                // Get any existing required payments that have already been copied
+                var potentialIds = paymentsAndEarnings.Select(x => x.RequiredPaymentEventId);
+                var existingIds = await v1Connection.QueryAsync<Guid>(
+                        V1Sql.ExistingRequiredPayments, new {requiredPaymentids = potentialIds});
+
                 // Map
-                var outputResults = mapper.MapV2Payments(paymentsAndEarnings, new HashSet<Guid> { Guid.Parse("f1a39005-3e13-41af-b427-b4c6e21daa37") });
+                var outputResults = mapper.MapV2Payments(paymentsAndEarnings, new HashSet<Guid>(existingIds));
 
                 var requiredPayments = outputResults.requiredPayments;
                 var payments = outputResults.payments;
