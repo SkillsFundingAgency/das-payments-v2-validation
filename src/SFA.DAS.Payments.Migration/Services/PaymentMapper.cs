@@ -80,7 +80,7 @@ namespace SFA.DAS.Payments.Migration.Services
                     legacyEarnings.Add(earning);
                 }
 
-                if (paymentModel.TransferSenderAccountId.HasValue && paymentModel.ApprenticeshipId.HasValue)
+                if (paymentModel.TransferSenderAccountId.HasValue && paymentModel.ApprenticeshipId.HasValue && paymentModel.FundingSource == 5)
                 {
                     accountTransfers.Add(new LegacyAccountTransferModel
                     {
