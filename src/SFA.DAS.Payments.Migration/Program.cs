@@ -376,9 +376,7 @@ namespace SFA.DAS.Payments.Migration
             {
                 await v1Connection.OpenAsync().ConfigureAwait(false);
 
-                List<V2PaymentAndEarning> paymentsAndEarnings;
-
-                paymentsAndEarnings = (await v2Connection.QueryAsync<V2PaymentAndEarning>(
+                var paymentsAndEarnings = (await v2Connection.QueryAsync<V2PaymentAndEarning>(
                         V2Sql.PaymentsAndEarningsForFailedTransfers,
                         new {collectionPeriod},
                         commandTimeout: 3600))
@@ -386,9 +384,11 @@ namespace SFA.DAS.Payments.Migration
                 await Log($"Loaded {paymentsAndEarnings.Count} records");
 
                 // Get any existing required payments that have already been copied
-                var potentialIds = paymentsAndEarnings.Select(x => x.RequiredPaymentEventId);
-                var existingIds = await v1Connection.QueryAsync<Guid>(
-                        V1Sql.ExistingRequiredPayments, new {requiredPaymentids = potentialIds});
+                var potentialIds = paymentsAndEarnings.Select(x => x.RequiredPaymentEventId).ToList();
+                var existingIds = new HashSet<Guid>(await v1Connection.QueryAsync<Guid>(
+                        V1Sql.ExistingRequiredPayments, new {requiredPaymentids = potentialIds}));
+
+                await Log($"Found {existingIds.Count} existing required payments");
 
                 // Map
                 var outputResults = mapper.MapV2Payments(paymentsAndEarnings, new HashSet<Guid>(existingIds));
