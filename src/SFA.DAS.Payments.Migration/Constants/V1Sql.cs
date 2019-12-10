@@ -75,5 +75,13 @@
                 
                 WHERE R.CollectionPeriodName = @period
             ";
+
+
+        public const string ExistingRequiredPayments = @"
+                SELECT Id 
+                FROM [DAS_PeriodEnd].PaymentsDue.RequiredPayments
+                WHERE Id IN @requiredPaymentIds
+            ";
+
     }
 }
