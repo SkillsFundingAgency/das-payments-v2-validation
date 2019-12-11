@@ -51,7 +51,7 @@
 	                ON E.EventId = P.EarningEventId
                 WHERE P.AcademicYear = 1920
                     AND P.CollectionPeriod = @collectionPeriod
-                ORDER BY R.EventId
+                ORDER BY R.EventId, P.Id
                 OFFSET @offset ROWS
                 FETCH NEXT @pageSize ROWS ONLY
                 ";
@@ -74,7 +74,7 @@
                 WHERE P.AcademicYear = 1920
                     AND P.CollectionPeriod = @collectionPeriod
 	                AND R.EventId IS NULL
-                ORDER BY R2.EventId
+                ORDER BY R2.EventId, P.Id
             ";
     }
 }
