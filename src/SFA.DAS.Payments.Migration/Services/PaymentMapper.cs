@@ -115,7 +115,7 @@ namespace SFA.DAS.Payments.Migration.Services
             return (legacyPayments, legacyRequiredPayments.Values.ToList(), legacyEarnings, accountTransfers);
         }
 
-        private int YearFromPeriod(short academicYear, byte collectionPeriod)
+        public static int YearFromPeriod(short academicYear, byte collectionPeriod)
         {
             var ilrStartYear = (academicYear / 100) + 2000;
 
@@ -127,7 +127,7 @@ namespace SFA.DAS.Payments.Migration.Services
             return ilrStartYear;
         }
 
-        private int MonthFromPeriod(byte collectionPeriod)
+        public static int MonthFromPeriod(byte collectionPeriod)
         {
             if (collectionPeriod <= 5)
             {

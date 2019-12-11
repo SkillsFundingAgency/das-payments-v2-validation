@@ -45,7 +45,7 @@ namespace SFA.DAS.Payments.Migration
                 await Log("3 - Payments");
                 await Log("4 - EAS");
                 await Log("5 - V2 Payments -> V1");
-                await Log("6 - Complete R03");
+                await Log("6 - Complete Return (1920 only)");
                 await Log("7 - V2 Transfers that didn't work -> V1");
                 await Log("8 - V2 Account Transfers -> V1");
                 await Log("9 - All V1 -> V2 (1, 2, 3 & 4)");
@@ -163,7 +163,8 @@ namespace SFA.DAS.Payments.Migration
 
         private static async Task CompleteR03()
         {
-            var trigger = CreateTrigger();
+            var period = await GetPeriod();
+            var trigger = CreateTrigger(period);
             var triggerList = new List<LegacyPeriodModel> { trigger };
 
             using (var connection = new SqlConnection(ConfigurationManager.ConnectionStrings["V1"].ConnectionString))
@@ -183,7 +184,7 @@ namespace SFA.DAS.Payments.Migration
             }
         }
 
-        private static LegacyPeriodModel CreateTrigger()
+        private static LegacyPeriodModel CreateTrigger(int period)
         {
             var now = DateTime.Now;
 
@@ -192,9 +193,9 @@ namespace SFA.DAS.Payments.Migration
                 AccountDataValidAt = now,
                 CommitmentDataValidAt = now,
                 CompletionDateTime = now,
-                PeriodName = "1920-R03",
-                CalendarMonth = 10,
-                CalendarYear = 2019,
+                PeriodName = $"1920-R{period:D2}",
+                CalendarMonth = PaymentMapper.MonthFromPeriod((byte)period),
+                CalendarYear = PaymentMapper.YearFromPeriod(1920, (byte)period),
             };
 
             return trigger;
@@ -376,9 +377,7 @@ namespace SFA.DAS.Payments.Migration
             {
                 await v1Connection.OpenAsync().ConfigureAwait(false);
 
-                List<V2PaymentAndEarning> paymentsAndEarnings;
-
-                paymentsAndEarnings = (await v2Connection.QueryAsync<V2PaymentAndEarning>(
+                var paymentsAndEarnings = (await v2Connection.QueryAsync<V2PaymentAndEarning>(
                         V2Sql.PaymentsAndEarningsForFailedTransfers,
                         new {collectionPeriod},
                         commandTimeout: 3600))
@@ -386,9 +385,11 @@ namespace SFA.DAS.Payments.Migration
                 await Log($"Loaded {paymentsAndEarnings.Count} records");
 
                 // Get any existing required payments that have already been copied
-                var potentialIds = paymentsAndEarnings.Select(x => x.RequiredPaymentEventId);
-                var existingIds = await v1Connection.QueryAsync<Guid>(
-                        V1Sql.ExistingRequiredPayments, new {requiredPaymentids = potentialIds});
+                var potentialIds = paymentsAndEarnings.Select(x => x.RequiredPaymentEventId).ToList();
+                var existingIds = new HashSet<Guid>(await v1Connection.QueryAsync<Guid>(
+                        V1Sql.ExistingRequiredPayments, new {requiredPaymentids = potentialIds}));
+
+                await Log($"Found {existingIds.Count} existing required payments");
 
                 // Map
                 var outputResults = mapper.MapV2Payments(paymentsAndEarnings, new HashSet<Guid>(existingIds));
