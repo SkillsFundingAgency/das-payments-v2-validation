@@ -68,14 +68,14 @@ namespace SFA.DAS.Payments.Migration.Services
 
                     var earning = new LegacyEarningModel
                     {
-                        StartDate = paymentModel.StartDate,
+                        StartDate = paymentModel.EarningsStartDate,
                         RequiredPaymentId = paymentModel.RequiredPaymentEventId,
-                        ActualEnddate = paymentModel.ActualEndDate,
-                        CompletionAmount = paymentModel.CompletionAmount,
-                        PlannedEndDate = paymentModel.PlannedEndDate ?? DateTime.MinValue,
-                        CompletionStatus = paymentModel.CompletionStatus,
-                        MonthlyInstallment = paymentModel.InstalmentAmount ?? 0m,
-                        TotalInstallments = (paymentModel.NumberOfInstalments ?? 0),
+                        ActualEnddate = paymentModel.EarningsActualEndDate,
+                        CompletionAmount = paymentModel.EarningsCompletionAmount,
+                        PlannedEndDate = paymentModel.EarningsPlannedEndDate ?? DateTime.MinValue,
+                        CompletionStatus = paymentModel.EarningsCompletionStatus,
+                        MonthlyInstallment = paymentModel.EarningsInstalmentAmount ?? 0m,
+                        TotalInstallments = paymentModel.EarningsNumberOfInstalments ?? 0,
                     };
                     legacyEarnings.Add(earning);
                 }
