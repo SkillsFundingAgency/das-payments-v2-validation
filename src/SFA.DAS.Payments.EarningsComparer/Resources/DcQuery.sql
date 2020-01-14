@@ -1,4 +1,4 @@
-﻿
+
 DECLARE @ukprnFilter bigint = null
 DECLARE @ukprnList table
 (
@@ -76,6 +76,7 @@ RawEarnings AS (
         or APEP.PriceEpisodeFirstDisadvantagePayment != 0
         or APEP.PriceEpisodeSecondDisadvantagePayment != 0
         or APEP.PriceEpisodeLSFCash != 0
+        or APEP.PriceEpisodeLearnerAdditionalPayment != 0
         )
         AND APEP.Period <= @collectionperiod
 )
