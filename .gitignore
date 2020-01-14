@@ -12,5 +12,5 @@
 
 *.dbmdl
 *.jfm
-#App.Debug.config
-#App.Release.config
+App.Debug.config
+App.Release.config
