@@ -15,10 +15,20 @@ namespace SFA.DAS.Payments.CleanAuditTables
             var collectionPeriod = await GetPeriod();
             using (var connection = new SqlConnection(ConfigurationManager.ConnectionStrings["V2"].ConnectionString))
             {
-                await connection.ExecuteAsync(Sql.CleanAuditForPeriod, new {collectionPeriod});
+                await connection.OpenAsync();
+                var numberOfActiveJobs = await connection.ExecuteScalarAsync<int>(Sql.CheckIfJobIsRunning);
+                if (numberOfActiveJobs > 0)
+                {
+                    await Log("There are active jobs running - aborting cleanup");
+                }
+                else
+                {
+                    await connection.ExecuteAsync(Sql.CleanAuditForPeriod, new { collectionPeriod });
+                    await Log("Completed");
+                }
             }
 
-            await Log("Completed - press enter to quit");
+            await Log("Press enter to quit");
             Console.ReadLine();
         }
 

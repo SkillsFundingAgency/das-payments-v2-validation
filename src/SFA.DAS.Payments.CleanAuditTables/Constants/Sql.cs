@@ -2,6 +2,13 @@
 {
     static class Sql
     {
+        public const string CheckIfJobIsRunning = @"
+SELECT COUNT(*)
+FROM Payments2.Job
+WHERE Status = 1
+AND DATEADD(hour, 2, StartTime) > GETDATE()
+";
+
         public const string CleanAuditForPeriod = @"
 
 DELETE Payments2.EarningEventPeriod
