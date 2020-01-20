@@ -49,6 +49,7 @@ namespace SFA.DAS.Payments.Migration
                 await Log("7 - V2 Transfers that didn't work -> V1");
                 await Log("8 - V2 Account Transfers -> V1");
                 await Log("9 - All V1 -> V2 (1, 2, 3 & 4)");
+                await Log("10 - All V2 -> V1 (5, 8, 7, 6)");
                 await Log("T - Test Connections");
                 await Log("Esc - exit");
 
@@ -113,7 +114,7 @@ namespace SFA.DAS.Payments.Migration
 
             if (selection == 6)
             {
-                await CompleteR03();
+                await CompletePeriod();
             }
 
             if (selection == 7)
@@ -124,6 +125,15 @@ namespace SFA.DAS.Payments.Migration
             if (selection == 8)
             {
                 await ProcessV1AccountTransfers();
+            }
+
+            if (selection == 10)
+            {
+                var period = await GetPeriod();
+                await ProcessV1Payments(period);
+                await ProcessV1AccountTransfers(period);
+                await ProcessFailedV1Payments(period);
+                await CompletePeriod(period);
             }
         }
 
@@ -161,9 +171,14 @@ namespace SFA.DAS.Payments.Migration
             await Log("");
         }
 
-        private static async Task CompleteR03()
+        private static async Task CompletePeriod()
         {
             var period = await GetPeriod();
+            await CompletePeriod(period);
+        }
+
+        private static async Task CompletePeriod(int period)
+        {
             var trigger = CreateTrigger(period);
             var triggerList = new List<LegacyPeriodModel> { trigger };
 
@@ -222,6 +237,11 @@ namespace SFA.DAS.Payments.Migration
         private static async Task ProcessV1Payments()
         {
             var collectionPeriod = await GetPeriod();
+            await ProcessV1Payments(collectionPeriod);
+        }
+
+        private static async Task ProcessV1Payments(int collectionPeriod)
+        {
             var mapper = new PaymentMapper();
 
             //using(var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled))
@@ -307,15 +327,12 @@ namespace SFA.DAS.Payments.Migration
 
         private static async Task ProcessV1AccountTransfers()
         {
-            await Log("");
-            await Log("Please enter the collection period: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 or 14");
-            var chosenPeriod = Console.ReadLine();
-            if (!int.TryParse(chosenPeriod, out var collectionPeriod) || collectionPeriod < 1 || collectionPeriod > 14)
-            {
-                await Log($"Invalid collection period: '{chosenPeriod}'.");
-                return;
-            }
+            var collectionPeriod = await GetPeriod();
+            await ProcessV1AccountTransfers(collectionPeriod);
+        }
 
+        private static async Task ProcessV1AccountTransfers(int collectionPeriod)
+        {
             var mapper = new PaymentMapper();
 
             //using(var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled))
@@ -370,6 +387,11 @@ namespace SFA.DAS.Payments.Migration
         private static async Task ProcessFailedV1Payments()
         {
             var collectionPeriod = await GetPeriod();
+            await ProcessFailedV1Payments(collectionPeriod);
+        }
+
+        private static async Task ProcessFailedV1Payments(int collectionPeriod)
+        {
             var mapper = new PaymentMapper();
 
             using (var v2Connection = new SqlConnection(ConfigurationManager.ConnectionStrings["V2"].ConnectionString))
