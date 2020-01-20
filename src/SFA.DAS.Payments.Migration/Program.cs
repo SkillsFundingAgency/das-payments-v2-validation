@@ -130,6 +130,7 @@ namespace SFA.DAS.Payments.Migration
             if (selection == 10)
             {
                 var period = await GetPeriod();
+
                 await ProcessV1Payments(period);
                 await ProcessV1AccountTransfers(period);
                 await ProcessFailedV1Payments(period);
