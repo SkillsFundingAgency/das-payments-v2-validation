@@ -357,9 +357,7 @@ namespace SFA.DAS.Payments.Migration
                     await Log($"Loaded {paymentsAndEarnings.Count} records from page {offset / pageSize}");
 
                     // Map
-                    var outputResults = mapper.MapV2Payments(paymentsAndEarnings, new HashSet<Guid>());
-
-                    var accountTransfers = outputResults.accountTransfers;
+                    var accountTransfers = mapper.MapV2AccountTransfers(paymentsAndEarnings);
 
                     // Write to V1
                     using (var bulkCopy = new SqlBulkCopy(v1Connection))
