@@ -49,7 +49,7 @@ namespace SFA.DAS.Payments.Migration
                 await Log("7 - V2 Transfers that didn't work -> V1");
                 await Log("8 - V2 Account Transfers -> V1");
                 await Log("9 - All V1 -> V2 (1, 2, 3 & 4)");
-                await Log("10 - All V2 -> V1 (5, 8, 7, 6)");
+                await Log("10 - All V2 -> V1 (5, 8, 7)");
                 await Log("T - Test Connections");
                 await Log("Esc - exit");
 
@@ -134,7 +134,6 @@ namespace SFA.DAS.Payments.Migration
                 await ProcessV1Payments(period);
                 await ProcessV1AccountTransfers(period);
                 await ProcessFailedV1Payments(period);
-                await CompletePeriod(period);
             }
         }
 
