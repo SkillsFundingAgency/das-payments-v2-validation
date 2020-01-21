@@ -418,7 +418,7 @@ namespace SFA.DAS.Payments.Migration
                 // Get any existing required payments that have already been copied
                 var potentialIds = paymentsAndEarnings.Select(x => x.RequiredPaymentEventId).ToList();
                 var existingIds = new HashSet<Guid>(await v1Connection.QueryAsync<Guid>(
-                        V1Sql.ExistingRequiredPayments, new {requiredPaymentids = potentialIds}));
+                        V1Sql.ExistingRequiredPayments.Replace("[DAS_PeriodEnd]", $"[{Config.PaymentsDatabase}]"), new {requiredPaymentids = potentialIds}));
 
                 await Log($"Found {existingIds.Count} existing required payments");
 
