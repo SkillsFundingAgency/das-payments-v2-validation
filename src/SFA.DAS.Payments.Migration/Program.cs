@@ -6,6 +6,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using System.Transactions;
 using Dapper;
@@ -53,22 +54,32 @@ namespace SFA.DAS.Payments.Migration
                 await Log("T - Test Connections");
                 await Log("Esc - exit");
 
-                var typeinput = Console.ReadKey();
+                StringBuilder buffer = new StringBuilder();
 
-                if (typeinput.Key == ConsoleKey.Escape)
+                ConsoleKeyInfo info = Console.ReadKey(true);
+                while (info.Key != ConsoleKey.Enter && info.Key != ConsoleKey.Escape)
+                {
+                    Console.Write(info.KeyChar);
+                    buffer.Append(info.KeyChar);
+                    info = Console.ReadKey(true);
+                }
+
+                if (info.Key == ConsoleKey.Escape)
                 {
                     await Log("Finished - press enter to continue...");
                     Console.ReadLine();
                     return;
                 }
 
-                if (typeinput.Key == ConsoleKey.T)
+                var enteredText = buffer.ToString();
+
+                if (enteredText == "T")
                 {
                     await TestConnections();
                     goto START;
                 }
 
-                if (!int.TryParse(typeinput.KeyChar.ToString(), out var typeinputAsInteger))
+                if (!int.TryParse(enteredText, out var typeinputAsInteger))
                 {
                     await Log("Please enter a number");
                     goto START;
