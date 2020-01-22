@@ -6,6 +6,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using System.Transactions;
 using Dapper;
@@ -49,25 +50,36 @@ namespace SFA.DAS.Payments.Migration
                 await Log("7 - V2 Transfers that didn't work -> V1");
                 await Log("8 - V2 Account Transfers -> V1");
                 await Log("9 - All V1 -> V2 (1, 2, 3 & 4)");
+                await Log("10 - Previous Earnings (1920) up to and including supplied period");
                 await Log("T - Test Connections");
                 await Log("Esc - exit");
 
-                var typeinput = Console.ReadKey();
+                StringBuilder buffer = new StringBuilder();
 
-                if (typeinput.Key == ConsoleKey.Escape)
+                ConsoleKeyInfo info = Console.ReadKey(true);
+                while (info.Key != ConsoleKey.Enter && info.Key != ConsoleKey.Escape)
+                {
+                    Console.Write(info.KeyChar);
+                    buffer.Append(info.KeyChar);
+                    info = Console.ReadKey(true);
+                }
+
+                if (info.Key == ConsoleKey.Escape)
                 {
                     await Log("Finished - press enter to continue...");
                     Console.ReadLine();
                     return;
                 }
 
-                if (typeinput.Key == ConsoleKey.T)
+                var enteredText = buffer.ToString();
+
+                if (enteredText == "T")
                 {
                     await TestConnections();
                     goto START;
                 }
 
-                if (!int.TryParse(typeinput.KeyChar.ToString(), out var typeinputAsInteger))
+                if (!int.TryParse(enteredText, out var typeinputAsInteger))
                 {
                     await Log("Please enter a number");
                     goto START;
@@ -106,6 +118,8 @@ namespace SFA.DAS.Payments.Migration
                 await ProcessEas();
             }
 
+          
+
             if (selection == 5)
             {
                 await ProcessV1Payments();
@@ -124,6 +138,16 @@ namespace SFA.DAS.Payments.Migration
             if (selection == 8)
             {
                 await ProcessV1AccountTransfers();
+            }
+
+
+            if (selection == 10)
+            {
+                await Log("");
+                await Log("");
+                await Log("Earnings will me migrated up to and including the provided period below. ");
+                await Log("");
+                await ProcessPreviousEarnings();
             }
         }
 
@@ -202,7 +226,8 @@ namespace SFA.DAS.Payments.Migration
         }
 
 
-        private static async Task<int> GetPeriod()
+        private static async Task<int> 
+            GetPeriod()
         {
             while (true)
             {
@@ -216,6 +241,67 @@ namespace SFA.DAS.Payments.Migration
                 }
 
                 return collectionPeriod;
+            }
+        }
+
+        private static async Task ProcessPreviousEarnings()
+        {
+            var collectionPeriod = await GetPeriod();
+            var mapper = new PaymentMapper();
+
+            //using(var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled))
+            using (var v2Connection = new SqlConnection(ConfigurationManager.ConnectionStrings["V2"].ConnectionString))
+            using (var v1Connection = new SqlConnection(ConfigurationManager.ConnectionStrings["V1"].ConnectionString))
+            {
+                await v1Connection.OpenAsync().ConfigureAwait(false);
+
+                // Per page
+                var pageSize = 100000;
+                var offset = 0;
+
+                List<V2PaymentAndEarning> paymentsAndEarnings;
+
+                do
+                {
+                    // Load from v2
+                    paymentsAndEarnings = (await v2Connection.QueryAsync<V2PaymentAndEarning>(V2Sql.PreviousEarnings,
+                            new {collectionPeriod, offset, pageSize},
+                            commandTimeout: 3600))
+                        .ToList();
+                   
+                    // Map
+                    var outputResults = mapper.MapV2Payments(paymentsAndEarnings, new HashSet<Guid>());
+
+                    var earnings = outputResults.earnings;
+                    await Log($"Loaded {earnings.Count} records from page {offset / pageSize}");
+
+                    var minDate = new DateTime(2000, 1, 1);
+
+                    earnings.ForEach(x =>
+                    {
+                        if (x.ActualEnddate < minDate) x.ActualEnddate = null;
+                        if (x.PlannedEndDate < minDate) x.PlannedEndDate = minDate;
+                        if (x.StartDate < minDate) x.StartDate = minDate;
+                    });
+
+                    // Write to V1
+                    using (var bulkCopy = new SqlBulkCopy(v1Connection))
+                    {
+                        bulkCopy.BatchSize = 1000;
+                        bulkCopy.BulkCopyTimeout = 3600;
+
+                        bulkCopy.DestinationTableName = "[PaymentsDue].[Earnings]";
+                        bulkCopy.ColumnMappings.Clear();
+                        PopulateBulkCopy(bulkCopy, typeof(LegacyEarningModel));
+
+                        using (var reader = ObjectReader.Create(earnings))
+                        {
+                            await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
+                        }
+                    }
+
+                    offset += pageSize;
+                } while (paymentsAndEarnings.Count > 0);
             }
         }
 
