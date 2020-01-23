@@ -276,7 +276,7 @@ namespace SFA.DAS.Payments.Migration
                         .ToList();
                    
                     // Map
-                    var outputResults = mapper.MapV2Payments(paymentsAndEarnings, new HashSet<Guid>(), resetIgnoredPayments:true);
+                    var outputResults = mapper.MapV2Payments(paymentsAndEarnings, new HashSet<Guid>());
 
                     var earnings = outputResults.earnings;
                     await Log($"Loaded {earnings.Count} records from page {offset / pageSize}");
