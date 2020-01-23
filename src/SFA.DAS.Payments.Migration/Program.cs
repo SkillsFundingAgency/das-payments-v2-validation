@@ -1,4 +1,4 @@
-﻿
+
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -145,7 +145,7 @@ namespace SFA.DAS.Payments.Migration
             {
                 await Log("");
                 await Log("");
-                await Log("Earnings will me migrated up to and including the provided period below. ");
+                await Log("Previous V1 earnings will be removed and migrated up to and INCLUDING the provided period below. ");
                 await Log("");
                 await ProcessPreviousEarnings();
             }
@@ -261,6 +261,12 @@ namespace SFA.DAS.Payments.Migration
 
                 List<V2PaymentAndEarning> paymentsAndEarnings;
 
+                //remove previous earnings
+                var v1CollectionPeriod = $"1920-R{collectionPeriod:D2}";
+                await v1Connection.ExecuteAsync(V1Sql.DeletePreviousEarnings,
+                        new {v1CollectionPeriod},
+                        commandTimeout: 3600);
+
                 do
                 {
                     // Load from v2
@@ -270,7 +276,7 @@ namespace SFA.DAS.Payments.Migration
                         .ToList();
                    
                     // Map
-                    var outputResults = mapper.MapV2Payments(paymentsAndEarnings, new HashSet<Guid>());
+                    var outputResults = mapper.MapV2Payments(paymentsAndEarnings, new HashSet<Guid>(), resetIgnoredPayments:true);
 
                     var earnings = outputResults.earnings;
                     await Log($"Loaded {earnings.Count} records from page {offset / pageSize}");
