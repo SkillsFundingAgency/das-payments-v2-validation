@@ -11,13 +11,9 @@ namespace SFA.DAS.Payments.Migration.Services
         private static readonly HashSet<Guid> ProcessedRequiredPayments = new HashSet<Guid>();
 
         public (List<LegacyPaymentModel> payments, List<LegacyRequiredPaymentModel> requiredPayments, List<LegacyEarningModel> earnings, List<LegacyAccountTransferModel> accountTransfers)
-            MapV2Payments(List<V2PaymentAndEarning> payments, HashSet<Guid> dontCreateRequiredPaymentList, bool resetIgnoredPayments = false)
+            MapV2Payments(List<V2PaymentAndEarning> payments, HashSet<Guid> dontCreateRequiredPaymentList)
         {
-            if (resetIgnoredPayments)
-            {
-                ProcessedRequiredPayments.Clear();
-            }
-
+            
             foreach (var guid in dontCreateRequiredPaymentList)
             {
                 ProcessedRequiredPayments.Add(guid);
