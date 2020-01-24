@@ -13,6 +13,14 @@ namespace SFA.DAS.Payments.CleanAuditTables
         static async Task Main(string[] args)
         {
             var collectionPeriod = await GetPeriod();
+            await Log("Please enter the academic year");
+            var academicYearAsString = Console.ReadLine();
+            GETYEAR:
+            if (!int.TryParse(academicYearAsString, out var academicYear))
+            {
+                await Log("Couldn't understand the academic year, please enter in the form 1920, 2021 etc");
+                goto GETYEAR;
+            }
             using (var connection = new SqlConnection(ConfigurationManager.ConnectionStrings["V2"].ConnectionString))
             {
                 await connection.OpenAsync();
@@ -23,7 +31,7 @@ namespace SFA.DAS.Payments.CleanAuditTables
                 }
                 else
                 {
-                    await connection.ExecuteAsync(Sql.CleanAuditForPeriod, new { collectionPeriod });
+                    await connection.ExecuteAsync(Sql.CleanAuditForPeriod, new { collectionPeriod, academicYear });
                     await Log("Completed");
                 }
             }

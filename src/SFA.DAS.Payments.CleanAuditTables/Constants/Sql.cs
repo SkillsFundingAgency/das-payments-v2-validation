@@ -17,6 +17,7 @@ WHERE EarningEventId IN (
 	SELECT EventId FROM Payments2.EarningEvent EE
 	WHERE EE.JobId NOT IN (SELECT DcJobId FROM #JobIds)
 	AND CollectionPeriod = @collectionPeriod
+    AND AcademicYear = @academicYear
 )
 
 DELETE Payments2.EarningEventPriceEpisode
@@ -24,6 +25,7 @@ WHERE EarningEventId IN (
 	SELECT EventId FROM Payments2.EarningEvent EE
 	WHERE EE.JobId NOT IN (SELECT DcJobId FROM #JobIds)
 	AND CollectionPeriod = @collectionPeriod
+    AND AcademicYear = @academicYear
 )
 
 DELETE Payments2.EarningEvent
@@ -31,6 +33,7 @@ WHERE JobId NOT IN (
 	SELECT DcJobId FROM #JobIds
 )
 AND CollectionPeriod = @collectionPeriod
+AND AcademicYear = @academicYear
 
 DELETE Payments2.FundingSourceEvent
 WHERE RequiredPaymentEventId IN (
@@ -40,6 +43,7 @@ WHERE RequiredPaymentEventId IN (
 	    SELECT DcJobId FROM #JobIds
     )
     AND CollectionPeriod = @collectionPeriod
+    AND AcademicYear = @academicYear
 )
 
 DELETE Payments2.RequiredPaymentEvent
@@ -47,6 +51,7 @@ WHERE JobId NOT IN (
 	SELECT DcJobId FROM #JobIds
 )
 AND CollectionPeriod = @collectionPeriod
+AND AcademicYear = @academicYear
 
 DELETE Payments2.DataLockEventNonPayablePeriodFailures
 WHERE DataLockEventNonPayablePeriodId IN (
@@ -55,6 +60,7 @@ WHERE DataLockEventNonPayablePeriodId IN (
 		SELECT EventId FROM Payments2.DataLockEvent DLE
 		WHERE DLE.JobId NOT IN (SELECT DcJobId FROM #JobIds)
 		AND CollectionPeriod = @collectionPeriod
+        AND AcademicYear = @academicYear
 	)
 )
 
@@ -63,6 +69,7 @@ WHERE DataLockEventId IN (
 	SELECT EventId FROM Payments2.DataLockEvent DLE
 	WHERE DLE.JobId NOT IN (SELECT DcJobId FROM #JobIds)
 	AND CollectionPeriod = @collectionPeriod
+    AND AcademicYear = @academicYear
 )
 
 DELETE Payments2.DataLockEventPayablePeriod
@@ -70,6 +77,7 @@ WHERE DataLockEventId IN (
 	SELECT EventId FROM Payments2.DataLockEvent DLE
 	WHERE DLE.JobId NOT IN (SELECT DcJobId FROM #JobIds)
 	AND CollectionPeriod = @collectionPeriod
+    AND AcademicYear = @academicYear
 )
 
 DELETE Payments2.DataLockEventPriceEpisode
@@ -77,12 +85,13 @@ WHERE DataLockEventId IN (
 	SELECT EventId FROM Payments2.DataLockEvent DLE
 	WHERE DLE.JobId NOT IN (SELECT DcJobId FROM #JobIds)
 	AND CollectionPeriod = @collectionPeriod
+    AND AcademicYear = @academicYear
 )
 
 DELETE Payments2.DataLockEvent
 WHERE JobId NOT IN (SELECT DcJobId FROM #JobIds)
 AND CollectionPeriod = @collectionPeriod
-
+AND AcademicYear = @academicYear
 ";
     }
 }
