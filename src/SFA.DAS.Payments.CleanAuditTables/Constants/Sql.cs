@@ -32,6 +32,16 @@ WHERE JobId NOT IN (
 )
 AND CollectionPeriod = @collectionPeriod
 
+DELETE Payments2.FundingSourceEvent
+WHERE RequiredPaymentEventId IN (
+    SELECT EventId 
+    FROM Payments2.RequiredPaymentEvent
+    WHERE JobId NOT IN (
+	    SELECT DcJobId FROM #JobIds
+    )
+    AND CollectionPeriod = @collectionPeriod
+)
+
 DELETE Payments2.RequiredPaymentEvent
 WHERE JobId NOT IN (
 	SELECT DcJobId FROM #JobIds
