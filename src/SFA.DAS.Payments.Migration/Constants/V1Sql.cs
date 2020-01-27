@@ -76,6 +76,18 @@
                 WHERE R.CollectionPeriodName = @period
             ";
 
+        public const string DeletePreviousEarnings = @"
+                DELETE
+                FROM
+				    [PaymentsDue].[Earnings] 
+                WHERE 
+                    RequiredPaymentId IN (
+		                SELECT RP.Id
+		                FROM 
+						[PaymentsDue].[RequiredPayments] RP
+		                WHERE RP.CollectionPeriodName <= @v1CollectionPeriod
+			                AND RP.CollectionPeriodName LIKE '1920-R%'
+		)";
 
         public const string ExistingRequiredPayments = @"
                 SELECT Id 
