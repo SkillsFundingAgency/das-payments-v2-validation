@@ -13,7 +13,7 @@ namespace SFA.DAS.Payments.CleanAuditTables
 
 
         public const int CommandTimeout = 600;
-        static async Task Main(string[] args)
+        static async Task<int> Main(string[] args)
         {
             var collectionPeriod = await GetPeriod();
             await Log("Please enter the academic year");
@@ -52,11 +52,12 @@ namespace SFA.DAS.Payments.CleanAuditTables
                 await Log("Unrecoverable exception occurred. Please view exception details above and press any key.");
                 
                 Console.ReadKey();
-                throw;
+                return 1;
             }
 
             await Log("Press enter to quit");
             Console.ReadLine();
+            return 0;
         }
 
         static async Task Log(string message)
