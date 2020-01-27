@@ -10,6 +10,9 @@ namespace SFA.DAS.Payments.CleanAuditTables
 {
     class Program
     {
+
+
+        public const int CommandTimeout = 600;
         static async Task Main(string[] args)
         {
             var collectionPeriod = await GetPeriod();
@@ -21,19 +24,35 @@ namespace SFA.DAS.Payments.CleanAuditTables
                 await Log("Couldn't understand the academic year, please enter in the form 1920, 2021 etc");
                 goto GETYEAR;
             }
-            using (var connection = new SqlConnection(ConfigurationManager.ConnectionStrings["V2"].ConnectionString))
+
+            try
             {
-                await connection.OpenAsync();
-                var numberOfActiveJobs = await connection.ExecuteScalarAsync<int>(Sql.CheckIfJobIsRunning);
-                if (numberOfActiveJobs > 0)
+                using (var connection = new SqlConnection(ConfigurationManager.ConnectionStrings["V2"].ConnectionString))
                 {
-                    await Log("There are active jobs running - aborting cleanup");
+                    await connection.OpenAsync();
+                    var numberOfActiveJobs = await connection.ExecuteScalarAsync<int>(Sql.CheckIfJobIsRunning, commandTimeout:CommandTimeout);
+                    if (numberOfActiveJobs > 0)
+                    {
+                        await Log("There are active jobs running - aborting cleanup");
+                    }
+                    else
+                    {
+                        await connection.ExecuteAsync(Sql.CleanAuditForPeriod, new { collectionPeriod, academicYear });
+                        await Log("Completed");
+                    }
                 }
-                else
-                {
-                    await connection.ExecuteAsync(Sql.CleanAuditForPeriod, new { collectionPeriod, academicYear });
-                    await Log("Completed");
-                }
+            }
+            catch (Exception e)
+            {
+                await Log("An exception occurred. The details can be found below.");
+                Console.WriteLine();
+                await Log(e.Message);
+                Console.WriteLine();
+
+                await Log("Unrecoverable exception occurred. Please view exception details above and press any key.");
+                
+                Console.ReadKey();
+                throw;
             }
 
             await Log("Press enter to quit");
