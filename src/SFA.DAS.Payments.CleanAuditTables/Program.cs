@@ -37,7 +37,7 @@ namespace SFA.DAS.Payments.CleanAuditTables
                     }
                     else
                     {
-                        await connection.ExecuteAsync(Sql.CleanAuditForPeriod, new { collectionPeriod, academicYear });
+                        await connection.ExecuteAsync(Sql.CleanAuditForPeriod, new { collectionPeriod, academicYear }, commandTimeout:CommandTimeout);
                         await Log("Completed");
                     }
                 }
