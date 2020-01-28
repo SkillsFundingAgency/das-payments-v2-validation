@@ -12,7 +12,7 @@ namespace SFA.DAS.Payments.CleanAuditTables
     {
 
 
-        public const int CommandTimeout = 600;
+        public const int CommandTimeout = 0; //wait indefinitely
         static async Task<int> Main(string[] args)
         {
             var collectionPeriod = await GetPeriod();
