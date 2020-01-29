@@ -308,6 +308,46 @@ namespace SFA.DAS.Payments.Migration
 
                     offset += pageSize;
                 } while (paymentsAndEarnings.Count > 0);
+
+                for (var i = 0; i <= collectionPeriod; i++)
+                {
+                    // Load from v2
+                    paymentsAndEarnings = (await v2Connection.QueryAsync<V2PaymentAndEarning>(V2Sql.PaymentsAndEarningsForFailedTransfers,
+                            new { collectionPeriod = i },
+                            commandTimeout: 3600))
+                        .ToList();
+
+                    // Map
+                    var outputResults = mapper.MapV2Payments(paymentsAndEarnings, new HashSet<Guid>());
+
+                    var earnings = outputResults.earnings;
+                    await Log($"Loaded {earnings.Count} records for period {i} for transfer records");
+
+                    var minDate = new DateTime(2000, 1, 1);
+
+                    earnings.ForEach(x =>
+                    {
+                        if (x.ActualEnddate < minDate) x.ActualEnddate = null;
+                        if (x.PlannedEndDate < minDate) x.PlannedEndDate = minDate;
+                        if (x.StartDate < minDate) x.StartDate = minDate;
+                    });
+
+                    // Write to V1
+                    using (var bulkCopy = new SqlBulkCopy(v1Connection))
+                    {
+                        bulkCopy.BatchSize = 1000;
+                        bulkCopy.BulkCopyTimeout = 3600;
+
+                        bulkCopy.DestinationTableName = "[PaymentsDue].[Earnings]";
+                        bulkCopy.ColumnMappings.Clear();
+                        PopulateBulkCopy(bulkCopy, typeof(LegacyEarningModel));
+
+                        using (var reader = ObjectReader.Create(earnings))
+                        {
+                            await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
+                        }
+                    }
+                }
             }
         }
 
