@@ -48,7 +48,7 @@ namespace SFA.DAS.Payments.EarningsComparer
             try
             {
                 CalculateEarningComparisonMetric(options.CollectionPeriod, options.ProcessingStartTime,
-                    options.ProcessingFilterMode);
+                    options.ProcessingFilterMode, options.UseLegacyMode);
             }
             catch (Exception e)
             {
@@ -60,8 +60,11 @@ namespace SFA.DAS.Payments.EarningsComparer
         }
 
         private static void CalculateEarningComparisonMetric(short collectionPeriod, DateTime processingStartTime,
-            FilterMode filterMode)
+            FilterMode filterMode, bool optionsUseLatestJobIdOnly)
         {
+
+            Console.WriteLine(optionsUseLatestJobIdOnly);
+            Console.ReadLine();
 
             Console.WriteLine("Getting required data");
 
@@ -93,7 +96,8 @@ namespace SFA.DAS.Payments.EarningsComparer
                     new
                     {
                         collectionperiod = collectionPeriod,
-                        monthendStartTime = processingStartTime
+                        monthendStartTime = processingStartTime,
+                        useJobIdFiltering = !optionsUseLatestJobIdOnly
                     },
                     commandTimeout: 5000);
             }

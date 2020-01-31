@@ -1,5 +1,6 @@
 ﻿using System;
 using CommandLine;
+using DocumentFormat.OpenXml;
 
 namespace SFA.DAS.Payments.EarningsComparer
 {
@@ -22,6 +23,10 @@ namespace SFA.DAS.Payments.EarningsComparer
 
             [Option('f', "filterMode", HelpText = "valid options are \"None\" (Default), WhiteList or BlackList")]
             public FilterMode ProcessingFilterMode { get; set; }
-        
+
+            [Option('l', "UseLegacyMode", HelpText = "Pass this parameter if you want to run the earning comparison using all data rather than filtering by last successful DcJobid")]
+
+            public bool UseLegacyMode { get; set; } 
+
     }
 }
