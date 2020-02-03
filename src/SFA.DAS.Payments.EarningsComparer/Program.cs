@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Data.SqlClient;
 using System.Linq;
+using System.Threading;
 using ClosedXML.Excel;
 using CommandLine;
 using Dapper;
+using Kurukuru;
 using MoreLinq.Extensions;
 
 namespace SFA.DAS.Payments.EarningsComparer
@@ -29,7 +31,7 @@ namespace SFA.DAS.Payments.EarningsComparer
             });
 
             return argParser.ParseArguments<Options>(args)
-                .MapResult(RunAndReturnExitCode,ShowOptions);
+                .MapResult(RunAndReturnExitCode, ShowOptions);
         }
 
 
@@ -41,7 +43,6 @@ namespace SFA.DAS.Payments.EarningsComparer
 
         public static int RunAndReturnExitCode(Options options)
         {
-         
             if (options.UseLegacyMode && options.ProcessingStartTime == DateTime.MinValue)
             {
                 Console.WriteLine("Processing start time is required when running in legacy mode.");
@@ -71,99 +72,103 @@ namespace SFA.DAS.Payments.EarningsComparer
         private static void CalculateEarningComparisonMetric(short collectionPeriod, DateTime processingStartTime,
             FilterMode filterMode, bool useLegacyMode)
         {
-            Console.WriteLine("Getting required data");
-
-            var dasConnectionString = ConfigurationManager.ConnectionStrings["DasConnectionString"].ConnectionString;
-            var dcConnectionString = ConfigurationManager.ConnectionStrings["DcConnectionString"].ConnectionString;
-            var outputPath = ConfigurationManager.AppSettings["OutputPath"];
-
-            var dasQuery = ResourceHelpers.ReadResource(DasQuery);
-            var legacyDasQuery = ResourceHelpers.ReadResource(LegacyDasQuery);
-            var dcQuery = ResourceHelpers.ReadResource(DcQuery);
-
-            IEnumerable<EarningsRow> dcData;
-            IEnumerable<EarningsRow> dasData;
-
-            Console.WriteLine("Getting DC data");
-
-
-            using (var dcConnection = new SqlConnection(dcConnectionString))
+            Spinner.Start("Getting required data. ", spinner =>
             {
-                dcData = dcConnection.Query<EarningsRow>(dcQuery,
-                    new {collectionperiod = collectionPeriod},
-                    commandTimeout: 5000);
-            }
+                var dasConnectionString =
+                    ConfigurationManager.ConnectionStrings["DasConnectionString"].ConnectionString;
+                var dcConnectionString = ConfigurationManager.ConnectionStrings["DcConnectionString"].ConnectionString;
+                var outputPath = ConfigurationManager.AppSettings["OutputPath"];
 
-            Console.WriteLine("Getting DAS data");
+                var dasQuery = ResourceHelpers.ReadResource(DasQuery);
+                var legacyDasQuery = ResourceHelpers.ReadResource(LegacyDasQuery);
+                var dcQuery = ResourceHelpers.ReadResource(DcQuery);
 
-            using (var dasConnection = new SqlConnection(dasConnectionString))
-            {
-                if (useLegacyMode)
+                IEnumerable<EarningsRow> dcData;
+                IEnumerable<EarningsRow> dasData;
+
+                spinner.Text = "Getting DC data";
+
+
+                using (var dcConnection = new SqlConnection(dcConnectionString))
                 {
-                    dasData = dasConnection.Query<EarningsRow>(legacyDasQuery,
-                        new
-                        {
-                            collectionperiod = collectionPeriod,
-                            monthendStartTime = processingStartTime
-                        },
-                        commandTimeout: 0);
+                    dcData = dcConnection.Query<EarningsRow>(dcQuery,
+                        new {collectionperiod = collectionPeriod},
+                        commandTimeout: 5000);
                 }
-                else
+                spinner.Text = "Getting DAS data";
+               
+
+                using (var dasConnection = new SqlConnection(dasConnectionString))
                 {
-                    dasData = dasConnection.Query<EarningsRow>(dasQuery,
-                        new
-                        {
-                            collectionperiod = collectionPeriod
-                        },
-                        commandTimeout: 0);
+                    if (useLegacyMode)
+                    {
+                        dasData = dasConnection.Query<EarningsRow>(legacyDasQuery,
+                            new
+                            {
+                                collectionperiod = collectionPeriod,
+                                monthendStartTime = processingStartTime
+                            },
+                            commandTimeout: 0);
+                    }
+                    else
+                    {
+                        dasData = dasConnection.Query<EarningsRow>(dasQuery,
+                            new
+                            {
+                                collectionperiod = collectionPeriod
+                            },
+                            commandTimeout: 0);
+                    }
                 }
-            }
 
-            Console.WriteLine("Calculating values");
-
-
-            var joinedValues = dasData.FullJoin(
-                    dcData,
-                    earningsRow => new {earningsRow.Ukprn, earningsRow.ApprenticeshipContractType},
-                    dasRow => new CombinedRow(dasRow.Ukprn, dasRow.ApprenticeshipContractType)
-                        {DasRow = dasRow, DcRow = null},
-                    dcRow => new CombinedRow(dcRow.Ukprn, dcRow.ApprenticeshipContractType)
-                        {DasRow = null, DcRow = dcRow},
-                    (dasRow, dcRow
-                    ) => new CombinedRow(dasRow.Ukprn, dasRow.ApprenticeshipContractType)
-                        {DasRow = dasRow, DcRow = dcRow}
-                )
-                .OrderBy(row => row.Ukprn)
-                .ThenBy(row => row.ApprenticeshipContractType)
-                .ToList();
-
-         
-
-            var filteredResults = FilterValues(filterMode, joinedValues);
+                spinner.Text = "Calculating values";
+              
 
 
-            using (var templateStream = ResourceHelpers.OpenResource(ExcelTemplate))
-            {
-                using (var spreadsheet = new XLWorkbook(templateStream))
+                var joinedValues = dasData.FullJoin(
+                        dcData,
+                        earningsRow => new {earningsRow.Ukprn, earningsRow.ApprenticeshipContractType},
+                        dasRow => new CombinedRow(dasRow.Ukprn, dasRow.ApprenticeshipContractType)
+                            {DasRow = dasRow, DcRow = null},
+                        dcRow => new CombinedRow(dcRow.Ukprn, dcRow.ApprenticeshipContractType)
+                            {DasRow = null, DcRow = dcRow},
+                        (dasRow, dcRow
+                        ) => new CombinedRow(dasRow.Ukprn, dasRow.ApprenticeshipContractType)
+                            {DasRow = dasRow, DcRow = dcRow}
+                    )
+                    .OrderBy(row => row.Ukprn)
+                    .ThenBy(row => row.ApprenticeshipContractType)
+                    .ToList();
+
+
+                var filteredResults = FilterValues(filterMode, joinedValues, spinner);
+
+
+                using (var templateStream = ResourceHelpers.OpenResource(ExcelTemplate))
                 {
-                    var sheet = spreadsheet.Worksheet("Earnings Comparison");
+                    using (var spreadsheet = new XLWorkbook(templateStream))
+                    {
+                        var sheet = spreadsheet.Worksheet("Earnings Comparison");
 
-                    AddFilterSheet(spreadsheet, filterMode, filteredResults.Item2);
+                        AddFilterSheet(spreadsheet, filterMode, filteredResults.Item2);
 
-                    AddSummaryInfo(sheet, collectionPeriod, processingStartTime);
+                        AddSummaryInfo(sheet, collectionPeriod, processingStartTime);
 
-                    WriteDataToSheet(sheet, filteredResults.Item1);
+                        WriteDataToSheet(sheet, filteredResults.Item1);
 
-                    sheet.AdjustToContent();
-                    sheet.SetAsTable(9,1);
+                        sheet.AdjustToContent();
+                        sheet.SetAsTable(9, 1);
 
-                    Console.WriteLine($"Saving data to spreadsheet to: {outputPath}");
+                        spinner.Text = $"Saving data to spreadsheet to: {outputPath}";
+                      
 
-                    ExcelHelpers.SaveWorksheet(spreadsheet, outputPath);
+                        ExcelHelpers.SaveWorksheet(spreadsheet, outputPath);
 
-                    Console.WriteLine("Spreadsheet saved.");
+                        spinner.Text = "Spreadsheet saved.";
+                        
+                    }
                 }
-            }
+            });
         }
 
         private static void AddFilterSheet(XLWorkbook spreadsheet, FilterMode filterMode, List<long> filterItems)
@@ -179,23 +184,21 @@ namespace SFA.DAS.Payments.EarningsComparer
 
 
         private static (List<CombinedRow>, List<long>) FilterValues(FilterMode filterMode,
-            List<CombinedRow> joinedValues)
+            List<CombinedRow> joinedValues, Spinner spinner)
         {
             if (filterMode == FilterMode.None)
             {
-                Console.WriteLine("No filtering configured");
+                spinner.Text = "No filtering configured";
 
-            return (joinedValues, null);
+                return (joinedValues, null);
             }
+            spinner.Text = $"Filtering using: {filterMode}";
 
-            Console.WriteLine($"Filtering using: {filterMode}");
+            var filterItems = GetFilterItems(filterMode);
 
-          var filterItems = GetFilterItems(filterMode);
-
-            return filterMode == FilterMode.Blacklist ?  
-                (joinedValues.Where(jv => !filterItems.Contains(jv.Ukprn)).ToList(), filterItems)
-                :
-                (joinedValues.Where(jv => filterItems.Contains(jv.Ukprn)).ToList(), filterItems);
+            return filterMode == FilterMode.Blacklist
+                ? (joinedValues.Where(jv => !filterItems.Contains(jv.Ukprn)).ToList(), filterItems)
+                : (joinedValues.Where(jv => filterItems.Contains(jv.Ukprn)).ToList(), filterItems);
         }
 
         private static List<long> GetFilterItems(FilterMode filterMode)
