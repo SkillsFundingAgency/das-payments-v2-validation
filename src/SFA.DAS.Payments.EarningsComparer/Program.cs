@@ -13,6 +13,7 @@ namespace SFA.DAS.Payments.EarningsComparer
     class Program
     {
         internal const string DasQuery = "DasQuery.sql";
+        internal const string LegacyDasQuery = "DasQueryLegacy.sql";
         internal const string DcQuery = "DcQuery.sql";
         internal const string ExcelTemplate = "Template.xlsx";
         internal const string BlackListFile = "blacklist.json";
@@ -40,11 +41,19 @@ namespace SFA.DAS.Payments.EarningsComparer
 
         public static int RunAndReturnExitCode(Options options)
         {
-            if (options.ProcessingStartTime.TimeOfDay == TimeSpan.Zero)
+         
+            if (options.UseLegacyMode && options.ProcessingStartTime == DateTime.MinValue)
+            {
+                Console.WriteLine("Processing start time is required when running in legacy mode.");
+                return 1;
+            }
+
+            if (options.UseLegacyMode && options.ProcessingStartTime.TimeOfDay == TimeSpan.Zero)
             {
                 Console.WriteLine("Time component required on Processing Start Time");
                 return 1;
             }
+
             try
             {
                 CalculateEarningComparisonMetric(options.CollectionPeriod, options.ProcessingStartTime,
@@ -60,12 +69,8 @@ namespace SFA.DAS.Payments.EarningsComparer
         }
 
         private static void CalculateEarningComparisonMetric(short collectionPeriod, DateTime processingStartTime,
-            FilterMode filterMode, bool optionsUseLatestJobIdOnly)
+            FilterMode filterMode, bool useLegacyMode)
         {
-
-            Console.WriteLine(optionsUseLatestJobIdOnly);
-            Console.ReadLine();
-
             Console.WriteLine("Getting required data");
 
             var dasConnectionString = ConfigurationManager.ConnectionStrings["DasConnectionString"].ConnectionString;
@@ -73,6 +78,7 @@ namespace SFA.DAS.Payments.EarningsComparer
             var outputPath = ConfigurationManager.AppSettings["OutputPath"];
 
             var dasQuery = ResourceHelpers.ReadResource(DasQuery);
+            var legacyDasQuery = ResourceHelpers.ReadResource(LegacyDasQuery);
             var dcQuery = ResourceHelpers.ReadResource(DcQuery);
 
             IEnumerable<EarningsRow> dcData;
@@ -92,14 +98,25 @@ namespace SFA.DAS.Payments.EarningsComparer
 
             using (var dasConnection = new SqlConnection(dasConnectionString))
             {
-                dasData = dasConnection.Query<EarningsRow>(dasQuery,
-                    new
-                    {
-                        collectionperiod = collectionPeriod,
-                        monthendStartTime = processingStartTime,
-                        useJobIdFiltering = !optionsUseLatestJobIdOnly
-                    },
-                    commandTimeout: 5000);
+                if (useLegacyMode)
+                {
+                    dasData = dasConnection.Query<EarningsRow>(legacyDasQuery,
+                        new
+                        {
+                            collectionperiod = collectionPeriod,
+                            monthendStartTime = processingStartTime
+                        },
+                        commandTimeout: 0);
+                }
+                else
+                {
+                    dasData = dasConnection.Query<EarningsRow>(dasQuery,
+                        new
+                        {
+                            collectionperiod = collectionPeriod
+                        },
+                        commandTimeout: 0);
+                }
             }
 
             Console.WriteLine("Calculating values");
