@@ -9,6 +9,7 @@ namespace SFA.DAS.Payments.Migration.Services
     public class PaymentMapper
     {
         private static readonly HashSet<Guid> ProcessedRequiredPayments = new HashSet<Guid>();
+        private static readonly HashSet<int> TransactionTypesForEarnings = new HashSet<int>(new [] {1, 2, 3});
 
         public (List<LegacyPaymentModel> payments, List<LegacyRequiredPaymentModel> requiredPayments, List<LegacyEarningModel> earnings, List<LegacyAccountTransferModel> accountTransfers)
             MapV2Payments(List<V2PaymentAndEarning> payments, HashSet<Guid> dontCreateRequiredPaymentList)
@@ -33,13 +34,12 @@ namespace SFA.DAS.Payments.Migration.Services
                     AccountVersionId = string.Empty,
                     AimSeqNumber = paymentModel.LearningAimSequenceNumber,
                     AmountDue = paymentModel.AmountDue,
-                    ApprenticeshipContractType = (int)paymentModel.ContractType,
+                    ApprenticeshipContractType = paymentModel.ContractType,
                     CollectionPeriodMonth = MonthFromPeriod(paymentModel.CollectionPeriod),
                     CollectionPeriodName =
                         $"{paymentModel.AcademicYear}-R{paymentModel.CollectionPeriod:D2}",
                     CollectionPeriodYear = YearFromPeriod(paymentModel.AcademicYear,
                         paymentModel.CollectionPeriod),
-                    // TODO: Fix this when available
                     CommitmentId = paymentModel.ApprenticeshipId,
                     CommitmentVersionId = string.Empty,
                     UseLevyBalance = false,
@@ -67,21 +67,27 @@ namespace SFA.DAS.Payments.Migration.Services
                     legacyRequiredPayments.Add(requiredPayment.Id, requiredPayment);
                     ProcessedRequiredPayments.Add(requiredPayment.Id);
 
-                    var earning = new LegacyEarningModel
+                    if (TransactionTypesForEarnings.Contains(requiredPayment.TransactionType.Value))
                     {
-                        StartDate = paymentModel.EarningsStartDate,
-                        RequiredPaymentId = paymentModel.RequiredPaymentEventId,
-                        ActualEnddate = paymentModel.EarningsActualEndDate,
-                        CompletionAmount = paymentModel.EarningsCompletionAmount,
-                        PlannedEndDate = paymentModel.EarningsPlannedEndDate ?? DateTime.MinValue,
-                        CompletionStatus = paymentModel.EarningsCompletionStatus,
-                        MonthlyInstallment = paymentModel.EarningsInstalmentAmount ?? 0m,
-                        TotalInstallments = paymentModel.EarningsNumberOfInstalments ?? 0,
-                    };
-                    legacyEarnings.Add(earning);
+                        var earning = new LegacyEarningModel
+                        {
+                            StartDate = paymentModel.EarningsStartDate,
+                            RequiredPaymentId = paymentModel.RequiredPaymentEventId,
+                            ActualEnddate = paymentModel.EarningsActualEndDate,
+                            CompletionAmount = paymentModel.EarningsCompletionAmount,
+                            PlannedEndDate = paymentModel.EarningsPlannedEndDate ?? DateTime.MinValue,
+                            CompletionStatus = paymentModel.EarningsCompletionStatus,
+                            MonthlyInstallment = paymentModel.EarningsInstalmentAmount ?? 0m,
+                            TotalInstallments = paymentModel.EarningsNumberOfInstalments ?? 0,
+                        };
+                        legacyEarnings.Add(earning);
+                    }
                 }
 
-                if (paymentModel.TransferSenderAccountId.HasValue && paymentModel.ApprenticeshipId.HasValue && paymentModel.FundingSource == 5)
+                if (paymentModel.TransferSenderAccountId.HasValue && 
+                    paymentModel.ApprenticeshipId.HasValue && 
+                    paymentModel.AccountId.HasValue &&
+                    paymentModel.FundingSource == 5) // Funding source == 5 should make payments 1-1 with required payments
                 {
                     accountTransfers.Add(new LegacyAccountTransferModel
                     {
@@ -107,7 +113,7 @@ namespace SFA.DAS.Payments.Migration.Services
                     CollectionPeriodName = requiredPayment.CollectionPeriodName,
                     DeliveryMonth = requiredPayment.DeliveryMonth ?? 0,
                     Amount = paymentModel.Amount,
-                    FundingSource = (int)paymentModel.FundingSource,
+                    FundingSource = paymentModel.FundingSource,
                     PaymentId = Guid.NewGuid(),
                 };
                 legacyPayments.Add(payment);
