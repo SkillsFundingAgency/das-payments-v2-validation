@@ -118,9 +118,7 @@ namespace SFA.DAS.Payments.Migration
             {
                 await ProcessEas();
             }
-
-          
-
+            
             if (selection == 5)
             {
                 await ProcessV1Payments();
