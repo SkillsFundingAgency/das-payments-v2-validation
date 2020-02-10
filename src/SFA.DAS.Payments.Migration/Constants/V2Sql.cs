@@ -1,4 +1,4 @@
-﻿namespace SFA.DAS.Payments.Migration.Constants
+namespace SFA.DAS.Payments.Migration.Constants
 {
     public static class V2Sql
     {
@@ -51,6 +51,23 @@
 	                ON E.EventId = P.EarningEventId
                 WHERE P.AcademicYear = 1920
                     AND P.CollectionPeriod = @collectionPeriod
+                ORDER BY R.EventId, P.Id
+                OFFSET @offset ROWS
+                FETCH NEXT @pageSize ROWS ONLY
+                ";
+
+        public const string PreviousEarnings = @"
+                SELECT R.EventId [RequiredPaymentEventId], P.*, ISNULL(E.LearningAimSequenceNumber, 0), 
+                    R.Amount [AmountDue]
+                FROM [Payments2].[Payment] P
+                JOIN Payments2.FundingSourceEvent F
+	                ON F.EventId = P.FundingSourceEventId
+                JOIN Payments2.RequiredPaymentEvent R
+	                ON R.EventId = F.RequiredPaymentEventId
+                LEFT JOIN Payments2.EarningEvent E
+	                ON E.EventId = P.EarningEventId
+                WHERE P.AcademicYear = 1920
+                    AND P.CollectionPeriod <= @collectionPeriod
                 ORDER BY R.EventId
                 OFFSET @offset ROWS
                 FETCH NEXT @pageSize ROWS ONLY
@@ -74,7 +91,9 @@
                 WHERE P.AcademicYear = 1920
                     AND P.CollectionPeriod = @collectionPeriod
 	                AND R.EventId IS NULL
-                ORDER BY R2.EventId
+                ORDER BY R2.EventId, P.Id
             ";
+
+
     }
 }

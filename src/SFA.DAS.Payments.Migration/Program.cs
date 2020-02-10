@@ -1,4 +1,4 @@
-﻿
+
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -6,6 +6,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using System.Transactions;
 using Dapper;
@@ -49,25 +50,37 @@ namespace SFA.DAS.Payments.Migration
                 await Log("7 - V2 Transfers that didn't work -> V1");
                 await Log("8 - V2 Account Transfers -> V1");
                 await Log("9 - All V1 -> V2 (1, 2, 3 & 4)");
+                await Log("10 - Previous Earnings (1920) up to and including supplied period");
+                await Log("11 - All V2 -> V1 (5, 8, 7)");
                 await Log("T - Test Connections");
                 await Log("Esc - exit");
 
-                var typeinput = Console.ReadKey();
+                StringBuilder buffer = new StringBuilder();
 
-                if (typeinput.Key == ConsoleKey.Escape)
+                ConsoleKeyInfo info = Console.ReadKey(true);
+                while (info.Key != ConsoleKey.Enter && info.Key != ConsoleKey.Escape)
+                {
+                    Console.Write(info.KeyChar);
+                    buffer.Append(info.KeyChar);
+                    info = Console.ReadKey(true);
+                }
+
+                if (info.Key == ConsoleKey.Escape)
                 {
                     await Log("Finished - press enter to continue...");
                     Console.ReadLine();
                     return;
                 }
 
-                if (typeinput.Key == ConsoleKey.T)
+                var enteredText = buffer.ToString();
+
+                if (enteredText == "T")
                 {
                     await TestConnections();
                     goto START;
                 }
 
-                if (!int.TryParse(typeinput.KeyChar.ToString(), out var typeinputAsInteger))
+                if (!int.TryParse(enteredText, out var typeinputAsInteger))
                 {
                     await Log("Please enter a number");
                     goto START;
@@ -105,7 +118,7 @@ namespace SFA.DAS.Payments.Migration
             {
                 await ProcessEas();
             }
-
+            
             if (selection == 5)
             {
                 await ProcessV1Payments();
@@ -113,7 +126,7 @@ namespace SFA.DAS.Payments.Migration
 
             if (selection == 6)
             {
-                await CompleteR03();
+                await CompletePeriod();
             }
 
             if (selection == 7)
@@ -124,6 +137,24 @@ namespace SFA.DAS.Payments.Migration
             if (selection == 8)
             {
                 await ProcessV1AccountTransfers();
+            }
+
+            if (selection == 10)
+            {
+                await Log("");
+                await Log("");
+                await Log("Previous V1 earnings will be removed and migrated up to and INCLUDING the provided period below. ");
+                await Log("");
+                await ProcessPreviousEarnings();
+			}
+			
+            if (selection == 11)
+            {
+                var period = await GetPeriod();
+
+                await ProcessV1Payments(period);
+                await ProcessV1AccountTransfers(period);
+                await ProcessFailedV1Payments(period);
             }
         }
 
@@ -161,9 +192,14 @@ namespace SFA.DAS.Payments.Migration
             await Log("");
         }
 
-        private static async Task CompleteR03()
+        private static async Task CompletePeriod()
         {
             var period = await GetPeriod();
+            await CompletePeriod(period);
+        }
+
+        private static async Task CompletePeriod(int period)
+        {
             var trigger = CreateTrigger(period);
             var triggerList = new List<LegacyPeriodModel> { trigger };
 
@@ -202,7 +238,8 @@ namespace SFA.DAS.Payments.Migration
         }
 
 
-        private static async Task<int> GetPeriod()
+        private static async Task<int> 
+            GetPeriod()
         {
             while (true)
             {
@@ -219,9 +256,121 @@ namespace SFA.DAS.Payments.Migration
             }
         }
 
+        private static async Task ProcessPreviousEarnings()
+        {
+            var collectionPeriod = await GetPeriod();
+            var mapper = new PaymentMapper();
+
+            //using(var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled))
+            using (var v2Connection = new SqlConnection(ConfigurationManager.ConnectionStrings["V2"].ConnectionString))
+            using (var v1Connection = new SqlConnection(ConfigurationManager.ConnectionStrings["V1"].ConnectionString))
+            {
+                await v1Connection.OpenAsync().ConfigureAwait(false);
+
+                // Per page
+                var pageSize = 100000;
+                var offset = 0;
+
+                List<V2PaymentAndEarning> paymentsAndEarnings;
+
+                //remove previous earnings
+                var v1CollectionPeriod = $"1920-R{collectionPeriod:D2}";
+                await v1Connection.ExecuteAsync(V1Sql.DeletePreviousEarnings,
+                        new {v1CollectionPeriod},
+                        commandTimeout: 3600);
+
+                do
+                {
+                    // Load from v2
+                    paymentsAndEarnings = (await v2Connection.QueryAsync<V2PaymentAndEarning>(V2Sql.PreviousEarnings,
+                            new {collectionPeriod, offset, pageSize},
+                            commandTimeout: 3600))
+                        .ToList();
+                   
+                    // Map
+                    var outputResults = mapper.MapV2Payments(paymentsAndEarnings, new HashSet<Guid>());
+
+                    var earnings = outputResults.earnings;
+                    await Log($"Loaded {earnings.Count} records from page {offset / pageSize}");
+
+                    var minDate = new DateTime(2000, 1, 1);
+
+                    earnings.ForEach(x =>
+                    {
+                        if (x.ActualEnddate < minDate) x.ActualEnddate = null;
+                        if (x.PlannedEndDate < minDate) x.PlannedEndDate = minDate;
+                        if (x.StartDate < minDate) x.StartDate = minDate;
+                    });
+
+                    // Write to V1
+                    using (var bulkCopy = new SqlBulkCopy(v1Connection))
+                    {
+                        bulkCopy.BatchSize = 1000;
+                        bulkCopy.BulkCopyTimeout = 3600;
+
+                        bulkCopy.DestinationTableName = "[PaymentsDue].[Earnings]";
+                        bulkCopy.ColumnMappings.Clear();
+                        PopulateBulkCopy(bulkCopy, typeof(LegacyEarningModel));
+
+                        using (var reader = ObjectReader.Create(earnings))
+                        {
+                            await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
+                        }
+                    }
+
+                    offset += pageSize;
+                } while (paymentsAndEarnings.Count > 0);
+
+                for (var i = 0; i <= collectionPeriod; i++)
+                {
+                    // Load from v2
+                    paymentsAndEarnings = (await v2Connection.QueryAsync<V2PaymentAndEarning>(V2Sql.PaymentsAndEarningsForFailedTransfers,
+                            new { collectionPeriod = i },
+                            commandTimeout: 3600))
+                        .ToList();
+
+                    // Map
+                    var outputResults = mapper.MapV2Payments(paymentsAndEarnings, new HashSet<Guid>());
+
+                    var earnings = outputResults.earnings;
+                    await Log($"Loaded {earnings.Count} records for period {i} for transfer records");
+
+                    var minDate = new DateTime(2000, 1, 1);
+
+                    earnings.ForEach(x =>
+                    {
+                        if (x.ActualEnddate < minDate) x.ActualEnddate = null;
+                        if (x.PlannedEndDate < minDate) x.PlannedEndDate = minDate;
+                        if (x.StartDate < minDate) x.StartDate = minDate;
+                    });
+
+                    // Write to V1
+                    using (var bulkCopy = new SqlBulkCopy(v1Connection))
+                    {
+                        bulkCopy.BatchSize = 1000;
+                        bulkCopy.BulkCopyTimeout = 3600;
+
+                        bulkCopy.DestinationTableName = "[PaymentsDue].[Earnings]";
+                        bulkCopy.ColumnMappings.Clear();
+                        PopulateBulkCopy(bulkCopy, typeof(LegacyEarningModel));
+
+                        using (var reader = ObjectReader.Create(earnings))
+                        {
+                            await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
+                        }
+                    }
+                }
+            }
+        }
+
         private static async Task ProcessV1Payments()
         {
             var collectionPeriod = await GetPeriod();
+            await ProcessV1Payments(collectionPeriod);
+        }
+
+        private static async Task ProcessV1Payments(int collectionPeriod)
+        {
             var mapper = new PaymentMapper();
 
             //using(var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled))
@@ -307,15 +456,12 @@ namespace SFA.DAS.Payments.Migration
 
         private static async Task ProcessV1AccountTransfers()
         {
-            await Log("");
-            await Log("Please enter the collection period: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 or 14");
-            var chosenPeriod = Console.ReadLine();
-            if (!int.TryParse(chosenPeriod, out var collectionPeriod) || collectionPeriod < 1 || collectionPeriod > 14)
-            {
-                await Log($"Invalid collection period: '{chosenPeriod}'.");
-                return;
-            }
+            var collectionPeriod = await GetPeriod();
+            await ProcessV1AccountTransfers(collectionPeriod);
+        }
 
+        private static async Task ProcessV1AccountTransfers(int collectionPeriod)
+        {
             var mapper = new PaymentMapper();
 
             //using(var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled))
@@ -340,9 +486,7 @@ namespace SFA.DAS.Payments.Migration
                     await Log($"Loaded {paymentsAndEarnings.Count} records from page {offset / pageSize}");
 
                     // Map
-                    var outputResults = mapper.MapV2Payments(paymentsAndEarnings, new HashSet<Guid>());
-
-                    var accountTransfers = outputResults.accountTransfers;
+                    var accountTransfers = mapper.MapV2AccountTransfers(paymentsAndEarnings);
 
                     // Write to V1
                     using (var bulkCopy = new SqlBulkCopy(v1Connection))
@@ -370,6 +514,11 @@ namespace SFA.DAS.Payments.Migration
         private static async Task ProcessFailedV1Payments()
         {
             var collectionPeriod = await GetPeriod();
+            await ProcessFailedV1Payments(collectionPeriod);
+        }
+
+        private static async Task ProcessFailedV1Payments(int collectionPeriod)
+        {
             var mapper = new PaymentMapper();
 
             using (var v2Connection = new SqlConnection(ConfigurationManager.ConnectionStrings["V2"].ConnectionString))
@@ -387,7 +536,7 @@ namespace SFA.DAS.Payments.Migration
                 // Get any existing required payments that have already been copied
                 var potentialIds = paymentsAndEarnings.Select(x => x.RequiredPaymentEventId).ToList();
                 var existingIds = new HashSet<Guid>(await v1Connection.QueryAsync<Guid>(
-                        V1Sql.ExistingRequiredPayments, new {requiredPaymentids = potentialIds}));
+                        V1Sql.ExistingRequiredPayments.Replace("[DAS_PeriodEnd]", $"[{Config.PaymentsDatabase}]"), new {requiredPaymentids = potentialIds}));
 
                 await Log($"Found {existingIds.Count} existing required payments");
 

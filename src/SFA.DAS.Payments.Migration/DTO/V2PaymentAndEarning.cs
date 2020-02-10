@@ -36,12 +36,13 @@ namespace SFA.DAS.Payments.Migration.DTO
         public long? AccountId { get; set; }
         public long? TransferSenderAccountId { get; set; }
         public DateTime StartDate { get; set; }
-        public DateTime? PlannedEndDate { get; set; }
-        public DateTime? ActualEndDate { get; set; }
-        public byte? CompletionStatus { get; set; }
-        public decimal? CompletionAmount { get; set; }
-        public decimal? InstalmentAmount { get; set; }
-        public short? NumberOfInstalments { get; set; }
+        public DateTime EarningsStartDate { get; set; }
+        public DateTime? EarningsPlannedEndDate { get; set; }
+        public DateTime? EarningsActualEndDate { get; set; }
+        public byte? EarningsCompletionStatus { get; set; }
+        public decimal? EarningsCompletionAmount { get; set; }
+        public decimal? EarningsInstalmentAmount { get; set; }
+        public short? EarningsNumberOfInstalments { get; set; }
         public string AgreementId { get; set; }
         public long? ApprenticeshipId { get; set; }
     }
