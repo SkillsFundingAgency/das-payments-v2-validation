@@ -24,9 +24,8 @@
 		ON EEP.EarningEventId = EE.EventId
 	AND DeliveryPeriod <= @collectionperiod
 	AND Amount != 0
-	AND	(EE.jobid IN (SELECT dcJobId FROM Payments2.LatestSuccessfulJobs))
-
-)
+	AND EE.CreationDate > @monthendStartTime
+	)
 
 
 SELECT ukprn,  [ApprenticeshipContractType],
