@@ -1,4 +1,4 @@
-﻿;with allEarnings as
+;with allEarnings as
 (
 	SELECT  ukprn,
 	ee.ContractType as [ApprenticeshipContractType],
@@ -23,6 +23,7 @@
 	JOIN Payments2.EarningEventPeriod EEP
 		ON EEP.EarningEventId = EE.EventId
 	AND DeliveryPeriod <= @collectionperiod
+    AND CollectionPeriod = @collectionperiod
 	AND Amount != 0
 	AND	(EE.jobid IN (SELECT dcJobId FROM Payments2.LatestSuccessfulJobs))
 
