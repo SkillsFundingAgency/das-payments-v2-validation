@@ -34,63 +34,61 @@ WHERE EventId IN (
 )
 
 
-DELETE Payments2.FundingSourceEvent
-WHERE RequiredPaymentEventId IN (
-    SELECT EventId 
+SELECT EventId INTO #RequiredPaymentsToDelete
+FROM (
+	SELECT EventId 
     FROM Payments2.RequiredPaymentEvent
     WHERE JobId NOT IN (
 	    SELECT DcJobId FROM #JobIds
     )
     AND CollectionPeriod = @collectionPeriod
     AND AcademicYear = @academicYear
+) q
+​
+​
+DELETE Payments2.FundingSourceEvent
+WHERE RequiredPaymentEventId IN (
+    SELECT EventId FROM #RequiredPaymentsToDelete
 )
-
+​
 DELETE Payments2.RequiredPaymentEvent
-WHERE JobId NOT IN (
-	SELECT DcJobId FROM #JobIds
+WHERE EventId IN (
+	SELECT EventId FROM #RequiredPaymentsToDelete
 )
-AND CollectionPeriod = @collectionPeriod
-AND AcademicYear = @academicYear
-
+​
+SELECT EventId INTO #DatalocksToDelete
+FROM (
+	SELECT EventId FROM Payments2.DataLockEvent DLE
+	WHERE DLE.JobId NOT IN (SELECT DcJobId FROM #JobIds)
+	AND CollectionPeriod = @collectionPeriod
+    AND AcademicYear = @academicYear
+) q
+​
+​
 DELETE Payments2.DataLockEventNonPayablePeriodFailures
 WHERE DataLockEventNonPayablePeriodId IN (
 	SELECT DataLockEventNonPayablePeriodId FROM Payments2.DataLockEventNonPayablePeriod
 	WHERE DataLockEventId IN (
-		SELECT EventId FROM Payments2.DataLockEvent DLE
-		WHERE DLE.JobId NOT IN (SELECT DcJobId FROM #JobIds)
-		AND CollectionPeriod = @collectionPeriod
-        AND AcademicYear = @academicYear
+		SELECT EventId FROM #DatalocksToDelete
 	)
 )
-
 DELETE Payments2.DataLockEventNonPayablePeriod
 WHERE DataLockEventId IN (
-	SELECT EventId FROM Payments2.DataLockEvent DLE
-	WHERE DLE.JobId NOT IN (SELECT DcJobId FROM #JobIds)
-	AND CollectionPeriod = @collectionPeriod
-    AND AcademicYear = @academicYear
+	SELECT EventId FROM #DatalocksToDelete
 )
-
 DELETE Payments2.DataLockEventPayablePeriod
 WHERE DataLockEventId IN (
-	SELECT EventId FROM Payments2.DataLockEvent DLE
-	WHERE DLE.JobId NOT IN (SELECT DcJobId FROM #JobIds)
-	AND CollectionPeriod = @collectionPeriod
-    AND AcademicYear = @academicYear
+	SELECT EventId FROM #DatalocksToDelete
 )
-
 DELETE Payments2.DataLockEventPriceEpisode
 WHERE DataLockEventId IN (
-	SELECT EventId FROM Payments2.DataLockEvent DLE
-	WHERE DLE.JobId NOT IN (SELECT DcJobId FROM #JobIds)
-	AND CollectionPeriod = @collectionPeriod
-    AND AcademicYear = @academicYear
+	SELECT EventId FROM #DatalocksToDelete
+)
+DELETE Payments2.DataLockEvent
+WHERE EventId IN (
+	SELECT EventId FROM #DatalocksToDelete
 )
 
-DELETE Payments2.DataLockEvent
-WHERE JobId NOT IN (SELECT DcJobId FROM #JobIds)
-AND CollectionPeriod = @collectionPeriod
-AND AcademicYear = @academicYear
 ";
     }
 }
