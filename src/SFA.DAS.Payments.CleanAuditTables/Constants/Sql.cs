@@ -10,8 +10,21 @@ AND DATEADD(hour, 2, StartTime) > GETDATE()
 ";
 
         public const string CleanAuditForPeriod = @"
-SELECT DcJobId INTO #JobIds FROM Payments2.LatestSuccessfulJobs
+DROP TABLE IF EXISTS #JobIds
+SELECT * INTO #JobIds FROM (
+	SELECT DcJobId
+	FROM Payments2.LatestSuccessfulJobs
+	
+	UNION
+	
+	SELECT DcJobId
+	FROM Payments2.Job
+	WHERE [Status] = 1
+	AND StartTime > DATEADD(d, -1, GETDATE())
+) q
 
+
+DROP TABLE IF EXISTS #EarningEventIdsToDelete
 SELECT EventId INTO #EarningEventIdsToDelete 
 FROM (
     SELECT EventId FROM Payments2.EarningEvent EE
@@ -20,6 +33,7 @@ FROM (
     AND AcademicYear = @academicYear
 ) q
 
+PRINT 'Deleting Earning Events and related tables'
 DELETE Payments2.EarningEventPeriod
 WHERE EarningEventId IN (
     SELECT EventId FROM #EarningEventIdsToDelete
@@ -34,6 +48,7 @@ WHERE EventId IN (
 )
 
 
+DROP TABLE IF EXISTS #RequiredPaymentsToDelete
 SELECT EventId INTO #RequiredPaymentsToDelete
 FROM (
 	SELECT EventId 
@@ -44,18 +59,22 @@ FROM (
     AND CollectionPeriod = @collectionPeriod
     AND AcademicYear = @academicYear
 ) q
-​
-​
+
+
+PRINT 'Deleting Funding Source Events and related tables'
 DELETE Payments2.FundingSourceEvent
 WHERE RequiredPaymentEventId IN (
     SELECT EventId FROM #RequiredPaymentsToDelete
 )
-​
+
+PRINT 'Deleting Required Payment Events and related tables'
 DELETE Payments2.RequiredPaymentEvent
 WHERE EventId IN (
 	SELECT EventId FROM #RequiredPaymentsToDelete
 )
-​
+
+
+DROP TABLE IF EXISTS #DatalocksToDelete
 SELECT EventId INTO #DatalocksToDelete
 FROM (
 	SELECT EventId FROM Payments2.DataLockEvent DLE
@@ -63,8 +82,9 @@ FROM (
 	AND CollectionPeriod = @collectionPeriod
     AND AcademicYear = @academicYear
 ) q
-​
-​
+
+
+PRINT 'Deleting Datalock Events and related tables'
 DELETE Payments2.DataLockEventNonPayablePeriodFailures
 WHERE DataLockEventNonPayablePeriodId IN (
 	SELECT DataLockEventNonPayablePeriodId FROM Payments2.DataLockEventNonPayablePeriod
