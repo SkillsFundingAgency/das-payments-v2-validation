@@ -84,18 +84,16 @@ FROM
 	
 --payment summaries
 SELECT 
-FORMAT(@CurrentRequiredPayments, 'C', 'en-gb') AS [Required Payments made this month],
-FORMAT(@PrevPayments, 'C', 'en-gb') AS [Payments made before this month YTD],
-FORMAT(@CurrentRequiredPayments + @PrevPayments, 'C', 'en-gb') AS [Expected Payments YTD after running Period End],
-FORMAT(@CurrentPayments, 'C', 'en-gb') AS [Total payments this month],
-FORMAT(@CurrentPaymentsAct1, 'C', 'en-gb') AS [Total ACT 1 payments YTD],
-FORMAT(@CurrentPaymentsAct2, 'C', 'en-gb') AS [Total ACT 2 payments YTD],
-FORMAT(@TotalPayments, 'C', 'en-gb') AS [Total payments YTD],
-FORMAT(@CurrentRequiredPaymentsHeldBack, 'C', 'en-gb') AS [Held Back Completion Payments this month]
-
-
+@CurrentRequiredPayments AS [RpsThisMonth],
+@PrevPayments AS [PaymentPriorThisMonth],
+@CurrentRequiredPayments + @PrevPayments AS [ExpectedPaymentAfterMonthEnd],
+@CurrentPayments AS [TotalPaymentsThisMonth],
+@CurrentPaymentsAct1 AS [TotalAct1],
+@CurrentPaymentsAct2 AS [TotalAct2],
+@TotalPayments AS [TotalYtd],
+@CurrentRequiredPaymentsHeldBack AS [HeldBackCompletionPayments]
 ----DAS earnings
-SELECT FORMAT(SUM(Amount), 'C', 'en-gb') as [DAS Earnings]
+SELECT SUM(Amount) as [DASEarnings]
 FROM Payments2.EarningEvent EE with (nolock)
 JOIN Payments2.EarningEventPeriod EEP with (nolock)
     ON EEP.EarningEventId = EE.EventId
@@ -162,9 +160,9 @@ SELECT Sum(amount)
 )
 
 SELECT 
-	FORMAT(@DatalockedEarnings, 'C', 'en-gb') AS [Datalocked Earnings],
-	FORMAT(@DatalockedPayments, 'C', 'en-gb') AS [Datalocked Payments],
-	FORMAT(@DatalockedEarnings - @DatalockedPayments, 'C', 'en-gb') AS [Adjusted Datalocks]
+	@DatalockedEarnings AS [DatalockedEarnings],
+	@DatalockedPayments AS [DatalockedPayments],
+	@DatalockedEarnings - @DatalockedPayments AS [AdjustedDatalocks]
 
 
 	

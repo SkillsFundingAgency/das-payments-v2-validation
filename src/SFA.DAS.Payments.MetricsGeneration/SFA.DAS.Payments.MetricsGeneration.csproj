@@ -79,6 +79,7 @@
   <ItemGroup>
     <Compile Include="DasTotals.cs" />
     <Compile Include="DataLocksTotals.cs" />
+    <Compile Include="ExcelHelpers.cs" />
     <Compile Include="Options.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

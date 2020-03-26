@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using ClosedXML.Excel;
 using CommandLine;
 using Dapper;
 using Kurukuru;
@@ -48,7 +49,7 @@ namespace SFA.DAS.Payments.MetricsGeneration
         {
             try
             {
-                GenerateMetrics(options.CollectionPeriod, options.AcademicYear);
+                GenerateMetrics(options);
             }
             catch (Exception e)
             {
@@ -60,47 +61,147 @@ namespace SFA.DAS.Payments.MetricsGeneration
             return 0;
         }
 
-        private static void GenerateMetrics(short collectionPeriod, short academicYear = 1920)
+        private static void GenerateMetrics(Options options)
         {
-            //get valid ukprn that have passed on both DC and DAS
-            List<long> validDcJobIds = GetValidDcJobIds(collectionPeriod, academicYear);
+            var collectionPeriod = options.CollectionPeriod;
+            var academicYear = options.AcademicYear ?? 1920;
+            List<long> validDcJobIds = null;
+            List<long> validDasUkPrns = null;
+            if (options.ProcessingFilterMode == FilterMode.OnlySuccessful)
+            {
+                validDcJobIds = GetValidDcJobIds(collectionPeriod, academicYear);
+                validDasUkPrns = GetValidDasUkPrns(validDcJobIds, collectionPeriod, academicYear);
+            }
 
-            List<long> validDasUkPrns = GetValidDasUkPrns(validDcJobIds, collectionPeriod, academicYear);
+            var dcTotalEarnings = GetTotalDcEarnings(collectionPeriod, academicYear, validDasUkPrns);
+            var dasTotalEarnings = GetTotalDasEarnings(collectionPeriod, academicYear, validDasUkPrns);
 
-            decimal dcTotalEarnings = GetTotalDcEarnings(collectionPeriod, academicYear, validDasUkPrns);
-            decimal dasTotalEarnings = GetTotalDasEarnings(collectionPeriod, academicYear, validDasUkPrns);
-
-            DataLocksTotals dataLocksTotals = GetDataLocksTotals(collectionPeriod, academicYear, validDasUkPrns);
-
-            DasTotals dasTotals = GetDasTotals(collectionPeriod, academicYear, validDasUkPrns);
+            SaveReport(dcTotalEarnings, dasTotalEarnings, validDasUkPrns, validDcJobIds, options);
 
 
         }
 
-        private static DasTotals GetDasTotals(short collectionPeriod, short academicYear, List<long> validDasUkPrns)
+        private static void SaveReport(decimal dcTotalEarnings, (decimal earnings, DasTotals totals, DataLocksTotals dataLocksTotals) dasTotalEarnings, List<long> ukPrns, List<long> dcJobids ,Options options)
         {
-            return new DasTotals();
+            Spinner.Start("Writing Excel Sheet", spinner =>
+            {
+
+                var outputPath = ConfigurationManager.AppSettings["OutputPath"];
+                using (var templateStream = ResourceHelpers.OpenResource(ExcelTemplate))
+                {
+                    using (var spreadsheet = new XLWorkbook(templateStream))
+                    {
+                        var sheet = spreadsheet.Worksheet("Das Payments");
+
+                        AddFilterSheet(spreadsheet, options, dcJobids, ukPrns);
+
+                        AddSummaryInfo(sheet, options.CollectionPeriod, options.AcademicYear);
+
+                        //earnings
+                        sheet.Cell(2, 1).Value = dasTotalEarnings.earnings; //DAS earnings
+                        sheet.Cell(2, 2).Value = dcTotalEarnings; //DC earnings
+
+                        //totals
+                        sheet.Cell(5, 1).Value = dasTotalEarnings.totals.RpsThisMonth;
+                        sheet.Cell(5, 2).Value = dasTotalEarnings.totals.PaymentPriorThisMonth;
+                        sheet.Cell(5, 3).Value = dasTotalEarnings.totals.ExpectedPaymentAfterMonthEnd;
+                        sheet.Cell(5, 4).Value = dasTotalEarnings.totals.TotalPaymentsThisMonth;
+                        sheet.Cell(5, 5).Value = dasTotalEarnings.totals.TotalAct1;
+                        sheet.Cell(5, 6).Value = dasTotalEarnings.totals.TotalAct2;
+                        sheet.Cell(5, 7).Value = dasTotalEarnings.totals.TotalYtd;
+                        sheet.Cell(5, 8).Value = dasTotalEarnings.totals.HeldBackCompletionPayments;
+
+                        //datalocks
+                        sheet.Cell(9, 1).Value = dasTotalEarnings.dataLocksTotals.DataLockedEarnings;
+                        sheet.Cell(9, 2).Value = dasTotalEarnings.dataLocksTotals.DataLockedPayments;
+                        sheet.Cell(9, 3).Value = dasTotalEarnings.dataLocksTotals.AdjustedDataLocks;
+
+                        sheet.AdjustToContent();
+
+                        var saveText = $"Saving data to spreadsheet to: {outputPath}";
+                        spinner.Text = saveText;
+                       string filename =  ExcelHelpers.SaveWorksheet(spreadsheet, outputPath);
+                       spinner.Text = $"Saved report to: {filename}";
+                    }
+                }
+            });
         }
 
-        private static DataLocksTotals GetDataLocksTotals(short collectionPeriod, short academicYear, List<long> validDasUkPrns)
+
+        private static void AddSummaryInfo(IXLWorksheet sheet, short collectionPeriod,short? academicYear)
         {
-            return new DataLocksTotals();
+            sheet.Cell(20, 1)
+                .SetValue(
+                    $"Report params: Collection Period:{collectionPeriod},Academic Year;" +
+                    $": {academicYear}");
         }
 
-        private static decimal GetTotalDasEarnings(short collectionPeriod, short academicYear, List<long> validDasUkPrns)
+        private static void AddFilterSheet(XLWorkbook spreadsheet, Options options, List<long> dcJobids, List<long> ukPrns)
+       
         {
+            if (options.ProcessingFilterMode == FilterMode.None)
+                return;
+
+            var ukprnSheet = spreadsheet.AddWorksheet("Included UKPRNS");
+            ukprnSheet.AddRowData(ukPrns);
+
+            var jobIdSheet = spreadsheet.AddWorksheet("Included DcJobIds");
+            jobIdSheet.AddRowData(dcJobids);
+        }
+
+        private static (decimal earnings, DasTotals totals, DataLocksTotals dataLocksTotals) GetTotalDasEarnings(short collectionPeriod, short academicYear,
+            List<long> validDasUkPrns)
+        {
+
+            decimal earnings = default;
+            DasTotals totals = null;
+            DataLocksTotals dataLocksTotals = null;
+
+            Spinner.Start("Getting Das totals  ", spinner =>
+            {
+                var dasConStr =
+                    ConfigurationManager.ConnectionStrings["DasConnectionString"].ConnectionString;
+                var dcQuery = ResourceHelpers.ReadResource(DasQuery);
+                //var replaceToken = "<validDcJobIds>";
+                //dcQuery = dcQuery.Replace(replaceToken, String.Join(",", validDcJobIds));
+                using (var dcConnection = new SqlConnection(dasConStr))
+                {
+                    var results  = dcConnection.QueryMultiple(dcQuery,
+                        new {collectionperiod = collectionPeriod, academicyear = academicYear},
+                        commandTimeout: 5000);
+                     totals = results.ReadFirst<DasTotals>();
+                     earnings = results.ReadFirst<decimal>();
+                     dataLocksTotals = results.ReadFirst<DataLocksTotals>();
+                }
+            });
             //query to get total DC earnings
-            return 0;
+            return (earnings, totals, dataLocksTotals);
         }
 
         private static decimal GetTotalDcEarnings(short collectionPeriod, short academicYear, List<long> validDasUkPrns)
         {
+            decimal totalEarnings = 0m;
             //query to get total DC earnings
-            return 0;
+            Spinner.Start("Getting DC total earnings ", spinner =>
+            {
+                var dasConStr =
+                    ConfigurationManager.ConnectionStrings["DcConnectionString"].ConnectionString;
+                var dcQuery = ResourceHelpers.ReadResource(DcQuery);
+                //var replaceToken = "<validDcJobIds>";
+                //dcQuery = dcQuery.Replace(replaceToken, String.Join(",", validDcJobIds));
+                using (var dcConnection = new SqlConnection(dasConStr))
+                {
+                    totalEarnings = dcConnection.Query<decimal>(dcQuery,
+                        new {collectionperiod = collectionPeriod, academicyear = academicYear},
+                        commandTimeout: 5000).FirstOrDefault();
+                }
+            });
+            return totalEarnings;
         }
-        
 
-        private static List<long> GetValidDasUkPrns(List<long> validDcJobIds,short collectionPeriod, short academicYear)
+
+        private static List<long> GetValidDasUkPrns(List<long> validDcJobIds, short collectionPeriod,
+            short academicYear)
         {
             List<long> ukPrns = null;
             Spinner.Start("Getting valid Das UKprns. ", spinner =>
@@ -108,8 +209,8 @@ namespace SFA.DAS.Payments.MetricsGeneration
                 var dasConStr =
                     ConfigurationManager.ConnectionStrings["DasConnectionString"].ConnectionString;
                 var dcQuery = ResourceHelpers.ReadResource(DasValidUKprns);
-                 var replaceToken = "<validDcJobIds>";
-                dcQuery =  dcQuery.Replace(replaceToken, String.Join(",", validDcJobIds));
+                var replaceToken = "<validDcJobIds>";
+                dcQuery = dcQuery.Replace(replaceToken, String.Join(",", validDcJobIds));
                 using (var dcConnection = new SqlConnection(dasConStr))
                 {
                     ukPrns = dcConnection.Query<long>(dcQuery,
@@ -121,7 +222,7 @@ namespace SFA.DAS.Payments.MetricsGeneration
         }
 
         private static List<long> GetValidDcJobIds(short collectionPeriod, short academicYear)
-        {  
+        {
             List<long> jobids = null;
             Spinner.Start("Getting valid DC JobiIds. ", spinner =>
             {
@@ -135,7 +236,6 @@ namespace SFA.DAS.Payments.MetricsGeneration
                         new {collectionperiod = collectionPeriod, academicyear = academicYear},
                         commandTimeout: 5000).ToList();
                 }
-
             });
             return jobids;
         }

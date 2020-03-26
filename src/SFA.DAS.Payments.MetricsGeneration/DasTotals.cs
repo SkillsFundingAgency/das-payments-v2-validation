@@ -3,13 +3,13 @@
     internal class DasTotals
 
     {
-        private decimal RpsThisMonth { get; set; }
-        private decimal paymentPriorThisMonth { get; set; }
-        private decimal expectedPaymentAfterMonthEnd { get; set; }
-        private decimal TotalPaymentsThisMonth { get; set; }
-        private decimal TotalAct1 { get; set; }
-        private decimal TotalAct2 { get; set; }
-        private decimal TotalYtd { get; set; }
-        private decimal HeldBackCompletionPayments { get; set; }
+        public decimal RpsThisMonth { get; set; }
+        public decimal PaymentPriorThisMonth { get; set; }
+        public decimal ExpectedPaymentAfterMonthEnd { get; set; }
+        public decimal TotalPaymentsThisMonth { get; set; }
+        public decimal TotalAct1 { get; set; }
+        public decimal TotalAct2 { get; set; }
+        public decimal TotalYtd { get; set; }
+        public decimal HeldBackCompletionPayments { get; set; }
     }
 }

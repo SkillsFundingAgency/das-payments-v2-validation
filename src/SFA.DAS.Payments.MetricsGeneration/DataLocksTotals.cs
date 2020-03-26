@@ -2,7 +2,7 @@
 {
     internal class DataLocksTotals
     {
-        public decimal DataLockedAmount { get; set; }
+        public decimal DataLockedEarnings { get; set; }
         public decimal DataLockedPayments { get; set; }
         public decimal AdjustedDataLocks { get; set; }
     }

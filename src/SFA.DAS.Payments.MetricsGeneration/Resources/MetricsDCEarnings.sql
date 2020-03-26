@@ -1,4 +1,4 @@
---declare @collectionperiod int = 3
+--declare @collectionperiod int = 7
 --DECLARE @ukprnFilter bigint = null
 DECLARE @ukprnList table
 (
@@ -141,24 +141,24 @@ RawEarnings AS (
     FROM RawEarningsMathsAndEnglish
 )
 
-SELECT [ApprenticeshipContractType],
-	SUM(TransactionType01) [TT1], 
-    SUM(TransactionType02) [TT2],
-    SUM(TransactionType03) [TT3],
-    SUM(TransactionType04) [TT4],
-    SUM(TransactionType05) [TT5],
-    SUM(TransactionType06) [TT6],
-    SUM(TransactionType07) [TT7],
-    SUM(TransactionType08) [TT8],
-    SUM(TransactionType09) [TT9],
-    SUM(TransactionType10) [TT10],
-    SUM(TransactionType11) [TT11],
-    SUM(TransactionType12) [TT12],
-    SUM(TransactionType13) [TT13],
-    SUM(TransactionType14) [TT14],
-    SUM(TransactionType15) [TT15],
-    SUM(TransactionType16) [TT16]
+SELECT 
+	SUM(TransactionType01  
+    +TransactionType02
+    +TransactionType03
+    +TransactionType04
+    +TransactionType05
+    +TransactionType06
+    +TransactionType07
+    +TransactionType08
+    +TransactionType09
+    +TransactionType10
+    +TransactionType11
+    +TransactionType12
+    +TransactionType13
+    +TransactionType14 
+    +TransactionType15 
+    +TransactionType16) as total
 FROM AllEarnings
 where 
  ((@GivenUkprnCount = 0) OR  (ukprn in (SELECT ids.ukprn FROM @ukprnList ids)))
-GROUP BY [ApprenticeshipContractType]
+and ApprenticeshipContractType in (1,2) 
