@@ -1,5 +1,5 @@
-declare @collectionperiod int = 3
-DECLARE @ukprnFilter bigint = null
+--declare @collectionperiod int = 3
+--DECLARE @ukprnFilter bigint = null
 DECLARE @ukprnList table
 (
 	ukprn bigint 

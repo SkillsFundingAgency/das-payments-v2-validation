@@ -12,7 +12,7 @@ namespace SFA.DAS.Payments.MetricsGeneration
         [Option('c', "collectionPeriod", Required = true, HelpText = "The collection period for which to calculate earnings")]
         public short CollectionPeriod { get; set; }
 
-        [Option('c', "collectionPeriod", Required = true, HelpText = "The collection period for which to calculate earnings")]
+        [Option('a', "academicYear", Required = true, HelpText = "The academic year for which to calculate earnings")]
         public short AcademicYear { get; set; }
     }
 }

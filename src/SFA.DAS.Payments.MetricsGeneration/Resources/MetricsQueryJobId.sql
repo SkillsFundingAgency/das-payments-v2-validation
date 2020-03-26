@@ -1,7 +1,7 @@
-SET STATISTICS TIME ON;  
-GO 
+--SET STATISTICS TIME ON;  
+--GO 
 
-DECLARE @collectionperiod INT = 6
+--DECLARE @collectionperiod INT = 6
 DECLARE @ukprnList table
 (
 	ukprn bigint NOT NULL PRIMARY KEY CLUSTERED

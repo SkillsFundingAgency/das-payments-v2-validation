@@ -1,5 +1,5 @@
-declare @collectionperiod int = 3
-declare @academicyear int = 1920
+--declare @collectionperiod int = 3
+--declare @academicyear int = 1920
 	
 Select 
 JOBID
