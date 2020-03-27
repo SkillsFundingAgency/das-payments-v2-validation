@@ -6,9 +6,7 @@ DECLARE @ukprnList table
 (
 	ukprn bigint NOT NULL PRIMARY KEY CLUSTERED
 )
---INSERT INTO @ukprnList --whitelist of suceeded ukprns if required
---VALUES
---(10004285)
+<##InsertTemplate##>
 
 Declare @GivenUkprnCount INT = (SELECT COUNT(1) from @ukprnList)
 

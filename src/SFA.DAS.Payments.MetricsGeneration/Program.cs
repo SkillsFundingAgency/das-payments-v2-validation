@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using ClosedXML.Excel;
 using CommandLine;
 using Dapper;
+using DocumentFormat.OpenXml.Office2010.ExcelAc;
 using Kurukuru;
 using SFA.DAS.Payments.MetricsGeneration.Resources;
 
@@ -16,6 +17,7 @@ namespace SFA.DAS.Payments.MetricsGeneration
 {
     class Program
     {
+        public const int CommandTimeout = 0; //wait indefinitely
         internal const string DasValidUKprns = "DasValidUkprns.sql";
         internal const string DCValidJobIds = "DCValidJobIds.sql";
         internal const string DasQuery = "MetricsQueryJobId.sql";
@@ -153,6 +155,8 @@ namespace SFA.DAS.Payments.MetricsGeneration
             List<long> validDasUkPrns)
         {
 
+            string filterInsertStatement = CreateFilterInsertStatement(validDasUkPrns);
+
             decimal earnings = default;
             DasTotals totals = null;
             DataLocksTotals dataLocksTotals = null;
@@ -161,14 +165,15 @@ namespace SFA.DAS.Payments.MetricsGeneration
             {
                 var dasConStr =
                     ConfigurationManager.ConnectionStrings["DasConnectionString"].ConnectionString;
-                var dcQuery = ResourceHelpers.ReadResource(DasQuery);
-                //var replaceToken = "<validDcJobIds>";
-                //dcQuery = dcQuery.Replace(replaceToken, String.Join(",", validDcJobIds));
+
+                var dasQuery = ResourceHelpers.ReadResource(DasQuery);
+                dasQuery = dasQuery.Replace("<##InsertTemplate##>", filterInsertStatement);
+
                 using (var dcConnection = new SqlConnection(dasConStr))
                 {
-                    var results  = dcConnection.QueryMultiple(dcQuery,
+                    var results  = dcConnection.QueryMultiple(dasQuery,
                         new {collectionperiod = collectionPeriod, academicyear = academicYear},
-                        commandTimeout: 5000);
+                        commandTimeout: CommandTimeout);
                      totals = results.ReadFirst<DasTotals>();
                      earnings = results.ReadFirst<decimal>();
                      dataLocksTotals = results.ReadFirst<DataLocksTotals>();
@@ -180,6 +185,8 @@ namespace SFA.DAS.Payments.MetricsGeneration
 
         private static decimal GetTotalDcEarnings(short collectionPeriod, short academicYear, List<long> validDasUkPrns)
         {
+            string filterInsertStatement = CreateFilterInsertStatement(validDasUkPrns);
+
             decimal totalEarnings = 0m;
             //query to get total DC earnings
             Spinner.Start("Getting DC total earnings ", spinner =>
@@ -187,22 +194,28 @@ namespace SFA.DAS.Payments.MetricsGeneration
                 var dasConStr =
                     ConfigurationManager.ConnectionStrings["DcConnectionString"].ConnectionString;
                 var dcQuery = ResourceHelpers.ReadResource(DcQuery);
+                dcQuery = dcQuery.Replace("<##InsertTemplate##>", filterInsertStatement);
                 //var replaceToken = "<validDcJobIds>";
                 //dcQuery = dcQuery.Replace(replaceToken, String.Join(",", validDcJobIds));
                 using (var dcConnection = new SqlConnection(dasConStr))
                 {
                     totalEarnings = dcConnection.Query<decimal>(dcQuery,
                         new {collectionperiod = collectionPeriod, academicyear = academicYear},
-                        commandTimeout: 5000).FirstOrDefault();
+                        commandTimeout: CommandTimeout).FirstOrDefault();
                 }
             });
             return totalEarnings;
         }
 
 
+
         private static List<long> GetValidDasUkPrns(List<long> validDcJobIds, short collectionPeriod,
             short academicYear)
         {
+            
+          
+
+
             List<long> ukPrns = null;
             Spinner.Start("Getting valid Das UKprns. ", spinner =>
             {
@@ -238,6 +251,43 @@ namespace SFA.DAS.Payments.MetricsGeneration
                 }
             });
             return jobids;
+        }
+
+
+        
+        private static string CreateFilterInsertStatement(List<long> validDasUkPrns)
+        {
+            if (validDasUkPrns == null)
+            {
+                return string.Empty;
+            }
+
+            StringBuilder sb = new StringBuilder();
+            int batchSize = 90;
+            int skip = 0;
+
+            var currentBatch =new  List<long>();
+            while ((currentBatch = validDasUkPrns.Skip(skip).Take(batchSize).ToList()).Count > 0)
+            {
+                var ukPrns =String.Join(",", CreateValuesString(currentBatch));
+
+                var template = $@"
+                INSERT INTO @ukprnList 
+                VALUES
+                ({ukPrns})
+                ";
+
+                sb.Append(template);
+
+                skip += batchSize;
+            }
+
+            return sb.ToString();
+        }
+
+        private static List<string> CreateValuesString(List<long> currentBatch)
+        {
+            return currentBatch.Select(x => $"({x})").ToList();
         }
     }
 }
