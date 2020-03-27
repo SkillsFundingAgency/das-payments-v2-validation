@@ -274,7 +274,7 @@ namespace SFA.DAS.Payments.MetricsGeneration
                 var template = $@"
                 INSERT INTO @ukprnList 
                 VALUES
-                ({ukPrns})
+                {ukPrns}
                 ";
 
                 sb.Append(template);
