@@ -22,6 +22,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SFA.DAS.Payments.EarningsCo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SFA.DAS.Payments.CleanAuditTables", "SFA.DAS.Payments.CleanAuditTables\SFA.DAS.Payments.CleanAuditTables.csproj", "{14C0889B-7D95-4888-A4CC-9F8C0D9848C7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SFA.DAS.Payments.AnonymiserTool", "SFA.DAS.Payments.AnonymiserTool\SFA.DAS.Payments.AnonymiserTool.csproj", "{2EB83684-A0BF-4792-9B1C-D92D2DEB5682}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -58,6 +60,10 @@ Global
 		{14C0889B-7D95-4888-A4CC-9F8C0D9848C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{14C0889B-7D95-4888-A4CC-9F8C0D9848C7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{14C0889B-7D95-4888-A4CC-9F8C0D9848C7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2EB83684-A0BF-4792-9B1C-D92D2DEB5682}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2EB83684-A0BF-4792-9B1C-D92D2DEB5682}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2EB83684-A0BF-4792-9B1C-D92D2DEB5682}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2EB83684-A0BF-4792-9B1C-D92D2DEB5682}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
