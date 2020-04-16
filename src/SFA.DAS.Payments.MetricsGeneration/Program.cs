@@ -73,6 +73,8 @@ namespace SFA.DAS.Payments.MetricsGeneration
             {
                 validDcJobIds = GetValidDcJobIds(collectionPeriod, academicYear);
                 validDasUkPrns = GetValidDasUkPrns(validDcJobIds, collectionPeriod, academicYear);
+
+
             }
 
             var dcTotalEarnings = GetTotalDcEarnings(collectionPeriod, academicYear, validDasUkPrns);
@@ -155,7 +157,7 @@ namespace SFA.DAS.Payments.MetricsGeneration
             List<long> validDasUkPrns)
         {
 
-            string filterInsertStatement = CreateFilterInsertStatement(validDasUkPrns.Distinct().ToList());
+            string filterInsertStatement = CreateFilterInsertStatement(validDasUkPrns);
 
             decimal earnings = default;
             DasTotals totals = null;
@@ -185,7 +187,7 @@ namespace SFA.DAS.Payments.MetricsGeneration
 
         private static decimal GetTotalDcEarnings(short collectionPeriod, short academicYear, List<long> validDasUkPrns)
         {
-            string filterInsertStatement = CreateFilterInsertStatement(validDasUkPrns.Distinct().ToList());
+            string filterInsertStatement = CreateFilterInsertStatement(validDasUkPrns);
 
             decimal totalEarnings = 0m;
             //query to get total DC earnings
@@ -212,9 +214,6 @@ namespace SFA.DAS.Payments.MetricsGeneration
         private static List<long> GetValidDasUkPrns(List<long> validDcJobIds, short collectionPeriod,
             short academicYear)
         {
-            
-          
-
 
             List<long> ukPrns = null;
             Spinner.Start("Getting valid Das UKprns. ", spinner =>
@@ -229,6 +228,9 @@ namespace SFA.DAS.Payments.MetricsGeneration
                     ukPrns = dcConnection.Query<long>(dcQuery,
                         new {collectionperiod = collectionPeriod, academicyear = academicYear},
                         commandTimeout: 5000).ToList();
+
+                    if(ukPrns.Any())
+                      ukPrns = ukPrns.Distinct().ToList();
                 }
             });
             return ukPrns;
@@ -249,6 +251,8 @@ namespace SFA.DAS.Payments.MetricsGeneration
                         new {collectionperiod = collectionPeriod, academicyear = academicYear},
                         commandTimeout: 5000).ToList();
                 }
+                if(jobids.Any())
+                    jobids = jobids.Distinct().ToList();
             });
             return jobids;
         }
