@@ -36,16 +36,13 @@
 --DECLARE @period VARCHAR(8) = '1819-R01'
 
 ;WITH Earnings AS (
-	SELECT MAX(StartDate) StartDate, 
-		MAX(E.PlannedEndDate) PlannedEndDate,
-		MAX(E.ActualEnddate) ActualEndDate,
-		MAX(CompletionStatus) CompletionStatus,
-		MAX(CompletionAmount) CompletionAmount,
-		MAX(E.MonthlyInstallment) MonthlyInstallment,
-		MAX(E.TotalInstallments) TotalInstallments,
-		RequiredPaymentId
-	FROM PaymentsDue.Earnings E
-	GROUP BY RequiredPaymentId
+	SELECT StartDate, PlannedEndDate, ActualEndDate,
+	    CompletionStatus, CompletionAmount, MonthlyInstallment,
+	    TotalInstallments, RequiredPaymentId
+    FROM PaymentsDue.Earnings E
+    GROUP BY RequiredPaymentId, StartDate, PlannedEndDate, ActualEndDate,
+	    CompletionStatus, CompletionAmount, MonthlyInstallment,
+	    TotalInstallments
 )
 
 SELECT * 
