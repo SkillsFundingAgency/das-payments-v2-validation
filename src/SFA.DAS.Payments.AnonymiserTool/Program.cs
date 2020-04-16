@@ -10,6 +10,14 @@ namespace SFA.DAS.Payments.AnonymiserTool
     {
         static void Main(string[] args)
         {
+            // Load the list of changed ULNs and UKPRNs
+
+            // Load the list of commitments (include child tables)
+
+            // Alter the commitment ULNs
+
+            // Create a script to delete existing commitments with UKPRNs
+            // And then insert the altered commitments 
         }
     }
 }
