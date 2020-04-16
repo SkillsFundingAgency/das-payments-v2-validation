@@ -155,7 +155,7 @@ namespace SFA.DAS.Payments.MetricsGeneration
             List<long> validDasUkPrns)
         {
 
-            string filterInsertStatement = CreateFilterInsertStatement(validDasUkPrns);
+            string filterInsertStatement = CreateFilterInsertStatement(validDasUkPrns.Distinct().ToList());
 
             decimal earnings = default;
             DasTotals totals = null;
@@ -185,7 +185,7 @@ namespace SFA.DAS.Payments.MetricsGeneration
 
         private static decimal GetTotalDcEarnings(short collectionPeriod, short academicYear, List<long> validDasUkPrns)
         {
-            string filterInsertStatement = CreateFilterInsertStatement(validDasUkPrns);
+            string filterInsertStatement = CreateFilterInsertStatement(validDasUkPrns.Distinct().ToList());
 
             decimal totalEarnings = 0m;
             //query to get total DC earnings
