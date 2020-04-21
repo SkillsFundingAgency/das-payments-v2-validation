@@ -33,47 +33,68 @@
             ";
 
         public const string Payments = @"
-                SELECT R.CommitmentId [ApprenticeshipId],
-                     AccountId, 
-                     Uln [LearnerUln],
-                     LearnRefNumber [LearnerReferenceNumber],
-                     Ukprn,
-                     IlrSubmissionDateTime,
-                     COALESCE(PriceEpisodeIdentifier, '') [PriceEpisodeIdentifier],
-                     StandardCode [LearningAimStandardCode],
-                     ProgrammeType [LearningAimProgrammeType],
-                     FrameworkCode [LearningAimFrameworkCode],
-                     PathwayCode [LearningAimPathwayCode],
-                     ApprenticeshipContractType [ContractType],
-                     R.CollectionPeriodName,
-                     R.TransactionType,
-                     SfaContributionPercentage,
-                     FundingLineType [LearningAimFundingLineType],
-                     LearnAimRef [LearningAimReference],
-                     CASE WHEN P.DeliveryMonth < 8 THEN P.DeliveryMonth + 5 ELSE P.DeliveryMonth - 7 END [DeliveryPeriod],
-                     SUBSTRING(R.CollectionPeriodName, 1, 4) [AcademicYear],
-                     FundingSource,
-                     P.Amount,
-                     CAST(SUBSTRING(R.CollectionPeriodName, 7, 2) AS INT) [CollectionPeriod],
-                     T.SendingAccountId [TransferSendingAccountId],
-			         R.LearningStartDate [EarningsStartDate],
-			         E.PlannedEndDate [EarningsPlannedEndDate],
-			         E.ActualEnddate [EarningsActualEndDate],
-			         E.CompletionStatus [EarningsCompletionStatus],
-			         E.CompletionAmount [EarningsCompletionAmount],
-			         E.MonthlyInstallment [EarningsInstalmentAmount],
-			         E.TotalInstallments [EarningsNumberOfInstalments],
-                     R.LearningStartDate [LearningStartDate]
+--DECLARE @period VARCHAR(8) = '1819-R01'
+
+;WITH Earnings AS (
+	SELECT StartDate, PlannedEndDate, ActualEndDate,
+	    CompletionStatus, CompletionAmount, MonthlyInstallment,
+	    TotalInstallments, RequiredPaymentId
+    FROM PaymentsDue.Earnings E
+    GROUP BY RequiredPaymentId, StartDate, PlannedEndDate, ActualEndDate,
+	    CompletionStatus, CompletionAmount, MonthlyInstallment,
+	    TotalInstallments
+)
+
+SELECT * 
+INTO #Earnings
+FROM Earnings
+
+
+SELECT R.CommitmentId [ApprenticeshipId],
+	AccountId, 
+	Uln [LearnerUln],
+	LearnRefNumber [LearnerReferenceNumber],
+	Ukprn,
+	IlrSubmissionDateTime,
+	COALESCE(PriceEpisodeIdentifier, '') [PriceEpisodeIdentifier],
+	StandardCode [LearningAimStandardCode],
+	ProgrammeType [LearningAimProgrammeType],
+	FrameworkCode [LearningAimFrameworkCode],
+	PathwayCode [LearningAimPathwayCode],
+	ApprenticeshipContractType [ContractType],
+	P.CollectionPeriodName,
+	R.TransactionType,
+	SfaContributionPercentage,
+	FundingLineType [LearningAimFundingLineType],
+	LearnAimRef [LearningAimReference],
+	CASE WHEN P.DeliveryMonth < 8 THEN P.DeliveryMonth + 5 ELSE P.DeliveryMonth - 7 END [DeliveryPeriod],
+	SUBSTRING(P.CollectionPeriodName, 1, 4) [AcademicYear],
+	FundingSource,
+	P.Amount,
+	CAST(SUBSTRING(P.CollectionPeriodName, 7, 2) AS INT) [CollectionPeriod],
+	T.SendingAccountId [TransferSendingAccountId],
+	E.StartDate [EarningsStartDate],
+	E.PlannedEndDate [EarningsPlannedEndDate],
+	E.ActualEnddate [EarningsActualEndDate],
+	E.CompletionStatus [EarningsCompletionStatus],
+	E.CompletionAmount [EarningsCompletionAmount],
+	E.MonthlyInstallment [EarningsInstalmentAmount],
+	E.TotalInstallments [EarningsNumberOfInstalments],
+	R.LearningStartDate [LearningStartDate],
+	P.PaymentId
 	
-                FROM [DAS_PeriodEnd].Payments.Payments P
-	            JOIN [DAS_PeriodEnd].PaymentsDue.RequiredPayments R
-	                ON P.RequiredPaymentId = R.Id
-                LEFT JOIN [DAS_PeriodEnd].TransferPayments.AccountTransfers T
-                    ON R.Id = T.RequiredPaymentId
-                LEFT JOIN [DAS_PeriodEnd].PaymentsDue.Earnings E
-                    ON R.Id = E.RequiredPaymentId
+FROM [DAS_PeriodEnd].Payments.Payments P
+JOIN [DAS_PeriodEnd].PaymentsDue.RequiredPayments R
+	ON P.RequiredPaymentId = R.Id
+LEFT JOIN [DAS_PeriodEnd].TransferPayments.AccountTransfers T
+	ON R.Id = T.RequiredPaymentId
+LEFT JOIN #Earnings E
+	ON R.Id = E.RequiredPaymentId
                 
-                WHERE R.CollectionPeriodName = @period
+WHERE R.CollectionPeriodName = @period
+
+ORDER BY LearnerUln, PaymentId
+
             ";
 
         public const string DeletePreviousEarnings = @"
