@@ -50,14 +50,21 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Dto\ApprenticeshipData.cs" />
+    <Compile Include="Dto\ChangedLearner.cs" />
     <Compile Include="Constants\Sql.cs" />
+    <Compile Include="AnonymiserOutputFiles\CsvChangedLearnerMapping.cs" />
     <Compile Include="DatabaseEntities\Apprenticeship.cs" />
     <Compile Include="DatabaseEntities\ApprenticeshipPause.cs" />
     <Compile Include="DatabaseEntities\ApprenticeshipPriceEpisode.cs" />
     <Compile Include="DataManipulation.cs" />
+    <Compile Include="AnonymiserOutputFiles\AnonymisedOutputFileFunctions.cs" />
+    <Compile Include="OutputFiles\OutputFileUtilities.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ScriptGeneration.cs" />
+    <Compile Include="Dto\ReadOptimisedProviderData.cs" />
+    <Compile Include="AnonymiserOutputFiles\ScriptGeneration.cs" />
+    <Compile Include="V2Database\DatabaseUtilities.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
@@ -69,5 +76,6 @@
       <Name>SDA.DAS.Payments.ConsoleUtilities</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using SDA.DAS.Payments.ConsoleUtilities;
 using SFA.DAS.Payments.AnonymiserTool.DatabaseEntities;
 
-namespace SFA.DAS.Payments.AnonymiserTool
+namespace SFA.DAS.Payments.AnonymiserTool.OutputFiles
 {
     class ScriptGeneration
     {

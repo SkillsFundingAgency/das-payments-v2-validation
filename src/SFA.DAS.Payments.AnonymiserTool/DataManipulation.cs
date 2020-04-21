@@ -8,6 +8,45 @@ namespace SFA.DAS.Payments.AnonymiserTool
 {
     class DataManipulation
     {
+        public static async Task<List<Apprenticeship>> AlterUlns(ApprenticeshipData apprenticeshipData, Dictionary<long, ReadOptimisedProviderData> anonymisedProviders)
+        {
+            var apprenticeshipsToRemove = new List<Apprenticeship>();
+            foreach (var apprenticeship in apprenticeshipData.Apprenticeships)
+            {
+                var ukprn = apprenticeship.Ukprn;
+                if (!anonymisedProviders.ContainsKey(ukprn))
+                {
+                    apprenticeshipsToRemove.Add(apprenticeship);
+                    continue;
+                }
+
+                var providerData = anonymisedProviders[ukprn];
+                if (!providerData.OptimisedLearners.ContainsKey(apprenticeship.Uln))
+                {
+                    apprenticeshipsToRemove.Add(apprenticeship);
+                    continue;
+                }
+
+                var listOfChangedLearners = providerData.OptimisedLearners[apprenticeship.Uln];
+                foreach (var changedLearner in listOfChangedLearners)
+                {
+                    if (changedLearner.OldUln != apprenticeship.Uln)
+                    {
+                        await Logger.Log(
+                            $"Multiple learners for UKPRN: {ukprn} and ULN: {apprenticeship.Uln} - results are not guaranteed");
+                        foreach (var learner in listOfChangedLearners)
+                        {
+                            await Logger.Log($"New ULN: {learner.NewUln}", 1);
+                        }
+                    }
+
+                    apprenticeship.Uln = changedLearner.NewUln;
+                }
+            }
+
+            return apprenticeshipsToRemove;
+        }
+
         public static async Task RemoveApprenticeships(ApprenticeshipData apprenticeshipData,
             List<Apprenticeship> apprenticeshipsToRemove)
         {
