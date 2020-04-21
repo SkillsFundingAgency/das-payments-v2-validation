@@ -61,8 +61,10 @@ namespace SFA.DAS.Payments.AnonymiserTool.AnonymiserOutputFiles
             return stringBuilder.ToString();
         }
 
-        public static async Task<string> CreateNewCommitmentsScript(ApprenticeshipData apprenticeshipData)
+        public static async Task<List<string>> CreateNewCommitmentsScript(ApprenticeshipData apprenticeshipData)
         {
+            var results = new List<string>();
+
             var stringBuilder = new StringBuilder();
 
             await Logger.Log("Structuring the data for easier lookups");
@@ -81,8 +83,6 @@ namespace SFA.DAS.Payments.AnonymiserTool.AnonymiserOutputFiles
             var apprenticeships = apprenticeshipData.Apprenticeships.Skip(position).Take(batch).ToList();
             while (apprenticeships.Any())
             {
-                await Logger.Log($"Processing {position} -> {position + batch} apprenticeships", 1);
-
                 /*      DELETE EXISTING     */
                 var apprenticeshipIds = apprenticeships.Select(x => x.Id).ToList();
                 stringBuilder.Append(CreateDeleteByApprenticeshipId(apprenticeshipIds));
@@ -180,16 +180,32 @@ namespace SFA.DAS.Payments.AnonymiserTool.AnonymiserOutputFiles
 
                     stringBuilder.Remove(stringBuilder.Length - 3, 1);
                 }
-                
+
+                stringBuilder.AppendLine("GO");
+                stringBuilder.AppendLine();
+                stringBuilder.AppendLine();
 
                 /*--------------- END LOOP  -------------------------------------*/
                 /* --------------------------------------------------------------*/
 
                 position += batch;
                 apprenticeships = apprenticeshipData.Apprenticeships.Skip(position).Take(batch).ToList();
+
+                if (position % 10000 == 0)
+                {
+                    await Logger.Log($"Processed {position} apprenticeships", 1);
+                }
+
+                if (position % 100000 == 0)
+                {
+                    results.Add(stringBuilder.ToString());
+                    stringBuilder.Clear();
+                }
             }
 
-            return stringBuilder.ToString();
+            results.Add(stringBuilder.ToString());
+
+            return results;
         }
 
         private static StringBuilder CreateDeleteByApprenticeshipId(List<long> apprenticeshipIds)

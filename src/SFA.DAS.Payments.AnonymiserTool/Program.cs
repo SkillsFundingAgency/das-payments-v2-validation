@@ -39,7 +39,10 @@ namespace SFA.DAS.Payments.AnonymiserTool
                 
                 // And then insert the altered commitments 
                 var createCommitmentsScript = await ScriptGeneration.CreateNewCommitmentsScript(apprenticeshipData);
-                await OutputFileUtilities.SaveScript(createCommitmentsScript, "CreateCommitments.sql");
+                for (var i = 0; i < createCommitmentsScript.Count; i++)
+                {
+                    await OutputFileUtilities.SaveScript(createCommitmentsScript[i], $"CreateCommitments-{i+1}.sql");
+                }
                 
                 // Add a script to remove the orphans
                 var removeOrphansScript = ScriptGeneration.CreateRemoveOrphansScript();
