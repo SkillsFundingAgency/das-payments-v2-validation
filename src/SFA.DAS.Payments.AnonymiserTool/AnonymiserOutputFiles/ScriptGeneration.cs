@@ -5,8 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 using SDA.DAS.Payments.ConsoleUtilities;
 using SFA.DAS.Payments.AnonymiserTool.DatabaseEntities;
+using SFA.DAS.Payments.AnonymiserTool.Dto;
 
-namespace SFA.DAS.Payments.AnonymiserTool.OutputFiles
+namespace SFA.DAS.Payments.AnonymiserTool.AnonymiserOutputFiles
 {
     class ScriptGeneration
     {
@@ -44,28 +45,6 @@ namespace SFA.DAS.Payments.AnonymiserTool.OutputFiles
             }
 
             return stringBuilder.ToString();
-        }
-
-        static StringBuilder CreateDeleteByApprenticeshipId(List<long> apprenticeshipIds)
-        {
-            var stringBuilder = new StringBuilder();
-
-            stringBuilder.AppendLine("DELETE Payments2.ApprenticeshipPriceEpisode");
-            stringBuilder.AppendLine("WHERE ApprenticeshipId IN (");
-            stringBuilder.AppendLine(string.Join(",", apprenticeshipIds));
-            stringBuilder.AppendLine(")");
-
-            stringBuilder.AppendLine("DELETE Payments2.ApprenticeshipPause");
-            stringBuilder.AppendLine("WHERE ApprenticeshipId IN (");
-            stringBuilder.AppendLine(string.Join(",", apprenticeshipIds));
-            stringBuilder.AppendLine(")");
-
-            stringBuilder.AppendLine("DELETE Payments2.Apprenticeship ");
-            stringBuilder.AppendLine("WHERE Id IN (");
-            stringBuilder.AppendLine(string.Join(",", apprenticeshipIds));
-            stringBuilder.AppendLine(")");
-
-            return stringBuilder;
         }
 
         public static string CreateRemoveOrphansScript()
@@ -213,7 +192,29 @@ namespace SFA.DAS.Payments.AnonymiserTool.OutputFiles
             return stringBuilder.ToString();
         }
 
-        static string DateToSql(DateTime? input)
+        private static StringBuilder CreateDeleteByApprenticeshipId(List<long> apprenticeshipIds)
+        {
+            var stringBuilder = new StringBuilder();
+
+            stringBuilder.AppendLine("DELETE Payments2.ApprenticeshipPriceEpisode");
+            stringBuilder.AppendLine("WHERE ApprenticeshipId IN (");
+            stringBuilder.AppendLine(string.Join(",", apprenticeshipIds));
+            stringBuilder.AppendLine(")");
+
+            stringBuilder.AppendLine("DELETE Payments2.ApprenticeshipPause");
+            stringBuilder.AppendLine("WHERE ApprenticeshipId IN (");
+            stringBuilder.AppendLine(string.Join(",", apprenticeshipIds));
+            stringBuilder.AppendLine(")");
+
+            stringBuilder.AppendLine("DELETE Payments2.Apprenticeship ");
+            stringBuilder.AppendLine("WHERE Id IN (");
+            stringBuilder.AppendLine(string.Join(",", apprenticeshipIds));
+            stringBuilder.AppendLine(")");
+
+            return stringBuilder;
+        }
+
+        private static string DateToSql(DateTime? input)
         {
             if (input == null)
             {
@@ -223,7 +224,7 @@ namespace SFA.DAS.Payments.AnonymiserTool.OutputFiles
             return $"'{input?.ToString("O")}'";
         }
 
-        static string LongToSql(long? input)
+        private static string LongToSql(long? input)
         {
             if (input == null)
             {
@@ -233,7 +234,7 @@ namespace SFA.DAS.Payments.AnonymiserTool.OutputFiles
             return input.ToString();
         }
 
-        static string BoolToSql(bool input)
+        private static string BoolToSql(bool input)
         {
             return input ? "1" : "0";
         }

@@ -4,10 +4,11 @@ using System.Data.SqlClient;
 using Dapper;
 using SFA.DAS.Payments.AnonymiserTool.Constants;
 using SFA.DAS.Payments.AnonymiserTool.DatabaseEntities;
+using SFA.DAS.Payments.AnonymiserTool.Dto;
 
 namespace SFA.DAS.Payments.AnonymiserTool.V2Database
 {
-    class DatabaseUtilities
+    static class DatabaseUtilities
     {
         public static ApprenticeshipData LoadProductionApprenticeships(List<long> ukprns)
         {

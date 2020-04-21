@@ -5,15 +5,15 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using SFA.DAS.Payments.AnonymiserTool.Dto;
-using SFA.DAS.Payments.AnonymiserTool.OutputFiles;
 using TinyCsvParser;
 
-namespace SFA.DAS.Payments.AnonymiserTool.Io
+namespace SFA.DAS.Payments.AnonymiserTool.AnonymiserOutputFiles
 {
-    class AnonymisedOutputFileFunctions
+    static class AnonymisedOutputFileFunctions
     {
-        public static Dictionary<long, ReadOptimisedProviderData> ReadAllAnonymisedFiles()
+        public static async Task<Dictionary<long, ReadOptimisedProviderData>> ReadAllAnonymisedFiles()
         {
             var results = new Dictionary<long, ReadOptimisedProviderData>();
 
@@ -27,9 +27,9 @@ namespace SFA.DAS.Payments.AnonymiserTool.Io
                     continue;
                 }
 
-                var learners = AnonymisedOutputFileFunctions.ReadAnonymiserOutputFile(file);
+                var learners = ReadAnonymiserOutputFile(file);
 
-                results.Add(ukprn, OptimiseData(ukprn, learners));
+                results.Add(ukprn, await OptimiseData(learners));
             }
 
             return results;
@@ -54,17 +54,15 @@ namespace SFA.DAS.Payments.AnonymiserTool.Io
         }
 
 
-        private static ReadOptimisedProviderData OptimiseData(long ukprn, List<ChangedLearner> learners)
+        private static Task<ReadOptimisedProviderData> OptimiseData(List<ChangedLearner> learners)
         {
             var result = new ReadOptimisedProviderData();
-            result.Ukprn = ukprn;
-            var optimisedLearners = learners.ToLookup(x => x.OldUln);
-            foreach (var optimisedLearner in optimisedLearners)
-            {
-                result.OptimisedLearners.Add(optimisedLearner.Key, optimisedLearner.ToList());
-            }
+            var optimisedLearners = learners
+                .ToLookup(x => x.OldUln)
+                .ToDictionary(x => x.Key, x => x.ToList());
 
-            return result;
+            result.OptimisedLearners = optimisedLearners;
+            return Task.FromResult(result);
         }
 
         private static readonly Regex UkprnExtractor = new Regex(@".*?ILR-(?<ukprn>\d{8})-\d{4}-\d{8}.*\.XML\.learnrefs\.csv",

@@ -3,10 +3,11 @@ using System.Linq;
 using System.Threading.Tasks;
 using SDA.DAS.Payments.ConsoleUtilities;
 using SFA.DAS.Payments.AnonymiserTool.DatabaseEntities;
+using SFA.DAS.Payments.AnonymiserTool.Dto;
 
 namespace SFA.DAS.Payments.AnonymiserTool
 {
-    class DataManipulation
+    static class DataManipulation
     {
         public static async Task<List<Apprenticeship>> AlterUlns(ApprenticeshipData apprenticeshipData, Dictionary<long, ReadOptimisedProviderData> anonymisedProviders)
         {

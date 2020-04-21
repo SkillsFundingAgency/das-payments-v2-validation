@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using SFA.DAS.Payments.AnonymiserTool.DatabaseEntities;
 
-namespace SFA.DAS.Payments.AnonymiserTool
+namespace SFA.DAS.Payments.AnonymiserTool.Dto
 {
     class ApprenticeshipData
     {

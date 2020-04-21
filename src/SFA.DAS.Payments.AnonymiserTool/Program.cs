@@ -2,13 +2,13 @@
 using System.Linq;
 using System.Threading.Tasks;
 using SDA.DAS.Payments.ConsoleUtilities;
-using SFA.DAS.Payments.AnonymiserTool.Io;
+using SFA.DAS.Payments.AnonymiserTool.AnonymiserOutputFiles;
 using SFA.DAS.Payments.AnonymiserTool.OutputFiles;
 using SFA.DAS.Payments.AnonymiserTool.V2Database;
 
 namespace SFA.DAS.Payments.AnonymiserTool
 {
-    class Program
+    static class Program
     {
         public static string FileLocationKey = "DcToolOutputDirectory";
 
@@ -18,7 +18,7 @@ namespace SFA.DAS.Payments.AnonymiserTool
             {
                 await Logger.Log("Starting script generation...");
                 // Load the list of changed ULNs and UKPRNs
-                var anonymisedProviders = AnonymisedOutputFileFunctions.ReadAllAnonymisedFiles();
+                var anonymisedProviders = await AnonymisedOutputFileFunctions.ReadAllAnonymisedFiles();
                 await Logger.Log($"Found {anonymisedProviders.Count} providers");
 
                 // Load the list of commitments (include child tables)

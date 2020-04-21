@@ -5,7 +5,7 @@ using SDA.DAS.Payments.ConsoleUtilities;
 
 namespace SFA.DAS.Payments.AnonymiserTool.OutputFiles
 {
-    class OutputFileUtilities
+    static class OutputFileUtilities
     {
         public static async Task SaveScript(string script, string filename)
         {

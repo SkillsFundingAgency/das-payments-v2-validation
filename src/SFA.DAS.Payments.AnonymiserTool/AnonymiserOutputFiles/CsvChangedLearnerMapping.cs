@@ -1,7 +1,7 @@
 ﻿using SFA.DAS.Payments.AnonymiserTool.Dto;
 using TinyCsvParser.Mapping;
 
-namespace SFA.DAS.Payments.AnonymiserTool.OutputFiles
+namespace SFA.DAS.Payments.AnonymiserTool.AnonymiserOutputFiles
 {
     class CsvChangedLearnerMapping : CsvMapping<ChangedLearner>
     {
