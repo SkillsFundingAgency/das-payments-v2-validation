@@ -1,30 +1,28 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using SDA.DAS.Payments.ConsoleUtilities;
-using SFA.DAS.Payments.AnonymiserTool.DatabaseEntities;
 using SFA.DAS.Payments.AnonymiserTool.Dto;
 
 namespace SFA.DAS.Payments.AnonymiserTool
 {
     static class DataManipulation
     {
-        public static async Task<List<Apprenticeship>> AlterUlns(ApprenticeshipData apprenticeshipData, Dictionary<long, ReadOptimisedProviderData> anonymisedProviders)
+        public static async Task<List<long>> AlterUlns(ApprenticeshipData apprenticeshipData, Dictionary<long, ReadOptimisedProviderData> anonymisedProviders)
         {
-            var apprenticeshipsToRemove = new List<Apprenticeship>();
+            var apprenticeshipsToRemove = new List<long>();
             foreach (var apprenticeship in apprenticeshipData.Apprenticeships)
             {
                 var ukprn = apprenticeship.Ukprn;
                 if (!anonymisedProviders.ContainsKey(ukprn))
                 {
-                    apprenticeshipsToRemove.Add(apprenticeship);
+                    apprenticeshipsToRemove.Add(apprenticeship.Id);
                     continue;
                 }
 
                 var providerData = anonymisedProviders[ukprn];
                 if (!providerData.OptimisedLearners.ContainsKey(apprenticeship.Uln))
                 {
-                    apprenticeshipsToRemove.Add(apprenticeship);
+                    apprenticeshipsToRemove.Add(apprenticeship.Id);
                     continue;
                 }
 
@@ -49,47 +47,21 @@ namespace SFA.DAS.Payments.AnonymiserTool
         }
 
         public static async Task RemoveApprenticeships(ApprenticeshipData apprenticeshipData,
-            List<Apprenticeship> apprenticeshipsToRemove)
+            List<long> apprenticeshipsToRemove)
         {
             await Logger.Log($"Removing {apprenticeshipsToRemove.Count} apprenticeships");
-            await Logger.Log($"Optimising the data...", 1);
 
-            var pausesByApprenticeshipId = apprenticeshipData
-                .ApprenticeshipPauses
-                .ToLookup(x => x.ApprenticeshipId);
+            var removed = apprenticeshipData.ApprenticeshipPauses.RemoveAll(x =>
+                apprenticeshipsToRemove.Contains(x.ApprenticeshipId));
+            await Logger.Log($"Removed {removed} apprenticeship paused", 1);
+            
+            removed = apprenticeshipData.ApprenticeshipPriceEpisodes.RemoveAll(x => 
+                apprenticeshipsToRemove.Contains(x.ApprenticeshipId));
+            await Logger.Log($"Removed {removed} apprenticeship price episodes", 1);
 
-            var priceEpisodesByApprenticeshipId = apprenticeshipData
-                .ApprenticeshipPriceEpisodes
-                .ToLookup(x => x.ApprenticeshipId);
-
-            var counter = 0;
-
-            foreach (var apprenticeship in apprenticeshipsToRemove)
-            {
-                if (pausesByApprenticeshipId.Contains(apprenticeship.Id))
-                {
-                    foreach (var apprenticeshipPause in pausesByApprenticeshipId[apprenticeship.Id])
-                    {
-                        apprenticeshipData.ApprenticeshipPauses.Remove(apprenticeshipPause);
-                    }
-                }
-
-                if (priceEpisodesByApprenticeshipId.Contains(apprenticeship.Id))
-                {
-                    foreach (var apprenticeshipPriceEpisode in priceEpisodesByApprenticeshipId[apprenticeship.Id])
-                    {
-                        apprenticeshipData.ApprenticeshipPriceEpisodes.Remove(apprenticeshipPriceEpisode);
-                    }
-                }
-                
-                apprenticeshipData.Apprenticeships.Remove(apprenticeship);
-
-                counter++;
-                if (counter % 1000 == 0)
-                {
-                    await Logger.Log($"Removed {counter} apprenticeships", 1);
-                }
-            }
+            removed = apprenticeshipData.Apprenticeships.RemoveAll(x =>
+                apprenticeshipsToRemove.Contains(x.Id));
+            await Logger.Log($"Removed {removed} apprenticeships", 1);
         }
     }
 }
