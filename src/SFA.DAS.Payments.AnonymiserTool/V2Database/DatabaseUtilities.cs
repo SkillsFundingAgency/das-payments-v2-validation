@@ -8,7 +8,7 @@ using SFA.DAS.Payments.AnonymiserTool.Dto;
 
 namespace SFA.DAS.Payments.AnonymiserTool.V2Database
 {
-    static class DatabaseUtilities
+    internal static class DatabaseUtilities
     {
         public static ApprenticeshipData LoadProductionApprenticeships(List<long> ukprns)
         {

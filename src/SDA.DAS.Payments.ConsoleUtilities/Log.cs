@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace SDA.DAS.Payments.ConsoleUtilities
 {
-    public class Logger
+    public static class Logger
     {
         public static async Task Log(string message, int offset = 0)
         {

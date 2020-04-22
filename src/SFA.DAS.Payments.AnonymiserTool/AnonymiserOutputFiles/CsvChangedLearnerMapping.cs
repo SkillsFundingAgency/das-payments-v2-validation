@@ -3,7 +3,7 @@ using TinyCsvParser.Mapping;
 
 namespace SFA.DAS.Payments.AnonymiserTool.AnonymiserOutputFiles
 {
-    class CsvChangedLearnerMapping : CsvMapping<ChangedLearner>
+    internal class CsvChangedLearnerMapping : CsvMapping<ChangedLearner>
     {
         public CsvChangedLearnerMapping()
         {

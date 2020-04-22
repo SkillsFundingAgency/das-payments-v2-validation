@@ -5,7 +5,7 @@ using SFA.DAS.Payments.AnonymiserTool.Dto;
 
 namespace SFA.DAS.Payments.AnonymiserTool
 {
-    static class DataManipulation
+    internal static class DataManipulation
     {
         public static async Task<List<long>> AlterUlnsAndReturnUnusedApprenticeshipIds(ApprenticeshipData apprenticeshipData, Dictionary<long, ReadOptimisedProviderData> anonymisedProviders)
         {

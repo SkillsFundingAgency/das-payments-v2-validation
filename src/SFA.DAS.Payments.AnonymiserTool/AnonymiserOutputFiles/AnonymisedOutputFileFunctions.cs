@@ -11,7 +11,7 @@ using TinyCsvParser;
 
 namespace SFA.DAS.Payments.AnonymiserTool.AnonymiserOutputFiles
 {
-    static class AnonymisedOutputFileFunctions
+    internal static class AnonymisedOutputFileFunctions
     {
         public static async Task<Dictionary<long, ReadOptimisedProviderData>> ReadAllAnonymisedFiles()
         {

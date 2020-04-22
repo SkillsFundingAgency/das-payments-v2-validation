@@ -9,7 +9,7 @@ using SFA.DAS.Payments.AnonymiserTool.Dto;
 
 namespace SFA.DAS.Payments.AnonymiserTool.AnonymiserOutputFiles
 {
-    class ScriptGeneration
+    internal class ScriptGeneration
     {
         public static string CreateDeleteByUkprnScript(ApprenticeshipData apprenticeshipData)
         {

@@ -2,7 +2,7 @@
 
 namespace SFA.DAS.Payments.AnonymiserTool.DatabaseEntities
 {
-    class ApprenticeshipPause
+    internal class ApprenticeshipPause
     {
         public long Id { get; set; }
         public long ApprenticeshipId { get; set; }

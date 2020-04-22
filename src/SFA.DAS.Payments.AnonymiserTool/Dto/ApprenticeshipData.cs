@@ -3,7 +3,7 @@ using SFA.DAS.Payments.AnonymiserTool.DatabaseEntities;
 
 namespace SFA.DAS.Payments.AnonymiserTool.Dto
 {
-    class ApprenticeshipData
+    internal class ApprenticeshipData
     {
         public List<Apprenticeship> Apprenticeships { get; set; } = new List<Apprenticeship>();
         public List<ApprenticeshipPause> ApprenticeshipPauses { get; set; } = new List<ApprenticeshipPause>();

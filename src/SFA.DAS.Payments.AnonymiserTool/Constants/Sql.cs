@@ -1,6 +1,6 @@
 ﻿namespace SFA.DAS.Payments.AnonymiserTool.Constants
 {
-    static class Sql
+    internal static class Sql
     {
         public static string Apprenticeships = @"
 SELECT *
