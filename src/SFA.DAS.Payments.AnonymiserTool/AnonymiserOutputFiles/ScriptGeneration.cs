@@ -27,11 +27,17 @@ namespace SFA.DAS.Payments.AnonymiserTool.AnonymiserOutputFiles
             {
                 stringBuilder.AppendLine("DELETE Payments2.ApprenticeshipPriceEpisode");
                 stringBuilder.AppendLine("WHERE ApprenticeshipId IN (SELECT Id ");
-                stringBuilder.AppendLine("FROM Payments2.Apprenticeship WHERE Ukprn IN @ukprns)");
+                stringBuilder.AppendLine("FROM Payments2.Apprenticeship WHERE Ukprn IN (");
+                stringBuilder.AppendLine(string.Join(",", ukprnsToRemove));
+                stringBuilder.AppendLine("))");
+                stringBuilder.AppendLine();
 
                 stringBuilder.AppendLine("DELETE Payments2.ApprenticeshipPause");
                 stringBuilder.AppendLine("WHERE ApprenticeshipId IN (SELECT Id ");
-                stringBuilder.AppendLine("FROM Payments2.Apprenticeship WHERE Ukprn IN @ukprns)");
+                stringBuilder.AppendLine("FROM Payments2.Apprenticeship WHERE Ukprn IN (");
+                stringBuilder.AppendLine(string.Join(",", ukprnsToRemove));
+                stringBuilder.AppendLine("))");
+                stringBuilder.AppendLine();
 
                 stringBuilder.AppendLine("DELETE Payments2.Apprenticeship ");
                 stringBuilder.AppendLine("WHERE Ukprn IN (");

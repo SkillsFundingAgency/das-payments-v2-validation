@@ -23,8 +23,8 @@ namespace SFA.DAS.Payments.AnonymiserTool
                 {
                     if (changedLearner.OldUln != apprenticeship.Uln)
                     {
-                        stringBuilder.AppendLine("Multiple learners for UKPRN: {apprenticeship.Ukprn} " +
-                                                 "and ULN: {apprenticeship.Uln} - results are not guaranteed");
+                        await Logger.Log(
+                            $"Multiple learners for UKPRN: {apprenticeship.Ukprn} and ULN: {apprenticeship.Uln} - results are not guaranteed");
 
                         foreach (var learner in listOfChangedLearners)
                         {
