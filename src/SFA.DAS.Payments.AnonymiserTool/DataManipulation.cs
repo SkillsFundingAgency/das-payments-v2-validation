@@ -7,7 +7,7 @@ namespace SFA.DAS.Payments.AnonymiserTool
 {
     static class DataManipulation
     {
-        public static async Task<List<long>> AlterUlns(ApprenticeshipData apprenticeshipData, Dictionary<long, ReadOptimisedProviderData> anonymisedProviders)
+        public static async Task<List<long>> AlterUlnsAndReturnUnusedApprenticeshipIds(ApprenticeshipData apprenticeshipData, Dictionary<long, ReadOptimisedProviderData> anonymisedProviders)
         {
             var apprenticeshipsToRemove = new List<long>();
             foreach (var apprenticeship in apprenticeshipData.Apprenticeships)

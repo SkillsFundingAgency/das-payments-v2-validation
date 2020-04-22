@@ -26,7 +26,7 @@ namespace SFA.DAS.Payments.AnonymiserTool
                 await Logger.Log("Loaded apprenticeships");
 
                 // Alter the commitment ULNs
-                var apprenticeshipsToRemove = await DataManipulation.AlterUlns(apprenticeshipData, anonymisedProviders);
+                var apprenticeshipsToRemove = await DataManipulation.AlterUlnsAndReturnUnusedApprenticeshipIds(apprenticeshipData, anonymisedProviders);
 
                 await Logger.Log("Updated commitments");
 
