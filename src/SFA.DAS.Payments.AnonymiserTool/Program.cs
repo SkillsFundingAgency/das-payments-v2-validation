@@ -25,14 +25,14 @@ namespace SFA.DAS.Payments.AnonymiserTool
                 var apprenticeshipData = DatabaseUtilities.LoadProductionApprenticeships(anonymisedProviders.Keys.ToList());
                 await Logger.Log("Loaded apprenticeships");
 
-                // Alter the commitment ULNs
-                var apprenticeshipsToRemove = await DataManipulation.AlterUlnsAndReturnUnusedApprenticeshipIds(apprenticeshipData, anonymisedProviders);
-
-                await Logger.Log("Updated commitments");
-
-                await DataManipulation.RemoveApprenticeships(apprenticeshipData, apprenticeshipsToRemove);
+                await DataManipulation.RemoveApprenticeships(apprenticeshipData, anonymisedProviders);
                 await Logger.Log("Removed existing apprenticeships");
 
+                // Alter the commitment ULNs
+                var sketchyUlns = await DataManipulation.AlterUlns(apprenticeshipData, anonymisedProviders);
+                await OutputFileUtilities.SaveScript(sketchyUlns.ToString(), "SketchyUlns.txt");
+                await Logger.Log("Updated commitments");
+                
                 // Create a script to delete existing commitments with UKPRNs
                 var removeByUkprnScript = ScriptGeneration.CreateDeleteByUkprnScript(apprenticeshipData);
                 await OutputFileUtilities.SaveScript(removeByUkprnScript, "RemoveUkprns.sql");
