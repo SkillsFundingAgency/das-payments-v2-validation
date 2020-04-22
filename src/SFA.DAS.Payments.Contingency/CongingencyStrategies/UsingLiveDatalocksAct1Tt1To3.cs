@@ -14,7 +14,7 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
 {
     class UsingLiveDatalocksAct1Tt1To3 : IProduceContingencyPayments
     {
-        public async Task GenerateContingencyPayments()
+        public async Task GenerateContingencyPayments(int period)
         {
             List<Earning> earnings;
             List<V2Datalock> v2Datalocks;

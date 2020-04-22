@@ -14,26 +14,27 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
 {
     class Act2WithPayments : IProduceContingencyPayments
     {
-        public async Task GenerateContingencyPayments()
+        public async Task GenerateContingencyPayments(int period)
         {
             List<Earning> earnings;
-            List<V2Datalock> v2Datalocks;
+            List<Payment> payments;
 
-            Console.WriteLine("Processing ACT2...");
+            Console.WriteLine("Processing in year ACT2...");
 
             // Load data
             using (var connection = new SqlConnection(ConfigurationManager.ConnectionStrings["ILR1920DataStore"].ConnectionString))
             {
-                earnings = (await connection.QueryAsync<Earning>(Sql.Earnings, commandTimeout: 3600).ConfigureAwait(false)).ToList();
+                earnings = (await connection.QueryAsync<Earning>(Sql.Earnings, new {collectionPeriod = period}, 
+                    commandTimeout: 3600).ConfigureAwait(false)).ToList();
             }
             Console.WriteLine($"Loaded {earnings.Count} earnings");
 
             using (var connection = new SqlConnection(ConfigurationManager.ConnectionStrings["DASPayments"].ConnectionString))
             {
-                v2Datalocks = (await connection.QueryAsync<V2Datalock>(Sql.V2Datalocks, commandTimeout: 3600)
+                payments = (await connection.QueryAsync<Payment>(Sql.V2Payments, commandTimeout: 3600)
                     .ConfigureAwait(false)).ToList();
             }
-            Console.WriteLine($"Loaded {v2Datalocks.Count} V2 datalocks");
+            Console.WriteLine($"Loaded {payments.Count} payments");
 
             var excel = new XLWorkbook(Path.Combine("Template", "Contingency.xlsx"));
 
@@ -42,23 +43,25 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
                 .Where(x => x.ApprenticeshipContractType == 2)
                 .ToList();
             
-            var rawEarnings = earnings.ToList();
-            rawEarnings.ForEach(x => x.Amount = x.AllTransactions);
-            // Write earnings tab
-            var sheet = excel.Worksheet("Earnings");
-            Program.WriteToTable(sheet, rawEarnings);
-
-
             // Apply co-funding multiplier
             earnings.ForEach(x =>
             {
-                if (x.ApprenticeshipContractType == 2)
-                {
-                    x.TransactionType01 *= x.SfaContributionPercentage;
-                    x.TransactionType02 *= x.SfaContributionPercentage;
-                    x.TransactionType03 *= x.SfaContributionPercentage;
-                }
+                x.TransactionType01 *= x.SfaContributionPercentage;
+                x.TransactionType02 *= x.SfaContributionPercentage;
+                x.TransactionType03 *= x.SfaContributionPercentage;
             });
+
+            var rawEarnings = earnings.ToList();
+            rawEarnings.ForEach(x => x.Amount = x.AllTransactions);
+            
+            // Calculate Earnings - Payments
+            //var newPayments = 
+
+
+            // Write earnings tab
+            var sheet = excel.Worksheet("Earnings");
+            Program.WriteToTable(sheet, rawEarnings);
+            
 
             // Set the 'Amount'
             earnings.ForEach(x => x.Amount = x.AllTransactions);
