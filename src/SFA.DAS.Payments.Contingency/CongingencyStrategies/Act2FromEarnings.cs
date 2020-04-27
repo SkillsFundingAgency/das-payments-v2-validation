@@ -17,8 +17,7 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
         public async Task GenerateContingencyPayments(int period)
         {
             List<Earning> earnings;
-            List<V2Datalock> v2Datalocks;
-
+            
             Console.WriteLine("Processing ACT2...");
 
             // Load data
@@ -29,13 +28,7 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
             }
             Console.WriteLine($"Loaded {earnings.Count} earnings");
 
-            using (var connection = new SqlConnection(ConfigurationManager.ConnectionStrings["DASPayments"].ConnectionString))
-            {
-                v2Datalocks = (await connection.QueryAsync<V2Datalock>(Sql.V2Datalocks, commandTimeout: 3600)
-                    .ConfigureAwait(false)).ToList();
-            }
-            Console.WriteLine($"Loaded {v2Datalocks.Count} V2 datalocks");
-
+            
             var excel = new XLWorkbook(Path.Combine("Template", "Contingency.xlsx"));
 
             // Filter out all ACT1 earnings

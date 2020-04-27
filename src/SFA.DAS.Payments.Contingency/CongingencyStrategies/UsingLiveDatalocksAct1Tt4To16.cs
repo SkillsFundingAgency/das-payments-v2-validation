@@ -16,8 +16,11 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
     {
         public async Task GenerateContingencyPayments(int period)
         {
+            Console.WriteLine("THIS IS USING OLD DATA AND SHOULD NOT BE TRUSTED!");
+            // Still has some good info in terms of calculating datalocks
+
             List<Earning> earnings;
-            List<V2Datalock> v2Datalocks;
+            List<V2Datalock> v2Datalocks = new List<V2Datalock>();
 
             Console.WriteLine("Processing ACT1 TT4-16 ...");
 
@@ -30,8 +33,8 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
 
             using (var connection = new SqlConnection(ConfigurationManager.ConnectionStrings["DASPayments"].ConnectionString))
             {
-                v2Datalocks = (await connection.QueryAsync<V2Datalock>(Sql.V2Datalocks, commandTimeout: 3600)
-                    .ConfigureAwait(false)).ToList();
+                //v2Datalocks = (await connection.QueryAsync<V2Datalock>(Sql.V2Datalocks, commandTimeout: 3600)
+                //    .ConfigureAwait(false)).ToList();
             }
             Console.WriteLine($"Loaded {v2Datalocks.Count} V2 datalocks");
 

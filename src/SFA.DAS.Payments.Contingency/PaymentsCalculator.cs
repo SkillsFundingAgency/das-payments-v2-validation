@@ -37,11 +37,70 @@ namespace SFA.DAS.Payments.Contingency
 
             return results;
         }
+
+        public sealed class LearnerIdentifier : IEquatable<LearnerIdentifier>
+        {
+            public LearnerIdentifier(Payment payment)
+            {
+                Ukprn = payment.Ukprn;
+                Uln = payment.Uln;
+                FundingLineType = payment.FundingLineType;
+            }
+
+            public LearnerIdentifier(Earning earning)
+            {
+                Ukprn = earning.Ukprn;
+                Uln = earning.Uln;
+                FundingLineType = earning.FundingLineType;
+            }
+
+            public override string ToString()
+            {
+                return $"Ukprn: {Ukprn}, Uln: {Uln}";
+            }
+
+            public bool Equals(LearnerIdentifier other)
+            {
+                if (ReferenceEquals(null, other)) return false;
+                if (ReferenceEquals(this, other)) return true;
+                return Ukprn == other.Ukprn && Uln == other.Uln && string.Equals(FundingLineType, other.FundingLineType, StringComparison.OrdinalIgnoreCase);
+            }
+
+            public override bool Equals(object obj)
+            {
+                return ReferenceEquals(this, obj) || obj is LearnerIdentifier other && Equals(other);
+            }
+
+            public override int GetHashCode()
+            {
+                unchecked
+                {
+                    var hashCode = Ukprn.GetHashCode();
+                    hashCode = (hashCode * 397) ^ Uln.GetHashCode();
+                    hashCode = (hashCode * 397) ^ StringComparer.OrdinalIgnoreCase.GetHashCode(FundingLineType);
+                    return hashCode;
+                }
+            }
+
+            public static bool operator ==(LearnerIdentifier left, LearnerIdentifier right)
+            {
+                return Equals(left, right);
+            }
+
+            public static bool operator !=(LearnerIdentifier left, LearnerIdentifier right)
+            {
+                return !Equals(left, right);
+            }
+
+            public long Ukprn { get; }
+            public long Uln { get; }
+            public string FundingLineType { get; }
+        }
     }
 
     public class CalculatedPayment
     {
-        public CalculatedPayment(LearnerIdentifier key, IList<Earning> earnings)
+        public CalculatedPayment(PaymentsCalculator.LearnerIdentifier key, IList<Earning> earnings)
         {
             Uln = key.Uln;
             Ukprn = key.Ukprn;
@@ -50,7 +109,7 @@ namespace SFA.DAS.Payments.Contingency
             IncentivePayments = earnings.Sum(x => x.Incentives);
         }
 
-        public CalculatedPayment(LearnerIdentifier key, decimal onProgAmount, decimal incentiveAmount)
+        public CalculatedPayment(PaymentsCalculator.LearnerIdentifier key, decimal onProgAmount, decimal incentiveAmount)
         {
             Uln = key.Uln;
             Ukprn = key.Ukprn;
@@ -68,64 +127,5 @@ namespace SFA.DAS.Payments.Contingency
         public decimal OnProgPayments { get; set; }
         public decimal IncentivePayments { get; set; }
         public decimal TotalAmount => OnProgPayments + IncentivePayments;
-    }
-
-    public class LearnerIdentifier : IEquatable<LearnerIdentifier>
-    {
-        public LearnerIdentifier(Payment payment)
-        {
-            Ukprn = payment.Ukprn;
-            Uln = payment.Uln;
-            FundingLineType = payment.FundingLineType;
-        }
-
-        public LearnerIdentifier(Earning earning)
-        {
-            Ukprn = earning.Ukprn;
-            Uln = earning.Uln;
-            FundingLineType = earning.FundingLineType;
-        }
-
-        public override string ToString()
-        {
-            return $"Ukprn: {Ukprn}, Uln: {Uln}";
-        }
-
-        public bool Equals(LearnerIdentifier other)
-        {
-            if (ReferenceEquals(null, other)) return false;
-            if (ReferenceEquals(this, other)) return true;
-            return Ukprn == other.Ukprn && Uln == other.Uln && string.Equals(FundingLineType, other.FundingLineType, StringComparison.OrdinalIgnoreCase);
-        }
-
-        public override bool Equals(object obj)
-        {
-            return ReferenceEquals(this, obj) || obj is LearnerIdentifier other && Equals(other);
-        }
-
-        public override int GetHashCode()
-        {
-            unchecked
-            {
-                var hashCode = Ukprn.GetHashCode();
-                hashCode = (hashCode * 397) ^ Uln.GetHashCode();
-                hashCode = (hashCode * 397) ^ StringComparer.OrdinalIgnoreCase.GetHashCode(FundingLineType);
-                return hashCode;
-            }
-        }
-
-        public static bool operator ==(LearnerIdentifier left, LearnerIdentifier right)
-        {
-            return Equals(left, right);
-        }
-
-        public static bool operator !=(LearnerIdentifier left, LearnerIdentifier right)
-        {
-            return !Equals(left, right);
-        }
-
-        public long Ukprn { get; set; }
-        public long Uln { get; set; }
-        public string FundingLineType { get; set; }
     }
 }

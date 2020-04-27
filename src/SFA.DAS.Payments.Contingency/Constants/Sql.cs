@@ -208,21 +208,10 @@ SELECT *
 FROM AllAct1Earnings
             ";
 
-        public const string V2Datalocks = @"
-                SELECT [Ukprn]
-                  ,[LearnerUln] [Uln]
-                  ,[LearnerReferenceNumber] [LearnRefNumber]
-                  ,[LearningAimReference] [LearnAimRef]
-                  ,[LearningAimProgrammeType] [ProgrammeType]
-                  ,[LearningAimStandardCode] [StandardCode]
-                  ,[LearningAimFrameworkCode] [FrameworkCode]
-                  ,[LearningAimPathwayCode] [PathwayCode]
-                  ,[DeliveryPeriod]
-                FROM Payments2.DataLockFailure
-                WHERE TransactionType = 1
-                AND AcademicYear = 1920
-                AND CollectionPeriod = 3
-            ";
+        public const string BasicV2Apprenticeships = @"
+SELECT Uln, Ukprn
+FROM Payments2.Apprenticeship
+";
 
         public const string R13Payments = @"
                 SELECT Ukprn, LearnerUln [Uln],

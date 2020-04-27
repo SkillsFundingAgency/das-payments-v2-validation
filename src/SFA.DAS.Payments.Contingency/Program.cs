@@ -28,6 +28,7 @@ namespace SFA.DAS.Payments.Contingency
                 var contingencyStrategies = new List<IProduceContingencyPayments>
                 {
                     new Act2WithPayments(),
+                    new Act1WithPaymentsAndDatalock1And2(),
                 };
 
                 foreach (var contingencyStrategy in contingencyStrategies)
