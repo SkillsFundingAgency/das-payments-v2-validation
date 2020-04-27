@@ -59,7 +59,7 @@
             ";
 
         // ILR1920Data
-        public const string Earnings = @"
+        public const string YtdEarnings = @"
 
 WITH RawEarnings AS (
     SELECT
@@ -235,10 +235,25 @@ FROM AllAct1Earnings
                 AND CollectionPeriod = 13
             ";
 
-        public const string V2Payments = @"
-SELECT *
-FROM Payments2.Payment
-WHERE AcademicYear = 1920
+        public const string YtdV2Payments = @"
+
+WITH YtdPayments AS (
+	SELECT 
+		CASE WHEN TransactionType < 4 THEN Amount ELSE 0 END [OnProg],
+		CASE WHEN TransactionType > 3 THEN Amount ELSE 0 END [Incentives],
+		Ukprn, LearnerUln [Uln],
+		LearningAimFundingLineType [FundingLineType],
+		ContractType
+	FROM Payments2.Payment
+	WHERE AcademicYear = 1920
+)
+
+SELECT SUM(OnProg) [OnProgPayments], SUM(Incentives) [IncentivePayments],
+	Ukprn, Uln, FundingLineType, ContractType
+FROM YtdPayments
+GROUP BY Ukprn, Uln, FundingLineType, ContractType
+ORDER BY Ukprn, Uln
+
 
 ";
     }

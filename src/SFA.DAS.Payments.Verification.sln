@@ -22,6 +22,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SFA.DAS.Payments.EarningsCo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SFA.DAS.Payments.CleanAuditTables", "SFA.DAS.Payments.CleanAuditTables\SFA.DAS.Payments.CleanAuditTables.csproj", "{14C0889B-7D95-4888-A4CC-9F8C0D9848C7}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{3D79D854-ECF3-4D87-96C5-E594ED253DDE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SFA.DAS.Payments.Contingency.UnitTests", "SFA.DAS.Payments.Contingency.Tests\SFA.DAS.Payments.Contingency.UnitTests.csproj", "{75991B51-E949-4A72-B3A3-A8DC27C8F64C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -58,9 +62,16 @@ Global
 		{14C0889B-7D95-4888-A4CC-9F8C0D9848C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{14C0889B-7D95-4888-A4CC-9F8C0D9848C7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{14C0889B-7D95-4888-A4CC-9F8C0D9848C7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{75991B51-E949-4A72-B3A3-A8DC27C8F64C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{75991B51-E949-4A72-B3A3-A8DC27C8F64C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{75991B51-E949-4A72-B3A3-A8DC27C8F64C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{75991B51-E949-4A72-B3A3-A8DC27C8F64C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{75991B51-E949-4A72-B3A3-A8DC27C8F64C} = {3D79D854-ECF3-4D87-96C5-E594ED253DDE}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6AF13DDF-F81F-4DE2-9253-A81CF2F081EC}

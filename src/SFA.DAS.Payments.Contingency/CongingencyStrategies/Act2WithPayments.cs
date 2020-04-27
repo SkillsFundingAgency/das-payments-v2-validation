@@ -24,14 +24,14 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
             // Load data
             using (var connection = new SqlConnection(ConfigurationManager.ConnectionStrings["ILR1920DataStore"].ConnectionString))
             {
-                earnings = (await connection.QueryAsync<Earning>(Sql.Earnings, new {collectionPeriod = period}, 
+                earnings = (await connection.QueryAsync<Earning>(Sql.YtdEarnings, new {collectionPeriod = period}, 
                     commandTimeout: 3600).ConfigureAwait(false)).ToList();
             }
             Console.WriteLine($"Loaded {earnings.Count} earnings");
 
             using (var connection = new SqlConnection(ConfigurationManager.ConnectionStrings["DASPayments"].ConnectionString))
             {
-                payments = (await connection.QueryAsync<Payment>(Sql.V2Payments, commandTimeout: 3600)
+                payments = (await connection.QueryAsync<Payment>(Sql.YtdV2Payments, commandTimeout: 3600)
                     .ConfigureAwait(false)).ToList();
             }
             Console.WriteLine($"Loaded {payments.Count} payments");
@@ -55,33 +55,26 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
             rawEarnings.ForEach(x => x.Amount = x.AllTransactions);
             
             // Calculate Earnings - Payments
-            //var newPayments = 
+            var newPayments = PaymentsCalculator.Generate(rawEarnings, payments);
 
 
-            // Write earnings tab
-            var sheet = excel.Worksheet("Earnings");
-            Program.WriteToTable(sheet, rawEarnings);
-            
-
-            // Set the 'Amount'
-            earnings.ForEach(x => x.Amount = x.AllTransactions);
-
-
-            // Get all earnings
-            // Write earnings to 'Earnings' tab
-            
+            // Write raw earnings
+            var sheet = excel.Worksheet("Raw Earnings");
+            //Program.WriteToTable(sheet, rawEarnings);
             Console.WriteLine($"Found {earnings.Count} ACT2 earnings");
 
-            // Write a summary tab
-            sheet = excel.Worksheet("Final Amounts (Full)");
-            Program.WriteToTable(sheet, earnings);
+            // Write raw payments
+            sheet = excel.Worksheet("Raw Payments");
+            //Program.WriteRawResults(sheet, newPayments);
 
-            
+            // Write payments summarised by UKPRN
+            sheet = excel.Worksheet("Final Payments");
+            Program.WriteToSummarisedTable(sheet, newPayments);
+
             // Summary
             sheet = excel.Worksheet("Summary");
             sheet.Cell(2, "A").Value = earnings.Select(x => x.Uln).Distinct().Count();
             sheet.Cell(2, "B").Value = earnings.Sum(x => x.Amount);
-
             
 
             using (var stream = new MemoryStream())
