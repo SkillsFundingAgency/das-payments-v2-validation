@@ -14,3 +14,6 @@
 *.jfm
 App.Debug.config
 App.Release.config
+
+**/*.crunchsolution.cache
+**/*.executiontimes.cache
