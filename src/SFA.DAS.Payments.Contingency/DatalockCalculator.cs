@@ -18,7 +18,7 @@ namespace SFA.DAS.Payments.Contingency
             }
 
             var results = new List<Earning>();
-
+            
             foreach (var groupedEarning in groupedEarnings)
             {
                 if (apprenticeshipList.Contains(groupedEarning.Key))

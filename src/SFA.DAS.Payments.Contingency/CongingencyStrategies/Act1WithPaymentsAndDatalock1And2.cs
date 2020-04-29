@@ -49,16 +49,14 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
                     .ConfigureAwait(false)).ToList();
             }
 
-            Console.WriteLine($"Loaded {basicV2Apprenticeships.Count} V2 datalocks");
-
+            Console.WriteLine($"Loaded {basicV2Apprenticeships.Count} V2 apprenticeships");
+            
             var excel = new XLWorkbook(Path.Combine("Template", "Contingency.xlsx"));
 
             // Filter out all non ACT1 earnings
             earnings = earnings
-                .Where(x => x.ApprenticeshipContractType != 1)
+                .Where(x => x.ApprenticeshipContractType == 1)
                 .ToList();
-
-
             Console.WriteLine($"Found {earnings.Count} ACT1 earnings");
 
             var earningsWithApprenticeships = DatalockCalculator

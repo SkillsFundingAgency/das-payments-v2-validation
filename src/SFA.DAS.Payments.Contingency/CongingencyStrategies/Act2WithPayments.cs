@@ -53,12 +53,11 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
 
             var rawEarnings = earnings.ToList();
             rawEarnings.ForEach(x => x.Amount = x.AllTransactions);
+            Console.WriteLine($"Found {earnings.Count} ACT2 earnings");
+
             
             // Calculate Earnings - Payments
             var newPayments = PaymentsCalculator.Generate(rawEarnings, payments);
-
-
-            // Write raw earnings
 
             // Write raw earnings
             await AuditData.Output(rawEarnings, $"ACT2EarningsByLearner-{DateTime.Now:yyyy-MM-dd-hh-mm}.csv");
@@ -66,8 +65,7 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
             // And payments
             await AuditData.Output(newPayments, $"ACT2PaymentsByLearner-{DateTime.Now:yyyy-MM-dd-hh-mm}.csv");
 
-            Console.WriteLine($"Found {earnings.Count} ACT2 earnings");
-
+            
             // Write payments summarised by UKPRN
             var sheet = excel.Worksheet("Final Payments");
             Program.WriteToSummarisedTable(sheet, newPayments);
