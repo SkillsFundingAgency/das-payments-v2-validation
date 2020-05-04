@@ -68,7 +68,7 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
             
             // Write payments summarised by UKPRN
             var sheet = excel.Worksheet("Final Payments");
-            Program.WriteToSummarisedTable(sheet, newPayments);
+            XlWriter.WriteToSummarisedTable(sheet, newPayments);
 
             // Summary
             sheet = excel.Worksheet("Summary");

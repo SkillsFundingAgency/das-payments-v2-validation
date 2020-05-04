@@ -79,7 +79,7 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
             var excel = new XLWorkbook(Path.Combine("Template", "Contingency.xlsx"));
 
             var sheet = excel.Worksheet("Earnings");
-            Program.WriteToTable(sheet, earnings);
+            XlWriter.WriteToTable(sheet, earnings);
             Console.WriteLine("Written earnings page");
 
             // Extract ACT1 earnings for datalock processing
@@ -107,21 +107,16 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
                     finalEarningsWithoutDatalocks.Add(earning);
                 }
             }
-
-
+            
             // Write the remainder of the datalocks to '1920 Datalocks' tab
             sheet = excel.Worksheet("1920 Datalocks (Full)");
-            Program.WriteToTable(sheet, finalEarningsWithDatalocks);
+            XlWriter.WriteToTable(sheet, finalEarningsWithDatalocks);
             Console.WriteLine($"Found {finalEarningsWithoutDatalocks.Count} remaining earnings with {finalEarningsWithDatalocks.Count} 1920 datalocks (full match)");
-
-
             
             // Write a summary tab
             sheet = excel.Worksheet("Final Amounts (Full)");
-            Program.WriteToTable(sheet, finalEarningsWithoutDatalocks);
-
+            XlWriter.WriteToTable(sheet, finalEarningsWithoutDatalocks);
             
-
             var datalockedUlns = finalEarningsWithDatalocks.Select(x => x.Uln).Distinct().ToList();
             datalockedUlns = datalockedUlns.Distinct().ToList();
 
@@ -138,16 +133,13 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
             
             sheet.Cell(2, "H").Value = finalEarningsWithDatalocks.Sum(x => x.Amount);
             sheet.Cell(2, "H").Value = finalEarningsWithoutDatalocks.Sum(x => x.Amount);
-
-
+            
             // Raw earnings
             //sheet = excel.Worksheet("Raw Earnings");
             //Program.WriteRawResults(sheet, earnings);
 
             //sheet = excel.Worksheet("Raw 1920 Datalocks (Full)");
             //Program.WriteRawResults(sheet, finalEarningsWithDatalocks);
-
-            
 
             using (var stream = new MemoryStream())
             using (var file = File.OpenWrite($"Contingency-Output-Live-Datalocks-TT4-TT16-{DateTime.Now:yyyy-MM-dd-hh-mm}.xlsx"))

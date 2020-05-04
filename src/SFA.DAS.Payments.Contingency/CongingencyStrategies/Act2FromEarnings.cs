@@ -40,7 +40,7 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
             rawEarnings.ForEach(x => x.Amount = x.AllTransactions);
             // Write earnings tab
             var sheet = excel.Worksheet("Earnings");
-            Program.WriteToTable(sheet, rawEarnings);
+            XlWriter.WriteToTable(sheet, rawEarnings);
 
 
             // Apply co-funding multiplier
@@ -65,7 +65,7 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
 
             // Write a summary tab
             sheet = excel.Worksheet("Final Amounts (Full)");
-            Program.WriteToTable(sheet, earnings);
+            XlWriter.WriteToTable(sheet, earnings);
 
             
             // Summary

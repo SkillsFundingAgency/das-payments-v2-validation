@@ -87,7 +87,7 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
             var excel = new XLWorkbook(Path.Combine("Template", "Contingency.xlsx"));
 
             var sheet = excel.Worksheet("Earnings");
-            Program.WriteToTable(sheet, earnings);
+            XlWriter.WriteToTable(sheet, earnings);
             Console.WriteLine("Written earnings page");
 
             // Extract ACT1 earnings for datalock processing
@@ -119,14 +119,14 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
 
             // Write the remainder of the datalocks to '1920 Datalocks' tab
             sheet = excel.Worksheet("1920 Datalocks (Full)");
-            Program.WriteToTable(sheet, finalEarningsWithDatalocks);
+            XlWriter.WriteToTable(sheet, finalEarningsWithDatalocks);
             Console.WriteLine($"Found {finalEarningsWithoutDatalocks.Count} remaining earnings with {finalEarningsWithDatalocks.Count} 1920 datalocks (full match)");
 
 
             
             // Write a summary tab
             sheet = excel.Worksheet("Final Amounts (Full)");
-            Program.WriteToTable(sheet, finalEarningsWithoutDatalocks);
+            XlWriter.WriteToTable(sheet, finalEarningsWithoutDatalocks);
 
             
 
