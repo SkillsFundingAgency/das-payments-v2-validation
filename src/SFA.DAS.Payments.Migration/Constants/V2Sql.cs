@@ -40,21 +40,47 @@ namespace SFA.DAS.Payments.Migration.Constants
             ";
 
         public const string PaymentsAndEarnings = @"
-                SELECT R.EventId [RequiredPaymentEventId], P.*, ISNULL(E.LearningAimSequenceNumber, 0), 
-                    R.Amount [AmountDue]
-                FROM [Payments2].[Payment] P
-                JOIN Payments2.FundingSourceEvent F
-	                ON F.EventId = P.FundingSourceEventId
-                JOIN Payments2.RequiredPaymentEvent R
-	                ON R.EventId = F.RequiredPaymentEventId
-                LEFT JOIN Payments2.EarningEvent E
-	                ON E.EventId = P.EarningEventId
-                WHERE P.AcademicYear = 1920
-                    AND P.CollectionPeriod = @collectionPeriod
-                ORDER BY R.EventId, P.Id
-                OFFSET @offset ROWS
-                FETCH NEXT @pageSize ROWS ONLY
-                ";
+;WITH FundingSourceEvents AS (
+	SELECT DISTINCT EventId, RequiredPaymentEventId
+	FROM Payments2.FundingSourceEvent
+	WHERE AcademicYear = 1920 
+	AND CollectionPeriod = @collectionPeriod
+)
+
+SELECT * INTO #FundingSourceEvents
+FROM FundingSourceEvents
+
+;WITH RequiredPaymentEvents AS (
+	SELECT MAX(Amount) [Amount], EventId
+	FROM Payments2.RequiredPaymentEvent
+    WHERE AcademicYear = 1920
+    AND CollectionPeriod = @collectionPeriod
+	GROUP BY EventId
+)
+
+SELECT * INTO #RequiredPaymentEvents
+FROM RequiredPaymentEvents
+
+;WITH MigrationPayments AS (
+	SELECT R.EventId [RequiredPaymentEventId], P.*, 
+		ISNULL(E.LearningAimSequenceNumber, 0) [LearningAimSequenceNumber], R.Amount [AmountDue]
+	FROM [Payments2].[Payment] P
+	JOIN #FundingSourceEvents F
+		ON F.EventId = P.FundingSourceEventId
+	JOIN #RequiredPaymentEvents R
+		ON R.EventId = F.RequiredPaymentEventId
+	LEFT JOIN Payments2.EarningEvent E
+		ON E.EventId = P.EarningEventId
+	WHERE P.AcademicYear = 1920
+	AND P.CollectionPeriod = @collectionPeriod
+)
+
+SELECT *
+FROM MigrationPayments
+ORDER BY RequiredPaymentEventId, Id
+OFFSET @offset ROWS
+FETCH NEXT @pageSize ROWS ONLY
+";
 
         public const string PreviousEarnings = @"
                 SELECT R.EventId [RequiredPaymentEventId], P.*, ISNULL(E.LearningAimSequenceNumber, 0), 
