@@ -22,6 +22,8 @@ namespace SFA.DAS.Payments.Contingency
                 foreach (var contingencyStrategy in contingencyStrategies)
                 {
                     await contingencyStrategy.GenerateContingencyPayments(period);
+                    (contingencyStrategy as IDisposable)?.Dispose();
+                    GC.Collect();
                 }
 
                 Console.WriteLine("Finished - press enter to exit...");

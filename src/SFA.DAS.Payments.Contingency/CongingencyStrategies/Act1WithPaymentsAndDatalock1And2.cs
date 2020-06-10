@@ -12,8 +12,11 @@ using SFA.DAS.Payments.Contingency.DTO;
 
 namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
 {
-    class Act1WithPaymentsAndDatalock1And2 : IProduceContingencyPayments
+    class Act1WithPaymentsAndDatalock1And2 : IProduceContingencyPayments, IDisposable
     {
+        public void Dispose()
+        {}
+
         public async Task GenerateContingencyPayments(int period)
         {
             List<Earning> earnings;
@@ -26,8 +29,10 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
             using (var connection =
                 new SqlConnection(ConfigurationManager.ConnectionStrings["ILR1920DataStore"].ConnectionString))
             {
-                earnings = (await connection.QueryAsync<Earning>(Sql.YtdEarnings, new {collectionPeriod = period},
-                    commandTimeout: 3600).ConfigureAwait(false)).ToList();
+                earnings = (await connection.QueryAsync<Earning>(Sql.YtdEarnings, new {collectionPeriod = period, act = 1},
+                    commandTimeout: 3600).ConfigureAwait(false))
+                        .Where(x => x.ApprenticeshipContractType == 1)
+                        .ToList();
             }
 
             Console.WriteLine($"Loaded {earnings.Count} earnings");
@@ -35,8 +40,10 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
             using (var connection =
                 new SqlConnection(ConfigurationManager.ConnectionStrings["DASPayments"].ConnectionString))
             {
-                payments = (await connection.QueryAsync<Payment>(Sql.YtdV2Payments, commandTimeout: 3600)
-                    .ConfigureAwait(false)).ToList();
+                payments = (await connection.QueryAsync<Payment>(Sql.YtdV2Payments, new { collectionPeriod = period, act = 1 },
+                    commandTimeout: 3600)
+                        .ConfigureAwait(false))
+                        .ToList();
             }
 
             Console.WriteLine($"Loaded {payments.Count} payments");
@@ -49,19 +56,18 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
                     .ConfigureAwait(false)).ToList();
             }
 
+            GC.Collect();
+
             Console.WriteLine($"Loaded {basicV2Apprenticeships.Count} V2 apprenticeships");
             
             var excel = new XLWorkbook(Path.Combine("Template", "Contingency.xlsx"));
 
-            // Filter out all non ACT1 earnings
-            earnings = earnings
-                .Where(x => x.ApprenticeshipContractType == 1)
-                .ToList();
             Console.WriteLine($"Found {earnings.Count} ACT1 earnings");
 
             var earningsWithApprenticeships = DatalockCalculator
                 .ApplyDatalocks(earnings, basicV2Apprenticeships);
             earningsWithApprenticeships.ForEach(x => x.Amount = x.AllTransactions);
+
             Console.WriteLine($"Found {earningsWithApprenticeships.Count} ACT1 " +
                               $"earnings after removing earnings without an apprenticeship");
 

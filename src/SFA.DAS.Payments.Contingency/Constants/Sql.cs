@@ -192,20 +192,20 @@ WITH RawEarnings AS (
         AND Period <= @collectionperiod
 )
 
-, AllAct1Earnings AS (
+, AllEarnings AS (
 	SELECT * 
 	FROM RawEarnings
-	--WHERE ApprenticeshipContractType = 1
 
 	UNION
 
 	SELECT * 
 	FROM RawEarningsMathsAndEnglish
-	--WHERE ApprenticeshipContractType = 1
 )
 
 SELECT *
-FROM AllAct1Earnings
+FROM AllEarnings
+WHERE ApprenticeshipContractType = @act
+
             ";
 
         public const string BasicV2Apprenticeships = @"
@@ -235,11 +235,13 @@ WITH YtdPayments AS (
 		ContractType
 	FROM Payments2.Payment
 	WHERE AcademicYear = 1920
+    AND FundingSource != 3
 )
 
 SELECT SUM(OnProg) [OnProgPayments], SUM(Incentives) [IncentivePayments],
 	Ukprn, Uln, FundingLineType, ContractType
 FROM YtdPayments
+WHERE ContractType = @act
 GROUP BY Ukprn, Uln, FundingLineType, ContractType
 ORDER BY Ukprn, Uln
 

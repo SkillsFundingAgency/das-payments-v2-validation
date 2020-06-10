@@ -12,8 +12,11 @@ using SFA.DAS.Payments.Contingency.DTO;
 
 namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
 {
-    class Act2WithPayments : IProduceContingencyPayments
+    class Act2WithPayments : IProduceContingencyPayments, IDisposable
     {
+        public void Dispose()
+        {}
+
         public async Task GenerateContingencyPayments(int period)
         {
             List<Earning> earnings;
@@ -24,25 +27,26 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
             // Load data
             using (var connection = new SqlConnection(ConfigurationManager.ConnectionStrings["ILR1920DataStore"].ConnectionString))
             {
-                earnings = (await connection.QueryAsync<Earning>(Sql.YtdEarnings, new {collectionPeriod = period}, 
-                    commandTimeout: 3600).ConfigureAwait(false)).ToList();
+                earnings = (await connection.QueryAsync<Earning>(Sql.YtdEarnings, new {collectionPeriod = period, act = 2}, 
+                    commandTimeout: 3600).ConfigureAwait(false))
+                        .Where(x => x.ApprenticeshipContractType == 2)
+                        .ToList();
             }
             Console.WriteLine($"Loaded {earnings.Count} earnings");
 
             using (var connection = new SqlConnection(ConfigurationManager.ConnectionStrings["DASPayments"].ConnectionString))
             {
-                payments = (await connection.QueryAsync<Payment>(Sql.YtdV2Payments, commandTimeout: 3600)
-                    .ConfigureAwait(false)).ToList();
+                payments = (await connection.QueryAsync<Payment>(Sql.YtdV2Payments, new { collectionPeriod = period, act = 2 },
+                    commandTimeout: 3600)
+                        .ConfigureAwait(false))
+                        .ToList();
             }
             Console.WriteLine($"Loaded {payments.Count} payments");
 
             var excel = new XLWorkbook(Path.Combine("Template", "Contingency.xlsx"));
 
-            // Filter out all ACT1 earnings
-            earnings = earnings
-                .Where(x => x.ApprenticeshipContractType == 2)
-                .ToList();
-            
+            GC.Collect();
+
             // Apply co-funding multiplier
             earnings.ForEach(x =>
             {
@@ -51,17 +55,17 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
                 x.TransactionType03 *= x.SfaContributionPercentage;
             });
 
-            var rawEarnings = earnings.ToList();
-            rawEarnings.ForEach(x => x.Amount = x.AllTransactions);
+            earnings.ForEach(x => x.Amount = x.AllTransactions);
             Console.WriteLine($"Found {earnings.Count} ACT2 earnings");
 
-            
+            GC.Collect();
+
             // Calculate Earnings - Payments
-            var newPayments = PaymentsCalculator.Generate(rawEarnings, payments);
+            var newPayments = PaymentsCalculator.Generate(earnings, payments);
 
             // Write raw earnings
-            await AuditData.Output(rawEarnings, $"ACT2EarningsByLearner-{DateTime.Now:yyyy-MM-dd-hh-mm}.csv");
-            
+            await AuditData.Output(earnings, $"ACT2EarningsByLearner-{DateTime.Now:yyyy-MM-dd-hh-mm}.csv");
+
             // And payments
             await AuditData.Output(newPayments, $"ACT2PaymentsByLearner-{DateTime.Now:yyyy-MM-dd-hh-mm}.csv");
 
