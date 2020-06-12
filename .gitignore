@@ -17,3 +17,5 @@ App.Release.config
 
 **/*.crunchsolution.cache
 **/*.executiontimes.cache
+
+**/.idea/*

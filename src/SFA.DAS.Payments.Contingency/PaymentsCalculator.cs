@@ -14,11 +14,13 @@ namespace SFA.DAS.Payments.Contingency
             var groupedEarnings = allEarnings.ToLookup(x => new LearnerIdentifier(x));
             var groupedPayments = allPayments.ToLookup(x => new LearnerIdentifier(x));
 
+            var processedPayments = new HashSet<LearnerIdentifier>();
+
             // Only looking at earnings as the ticket expressly says that we are not
             //  accounting for learners that are removed from the ILR
             foreach (var earning in groupedEarnings)
             {
-                var earnings = groupedEarnings[earning.Key].ToList();
+                var earnings = earning.ToList();
 
                 if (!groupedPayments.Contains(earning.Key))
                 {
@@ -33,6 +35,18 @@ namespace SFA.DAS.Payments.Contingency
                 var incentiveDifference = earning.Sum(x => x.Incentives) -
                                           payments.Sum(x => x.IncentivePayments);
                 results.Add(new CalculatedPayment(earning.Key, onProgDifference, incentiveDifference));
+
+                processedPayments.Add(earning.Key);
+            }
+
+            foreach(var payment in groupedPayments)
+            {
+                if (processedPayments.Contains(payment.Key))
+                {
+                    continue;
+                }
+
+                results.Add(new CalculatedPayment(payment.Key, payment.ToList()));
             }
 
             return results;
@@ -107,6 +121,15 @@ namespace SFA.DAS.Payments.Contingency
             FundingLineType = key.FundingLineType;
             OnProgPayments = earnings.Sum(x => x.OneToThree);
             IncentivePayments = earnings.Sum(x => x.Incentives);
+        }
+
+        public CalculatedPayment(PaymentsCalculator.LearnerIdentifier key, IList<Payment> payments)
+        {
+            Uln = key.Uln;
+            Ukprn = key.Ukprn;
+            FundingLineType = key.FundingLineType;
+            OnProgPayments = 0 /* earnings */ - payments.Sum(x => x.OnProgPayments);
+            IncentivePayments = 0 /* earnings */ - payments.Sum(x => x.IncentivePayments);
         }
 
         public CalculatedPayment(PaymentsCalculator.LearnerIdentifier key, decimal onProgAmount, decimal incentiveAmount)
