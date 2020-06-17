@@ -4,13 +4,13 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
-using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Transactions;
 using Dapper;
 using FastMember;
+using SDA.DAS.Payments.ConsoleUtilities;
 using SFA.DAS.Payments.Migration.Constants;
 using SFA.DAS.Payments.Migration.DTO;
 using SFA.DAS.Payments.Migration.Services;
@@ -22,15 +22,6 @@ namespace SFA.DAS.Payments.Migration
 {
     class Program
     {
-        static async Task Log(string message)
-        {
-            using (var file = File.AppendText("log.txt"))
-            {
-                await file.WriteLineAsync(message);
-            }
-            Console.WriteLine(message);
-        }
-
         static async Task Main(string[] args)
         {
             Console.ForegroundColor = ConsoleColor.White;
@@ -39,21 +30,21 @@ namespace SFA.DAS.Payments.Migration
             {
             START:
 
-                await Log("");
-                await Log("Please select what you would like to migrate:");
-                await Log("1 - Commitments");
-                await Log("2 - Accounts");
-                await Log("3 - Payments");
-                await Log("4 - EAS");
-                await Log("5 - V2 Payments -> V1");
-                await Log("6 - Complete Return (1920 only)");
-                await Log("7 - V2 Transfers that didn't work -> V1");
-                await Log("8 - V2 Account Transfers -> V1");
-                await Log("9 - All V1 -> V2 (1, 2, 3 & 4)");
-                await Log("10 - Previous Earnings (1920) up to and including supplied period");
-                await Log("11 - All V2 -> V1 (5, 8, 7)");
-                await Log("T - Test Connections");
-                await Log("Esc - exit");
+                await Logger.Log("");
+                await Logger.Log("Please select what you would like to migrate:");
+                await Logger.Log("1 - Commitments");
+                await Logger.Log("2 - Accounts");
+                await Logger.Log("3 - Payments");
+                await Logger.Log("4 - EAS");
+                await Logger.Log("5 - V2 Payments -> V1");
+                await Logger.Log("6 - Complete Return (1920 only)");
+                await Logger.Log("7 - V2 Transfers that didn't work -> V1");
+                await Logger.Log("8 - V2 Account Transfers -> V1");
+                await Logger.Log("9 - All V1 -> V2 (1, 2, 3 & 4)");
+                await Logger.Log("10 - Previous Earnings (1920) up to and including supplied period");
+                await Logger.Log("11 - All V2 -> V1 (5, 8, 7)");
+                await Logger.Log("T - Test Connections");
+                await Logger.Log("Esc - exit");
 
                 StringBuilder buffer = new StringBuilder();
 
@@ -67,7 +58,7 @@ namespace SFA.DAS.Payments.Migration
 
                 if (info.Key == ConsoleKey.Escape)
                 {
-                    await Log("Finished - press enter to continue...");
+                    await Logger.Log("Finished - press enter to continue...");
                     Console.ReadLine();
                     return;
                 }
@@ -82,7 +73,7 @@ namespace SFA.DAS.Payments.Migration
 
                 if (!int.TryParse(enteredText, out var typeinputAsInteger))
                 {
-                    await Log("Please enter a number");
+                    await Logger.Log("Please enter a number");
                     goto START;
                 }
 
@@ -91,9 +82,9 @@ namespace SFA.DAS.Payments.Migration
             }
             catch (Exception e)
             {
-                await Log(e.Message);
-                await Log(e.StackTrace);
-                await Log("Press enter to continue...");
+                await Logger.Log(e.Message);
+                await Logger.Log(e.StackTrace);
+                await Logger.Log("Press enter to continue...");
                 Console.ReadLine();
             }
         }
@@ -141,10 +132,10 @@ namespace SFA.DAS.Payments.Migration
 
             if (selection == 10)
             {
-                await Log("");
-                await Log("");
-                await Log("Previous V1 earnings will be removed and migrated up to and INCLUDING the provided period below. ");
-                await Log("");
+                await Logger.Log("");
+                await Logger.Log("");
+                await Logger.Log("Previous V1 earnings will be removed and migrated up to and INCLUDING the provided period below. ");
+                await Logger.Log("");
                 await ProcessPreviousEarnings();
 			}
 			
@@ -169,7 +160,7 @@ namespace SFA.DAS.Payments.Migration
 
         private static async Task TestConnection(string connectionString, string friendlyName)
         {
-            await Log($"Testing: {friendlyName}");
+            await Logger.Log($"Testing: {friendlyName}");
             try
             {
                 using (var connection =
@@ -179,17 +170,17 @@ namespace SFA.DAS.Payments.Migration
                 }
 
                 Console.ForegroundColor = ConsoleColor.Green;
-                await Log($"Connection successful for {friendlyName}");
+                await Logger.Log($"Connection successful for {friendlyName}");
                 Console.ForegroundColor = ConsoleColor.White;
             }
             catch (Exception e)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                await Log($"Connection failed for {friendlyName}");
+                await Logger.Log($"Connection failed for {friendlyName}");
                 Console.ForegroundColor = ConsoleColor.White;
             }
 
-            await Log("");
+            await Logger.Log("");
         }
 
         private static async Task CompletePeriod()
@@ -242,12 +233,12 @@ namespace SFA.DAS.Payments.Migration
         {
             while (true)
             {
-                await Log("");
-                await Log("Please enter the collection period: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 or 14");
+                await Logger.Log("");
+                await Logger.Log("Please enter the collection period: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 or 14");
                 var chosenPeriod = Console.ReadLine();
                 if (!int.TryParse(chosenPeriod, out var collectionPeriod) || collectionPeriod < 1 || collectionPeriod > 14)
                 {
-                    await Log($"Invalid collection period: '{chosenPeriod}'.");
+                    await Logger.Log($"Invalid collection period: '{chosenPeriod}'.");
                     continue;
                 }
 
@@ -290,7 +281,7 @@ namespace SFA.DAS.Payments.Migration
                     var outputResults = mapper.MapV2Payments(paymentsAndEarnings, new HashSet<Guid>());
 
                     var earnings = outputResults.earnings;
-                    await Log($"Loaded {earnings.Count} records from page {offset / pageSize}");
+                    await Logger.Log($"Loaded {earnings.Count} records from page {offset / pageSize}");
 
                     var minDate = new DateTime(2000, 1, 1);
 
@@ -332,7 +323,7 @@ namespace SFA.DAS.Payments.Migration
                     var outputResults = mapper.MapV2Payments(paymentsAndEarnings, new HashSet<Guid>());
 
                     var earnings = outputResults.earnings;
-                    await Log($"Loaded {earnings.Count} records for period {i} for transfer records");
+                    await Logger.Log($"Loaded {earnings.Count} records for period {i} for transfer records");
 
                     var minDate = new DateTime(2000, 1, 1);
 
@@ -391,7 +382,7 @@ namespace SFA.DAS.Payments.Migration
                             new { collectionPeriod, offset, pageSize },
                             commandTimeout: 3600))
                         .ToList();
-                    await Log($"Loaded {paymentsAndEarnings.Count} records from page {offset / pageSize}");
+                    await Logger.Log($"Loaded {paymentsAndEarnings.Count} records from page {offset / pageSize}");
 
                     // Map
                     var outputResults = mapper.MapV2Payments(paymentsAndEarnings, new HashSet<Guid>());
@@ -482,7 +473,7 @@ namespace SFA.DAS.Payments.Migration
                             new { collectionPeriod, offset, pageSize },
                             commandTimeout: 3600))
                         .ToList();
-                    await Log($"Loaded {paymentsAndEarnings.Count} records from page {offset / pageSize}");
+                    await Logger.Log($"Loaded {paymentsAndEarnings.Count} records from page {offset / pageSize}");
 
                     // Map
                     var accountTransfers = mapper.MapV2AccountTransfers(paymentsAndEarnings);
@@ -530,14 +521,14 @@ namespace SFA.DAS.Payments.Migration
                         new {collectionPeriod},
                         commandTimeout: 3600))
                     .ToList();
-                await Log($"Loaded {paymentsAndEarnings.Count} records");
+                await Logger.Log($"Loaded {paymentsAndEarnings.Count} records");
 
                 // Get any existing required payments that have already been copied
                 var potentialIds = paymentsAndEarnings.Select(x => x.RequiredPaymentEventId).ToList();
                 var existingIds = new HashSet<Guid>(await v1Connection.QueryAsync<Guid>(
                         V1Sql.ExistingRequiredPayments.Replace("[DAS_PeriodEnd]", $"[{Config.PaymentsDatabase}]"), new {requiredPaymentids = potentialIds}));
 
-                await Log($"Found {existingIds.Count} existing required payments");
+                await Logger.Log($"Found {existingIds.Count} existing required payments");
 
                 // Map
                 var outputResults = mapper.MapV2Payments(paymentsAndEarnings, new HashSet<Guid>(existingIds));
@@ -613,7 +604,7 @@ namespace SFA.DAS.Payments.Migration
                 mappings.Add(new SqlBulkCopyColumnMapping(propertyInfo.Name, propertyInfo.Name));
             }
 
-            await Log("Processing EAS migration");
+            await Logger.Log("Processing EAS migration");
             using (var connection =
                 new SqlConnection(ConfigurationManager.ConnectionStrings["V1"].ConnectionString))
             {
@@ -621,7 +612,7 @@ namespace SFA.DAS.Payments.Migration
                         .QueryAsync<EasRecord>(V1Sql.EasRecords, commandTimeout: 3600)
                         .ConfigureAwait(false))
                     .ToList();
-                await Log($"Loaded {records.Count} V1 EAS payments");
+                await Logger.Log($"Loaded {records.Count} V1 EAS payments");
 
                 using (var scope = new TransactionScope(
                     TransactionScopeOption.Required,
@@ -638,7 +629,7 @@ namespace SFA.DAS.Payments.Migration
                     }
 
                     var deleted = await v2Connection.ExecuteAsync(V2Sql.DeleteEasPayments, commandTimeout: 3600);
-                    await Log($"Deleted {deleted} V2 EAS records");
+                    await Logger.Log($"Deleted {deleted} V2 EAS records");
 
                     bulkCopy.DestinationTableName = "Payments2.ProviderAdjustmentPayments";
                     bulkCopy.BatchSize = 5000;
@@ -650,18 +641,18 @@ namespace SFA.DAS.Payments.Migration
                     }
 
                     await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
-                    await Log("Inserted payments in V2");
+                    await Logger.Log("Inserted payments in V2");
 
                     scope.Complete();
-                    await Log("Completed EAS migration");
+                    await Logger.Log("Completed EAS migration");
                 }
             }
         }
 
         static async Task ProcessPayments(int maxPeriod)
         {
-            await Log("Process 1617 and 1718?");
-            await Log("Press 1 to process or 0 to ignore...");
+            await Logger.Log("Process 1617 and 1718?");
+            await Logger.Log("Press 1 to process or 0 to ignore...");
             var process = Console.ReadKey().Key == ConsoleKey.D1;
 
             var periods = new List<int> { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 };
@@ -699,7 +690,7 @@ namespace SFA.DAS.Payments.Migration
 
                     if (periodsToIgnore.Contains(collectionPeriod))
                     {
-                        await Log($"Ignoring period {collectionPeriod}");
+                        await Logger.Log($"Ignoring period {collectionPeriod}");
                         continue;
                     }
 
@@ -734,7 +725,7 @@ namespace SFA.DAS.Payments.Migration
                                 x.EarningsPlannedEndDate = maxSqlDate;
                         });
 
-                        await Log($"Retrieved {payments.Count} payments for {collectionPeriodName}");
+                        await Logger.Log($"Retrieved {payments.Count} payments for {collectionPeriodName}");
 
                         using (var scope = new TransactionScope(
                             TransactionScopeOption.Required,
@@ -747,7 +738,7 @@ namespace SFA.DAS.Payments.Migration
                         {
                             await v2Connection.OpenAsync();
                             await v2Connection.ExecuteAsync(V2Sql.DeletePayments, new { academicYear, collectionPeriod }, commandTimeout: 3600);
-                            await Log("Deleted existing payments");
+                            await Logger.Log("Deleted existing payments");
 
                             if (v2Connection.State != ConnectionState.Open)
                             {
@@ -769,7 +760,7 @@ namespace SFA.DAS.Payments.Migration
                             scope.Complete();
                         }
 
-                        await Log($"Saved payments for {collectionPeriodName}");
+                        await Logger.Log($"Saved payments for {collectionPeriodName}");
                     }
 
                     GC.Collect();
@@ -823,7 +814,7 @@ namespace SFA.DAS.Payments.Migration
                     }
                     else
                     {
-                        await Log($"Unknown TrainingType: {commitment.TrainingType} for CommitmentId: {commitment.ApprenticeshipId}");
+                        await Logger.Log($"Unknown TrainingType: {commitment.TrainingType} for CommitmentId: {commitment.ApprenticeshipId}");
                     }
                 }
 
@@ -884,12 +875,12 @@ namespace SFA.DAS.Payments.Migration
                     }
                 }
 
-                await Log($"Loaded {apprenticeships.Count} commitments");
+                await Logger.Log($"Loaded {apprenticeships.Count} commitments");
 
                 var providerPriority = (await dasConnection
                     .QueryAsync<ProviderPriority>("SELECT * FROM CustomProviderPaymentPriority"))
                     .ToList();
-                await Log($"Loaded {providerPriority.Count} provider priority records");
+                await Logger.Log($"Loaded {providerPriority.Count} provider priority records");
 
                 using (var scope = new TransactionScope(TransactionScopeOption.Required, new TransactionOptions
                 {
@@ -907,7 +898,7 @@ namespace SFA.DAS.Payments.Migration
                     {
                         await v2Connection.ExecuteAsync(V2Sql.DeleteCommitments, commandTimeout: 3600)
                             .ConfigureAwait(false);
-                        await Log("Deleted old data");
+                        await Logger.Log("Deleted old data");
 
                         bulkCopy.DestinationTableName = "Payments2.Apprenticeship";
                         bulkCopy.BatchSize = 5000;
@@ -937,7 +928,7 @@ namespace SFA.DAS.Payments.Migration
                         await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
                     }
 
-                    await Log("Saved apprenticeships");
+                    await Logger.Log("Saved apprenticeships");
 
                     using (var bulkCopy = new SqlBulkCopy(v2Connection))
                     using (var reader = ObjectReader.Create(apprenticeshipPriceEpisodes))
@@ -956,7 +947,7 @@ namespace SFA.DAS.Payments.Migration
                         await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
                     }
 
-                    await Log("Saved apprenticeship price episodes");
+                    await Logger.Log("Saved apprenticeship price episodes");
 
                     using (var bulkCopy = new SqlBulkCopy(v2Connection))
                     using (var reader = ObjectReader.Create(apprenticeshipPause))
@@ -971,7 +962,7 @@ namespace SFA.DAS.Payments.Migration
                         await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
                     }
 
-                    await Log("Saved apprenticeship pauses");
+                    await Logger.Log("Saved apprenticeship pauses");
 
                     using (var bulkCopy = new SqlBulkCopy(v2Connection))
                     using (var reader = ObjectReader.Create(providerPriority))
@@ -984,11 +975,11 @@ namespace SFA.DAS.Payments.Migration
                         bulkCopy.ColumnMappings.Add(new SqlBulkCopyColumnMapping("PriorityOrder", "Order"));
 
                         await bulkCopy.WriteToServerAsync(reader).ConfigureAwait(false);
-                        await Log("Saved priovider priorities");
+                        await Logger.Log("Saved priovider priorities");
                     }
 
                     scope.Complete();
-                    await Log("Committed transaction");
+                    await Logger.Log("Committed transaction");
                 }
             }
         }
@@ -1014,7 +1005,7 @@ namespace SFA.DAS.Payments.Migration
                     });
                 }
 
-                await Log("Finished loading v1 accounts");
+                await Logger.Log("Finished loading v1 accounts");
 
                 using (var v2Connection =
                     new SqlConnection(ConfigurationManager.ConnectionStrings["V2"].ConnectionString))
@@ -1022,7 +1013,7 @@ namespace SFA.DAS.Payments.Migration
                     await v2Connection.OpenAsync().ConfigureAwait(false);
 
                     await v2Connection.ExecuteAsync(V2Sql.DeleteAccounts, commandTimeout: 3600);
-                    await Log("Deleted accounts");
+                    await Logger.Log("Deleted accounts");
 
                     using (var bulkCopy = new SqlBulkCopy(v2Connection))
                     using (var reader = ObjectReader.Create(accounts))
@@ -1058,7 +1049,7 @@ namespace SFA.DAS.Payments.Migration
 
                 }
 
-                await Log("Finished writing v2 levy accounts");
+                await Logger.Log("Finished writing v2 levy accounts");
             }
         }
     }
