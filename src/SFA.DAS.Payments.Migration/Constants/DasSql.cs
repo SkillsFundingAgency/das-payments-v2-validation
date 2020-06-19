@@ -30,7 +30,7 @@
 	            ON A.Id = H.ApprenticeshipId
             JOIN Commitment C
 	            ON C.Id = A.CommitmentId
-	        JOIN [AccountLegalEntities] AS AE
+	        LEFT JOIN [AccountLegalEntities] AS AE
 	        	ON c.AccountLegalEntityId = AE.Id
             WHERE A.PaymentStatus > 0
             ";
