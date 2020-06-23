@@ -18,11 +18,11 @@
                 TransferApprovalActionedOn [TransferApprovalDate],
                 PauseDate [PausedOnDate],
                 StopDate [WithdrawnOnDate],
-                AE.[Name] AS LegalEntityName, 
+                ALE.[Name] AS LegalEntityName, 
                 TrainingType,
                 TrainingCode,  
 	            ISNULL(ApprenticeshipEmployerTypeOnApproval, 1) [ApprenticeshipEmployerType], 
-	            AE.PublicHashedId AS AccountLegalEntityPublicHashedId,
+	            ALE.PublicHashedId AS AccountLegalEntityPublicHashedId,
                 A.AgreedOn [AgreedOnDate],
                 A.CreatedOn [CreatedDate]
             FROM [dbo].[Apprenticeship] A
@@ -30,8 +30,8 @@
 	            ON A.Id = H.ApprenticeshipId
             JOIN Commitment C
 	            ON C.Id = A.CommitmentId
-	        LEFT JOIN [AccountLegalEntities] AS AE
-	        	ON c.AccountLegalEntityId = AE.Id
+	        LEFT JOIN [AccountLegalEntities] AS ALE
+	        	ON c.AccountLegalEntityId = ALE.Id
             WHERE A.PaymentStatus > 0
             ";
     }
