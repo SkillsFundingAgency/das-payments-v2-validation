@@ -229,8 +229,7 @@ namespace SFA.DAS.Payments.Migration
         }
 
 
-        private static async Task<int> 
-            GetPeriod()
+        private static async Task<int> GetPeriod()
         {
             while (true)
             {
