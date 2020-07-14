@@ -13,5 +13,7 @@ SELECT
   AcademicYear = @academicyear
   and
   [Status] in (2,3)
+  and DCJobSucceeded = 1
+  and JobType = 1 
   and 
   DCJobId in (<validDcJobIds>)
