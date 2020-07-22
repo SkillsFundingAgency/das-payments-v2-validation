@@ -15,8 +15,8 @@ namespace SFA.DAS.Payments.Contingency
 
                 var contingencyStrategies = new List<IProduceContingencyPayments>
                 {
-                    new Act1WithPaymentsAndDatalock1And2(),
-                    new Act2WithPayments(),
+                    new Act1FromSinglePeriodAndDatalock1And2(),
+                    new Act2FromSinglePeriodEarnings(),
                 };
 
                 foreach (var contingencyStrategy in contingencyStrategies)
@@ -41,10 +41,10 @@ namespace SFA.DAS.Payments.Contingency
             while (true)
             {
                 Console.WriteLine(
-                    "Please enter the collection period: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 or 14");
+                    "Please enter the collection period: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12");
                 var chosenPeriod = Console.ReadLine();
                 if (!int.TryParse(chosenPeriod, out var collectionPeriod) || collectionPeriod < 1 ||
-                    collectionPeriod > 14)
+                    collectionPeriod > 12)
                 {
                     Console.WriteLine($"Invalid collection period: '{chosenPeriod}'.");
                     continue;

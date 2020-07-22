@@ -27,7 +27,7 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
             // Load data
             using (var connection = new SqlConnection(ConfigurationManager.ConnectionStrings["ILR1920DataStore"].ConnectionString))
             {
-                earnings = (await connection.QueryAsync<Earning>(Sql.YtdEarnings, commandTimeout: 3600).ConfigureAwait(false)).ToList();
+                earnings = (await connection.QueryAsync<Earning>(Sql.PeriodEarnings, commandTimeout: 3600).ConfigureAwait(false)).ToList();
             }
             Console.WriteLine($"Loaded {earnings.Count} earnings");
 

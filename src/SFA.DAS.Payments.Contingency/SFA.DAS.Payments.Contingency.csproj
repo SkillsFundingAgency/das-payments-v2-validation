@@ -122,8 +122,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AuditData.cs" />
-    <Compile Include="CongingencyStrategies\Act1WithPaymentsAndDatalock1And2.cs" />
-    <Compile Include="CongingencyStrategies\Act2WithPayments.cs" />
+    <Compile Include="CongingencyStrategies\Act1FromSinglePeriodAndDatalock1And2.cs" />
+    <Compile Include="CongingencyStrategies\Act2FromSinglePeriodEarnings.cs" />
     <Compile Include="CongingencyStrategies\IProduceContingencyPayments.cs" />
     <Compile Include="CongingencyStrategies\R13Payments.cs" />
     <Compile Include="CongingencyStrategies\Act2FromEarnings.cs" />

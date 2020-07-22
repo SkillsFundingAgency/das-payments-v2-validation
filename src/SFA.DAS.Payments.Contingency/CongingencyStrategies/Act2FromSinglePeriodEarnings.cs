@@ -12,7 +12,7 @@ using SFA.DAS.Payments.Contingency.DTO;
 
 namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
 {
-    class Act2WithPayments : IProduceContingencyPayments, IDisposable
+    class Act2FromSinglePeriodEarnings : IProduceContingencyPayments, IDisposable
     {
         public void Dispose()
         {}
@@ -20,28 +20,18 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
         public async Task GenerateContingencyPayments(int period)
         {
             List<Earning> earnings;
-            List<Payment> payments;
 
             Console.WriteLine("Processing in year ACT2...");
 
             // Load data
             using (var connection = new SqlConnection(ConfigurationManager.ConnectionStrings["ILR1920DataStore"].ConnectionString))
             {
-                earnings = (await connection.QueryAsync<Earning>(Sql.YtdEarnings, new {collectionPeriod = period, act = 2}, 
+                earnings = (await connection.QueryAsync<Earning>(Sql.PeriodEarnings, new {collectionPeriod = period, act = 2}, 
                     commandTimeout: 3600).ConfigureAwait(false))
                         .Where(x => x.ApprenticeshipContractType == 2)
                         .ToList();
             }
             Console.WriteLine($"Loaded {earnings.Count} earnings");
-
-            using (var connection = new SqlConnection(ConfigurationManager.ConnectionStrings["DASPayments"].ConnectionString))
-            {
-                payments = (await connection.QueryAsync<Payment>(Sql.YtdV2Payments, new { collectionPeriod = period, act = 2 },
-                    commandTimeout: 3600)
-                        .ConfigureAwait(false))
-                        .ToList();
-            }
-            Console.WriteLine($"Loaded {payments.Count} payments");
 
             var excel = new XLWorkbook(Path.Combine("Template", "Contingency.xlsx"));
 
@@ -61,7 +51,7 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
             GC.Collect();
 
             // Calculate Earnings - Payments
-            var newPayments = PaymentsCalculator.Generate(earnings, payments);
+            var newPayments = PaymentsCalculator.Generate(earnings, new List<Payment>());
 
             // Write raw earnings
             await AuditData.Output(earnings, $"ACT2EarningsByLearner-{DateTime.Now:yyyy-MM-dd-hh-mm}.csv");

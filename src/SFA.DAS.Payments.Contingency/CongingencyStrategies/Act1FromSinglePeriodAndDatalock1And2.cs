@@ -12,7 +12,7 @@ using SFA.DAS.Payments.Contingency.DTO;
 
 namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
 {
-    class Act1WithPaymentsAndDatalock1And2 : IProduceContingencyPayments, IDisposable
+    class Act1FromSinglePeriodAndDatalock1And2 : IProduceContingencyPayments, IDisposable
     {
         public void Dispose()
         {}
@@ -20,7 +20,6 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
         public async Task GenerateContingencyPayments(int period)
         {
             List<Earning> earnings;
-            List<Payment> payments;
             List<BasicV2Apprenticeship> basicV2Apprenticeships;
 
             Console.WriteLine("Processing in year ACT1...");
@@ -29,24 +28,13 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
             using (var connection =
                 new SqlConnection(ConfigurationManager.ConnectionStrings["ILR1920DataStore"].ConnectionString))
             {
-                earnings = (await connection.QueryAsync<Earning>(Sql.YtdEarnings, new {collectionPeriod = period, act = 1},
+                earnings = (await connection.QueryAsync<Earning>(Sql.PeriodEarnings, new {collectionPeriod = period, act = 1},
                     commandTimeout: 3600).ConfigureAwait(false))
                         .Where(x => x.ApprenticeshipContractType == 1)
                         .ToList();
             }
 
             Console.WriteLine($"Loaded {earnings.Count} earnings");
-
-            using (var connection =
-                new SqlConnection(ConfigurationManager.ConnectionStrings["DASPayments"].ConnectionString))
-            {
-                payments = (await connection.QueryAsync<Payment>(Sql.YtdV2Payments, new { collectionPeriod = period, act = 1 },
-                    commandTimeout: 3600)
-                        .ConfigureAwait(false))
-                        .ToList();
-            }
-
-            Console.WriteLine($"Loaded {payments.Count} payments");
 
             using (var connection =
                 new SqlConnection(ConfigurationManager.ConnectionStrings["DASPayments"].ConnectionString))
@@ -72,7 +60,7 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
                               $"earnings after removing earnings without an apprenticeship");
 
             // Calculate Earnings - Payments
-            var newPayments = PaymentsCalculator.Generate(earningsWithApprenticeships, payments);
+            var newPayments = PaymentsCalculator.Generate(earningsWithApprenticeships, new List<Payment>());
 
 
             // Write raw earnings

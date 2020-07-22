@@ -59,7 +59,7 @@
             ";
 
         // ILR1920Data
-        public const string YtdEarnings = @"
+        public const string PeriodEarnings = @"
 
 WITH RawEarnings AS (
     SELECT
@@ -131,7 +131,7 @@ WITH RawEarnings AS (
         or APEP.PriceEpisodeLSFCash != 0
         or APEP.PriceEpisodeLearnerAdditionalPayment != 0
         )
-        AND APEP.Period <= @collectionperiod
+        AND APEP.Period = @collectionperiod
 )
 , RawEarningsMathsAndEnglish AS (
     SELECT 
@@ -189,7 +189,7 @@ WITH RawEarnings AS (
         or LearnSuppFundCash != 0
         )
         AND LD.LearnAimRef != 'ZPROG001'
-        AND Period <= @collectionperiod
+        AND Period = @collectionperiod
 )
 
 , AllEarnings AS (
