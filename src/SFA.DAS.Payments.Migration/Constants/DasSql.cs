@@ -1,8 +1,8 @@
 ﻿namespace SFA.DAS.Payments.Migration.Constants
 {
-    static class DasSql
+	public static class DasSql
     {
-        public static string Commitments = @"
+	    public const string Commitments = @"
             SELECT  A.Id [ApprenticeshipId], 
                 A.Uln, 
                 ProviderId [Ukprn], 
@@ -18,19 +18,20 @@
                 TransferApprovalActionedOn [TransferApprovalDate],
                 PauseDate [PausedOnDate],
                 StopDate [WithdrawnOnDate],
-                LegalEntityName, 
+                ALE.[Name] AS LegalEntityName, 
                 TrainingType,
                 TrainingCode,  
 	            ISNULL(ApprenticeshipEmployerTypeOnApproval, 1) [ApprenticeshipEmployerType], 
-	            AccountLegalEntityPublicHashedId,
+	            ALE.PublicHashedId AS AccountLegalEntityPublicHashedId,
                 A.AgreedOn [AgreedOnDate],
                 A.CreatedOn [CreatedDate]
-	            
             FROM [dbo].[Apprenticeship] A
             JOIN PriceHistory H
 	            ON A.Id = H.ApprenticeshipId
             JOIN Commitment C
 	            ON C.Id = A.CommitmentId
+	        LEFT JOIN [AccountLegalEntities] AS ALE
+	        	ON c.AccountLegalEntityId = ALE.Id
             WHERE A.PaymentStatus > 0
             ";
     }

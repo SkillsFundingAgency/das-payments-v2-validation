@@ -22,6 +22,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SFA.DAS.Payments.EarningsCo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SFA.DAS.Payments.CleanAuditTables", "SFA.DAS.Payments.CleanAuditTables\SFA.DAS.Payments.CleanAuditTables.csproj", "{14C0889B-7D95-4888-A4CC-9F8C0D9848C7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SFA.DAS.Payments.AnonymiserTool", "SFA.DAS.Payments.AnonymiserTool\SFA.DAS.Payments.AnonymiserTool.csproj", "{2EB83684-A0BF-4792-9B1C-D92D2DEB5682}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SDA.DAS.Payments.ConsoleUtilities", "SDA.DAS.Payments.ConsoleUtilities\SDA.DAS.Payments.ConsoleUtilities.csproj", "{A30D89FD-4D4E-4217-97E6-6D16797525F6}"
+EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{3D79D854-ECF3-4D87-96C5-E594ED253DDE}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SFA.DAS.Payments.Contingency.UnitTests", "SFA.DAS.Payments.Contingency.Tests\SFA.DAS.Payments.Contingency.UnitTests.csproj", "{75991B51-E949-4A72-B3A3-A8DC27C8F64C}"
@@ -62,6 +66,14 @@ Global
 		{14C0889B-7D95-4888-A4CC-9F8C0D9848C7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{14C0889B-7D95-4888-A4CC-9F8C0D9848C7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{14C0889B-7D95-4888-A4CC-9F8C0D9848C7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2EB83684-A0BF-4792-9B1C-D92D2DEB5682}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2EB83684-A0BF-4792-9B1C-D92D2DEB5682}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2EB83684-A0BF-4792-9B1C-D92D2DEB5682}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2EB83684-A0BF-4792-9B1C-D92D2DEB5682}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A30D89FD-4D4E-4217-97E6-6D16797525F6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A30D89FD-4D4E-4217-97E6-6D16797525F6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A30D89FD-4D4E-4217-97E6-6D16797525F6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A30D89FD-4D4E-4217-97E6-6D16797525F6}.Release|Any CPU.Build.0 = Release|Any CPU
 		{75991B51-E949-4A72-B3A3-A8DC27C8F64C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{75991B51-E949-4A72-B3A3-A8DC27C8F64C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{75991B51-E949-4A72-B3A3-A8DC27C8F64C}.Release|Any CPU.ActiveCfg = Release|Any CPU
