@@ -24,6 +24,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SFA.DAS.Payments.CleanAudit
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SFA.DAS.Payments.MetricsGeneration", "SFA.DAS.Payments.MetricsGeneration\SFA.DAS.Payments.MetricsGeneration.csproj", "{3613DFE0-F4F6-480C-ABB6-882BA7FE8CB2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SFA.DAS.Payments.AnonymiserTool", "SFA.DAS.Payments.AnonymiserTool\SFA.DAS.Payments.AnonymiserTool.csproj", "{2EB83684-A0BF-4792-9B1C-D92D2DEB5682}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SDA.DAS.Payments.ConsoleUtilities", "SDA.DAS.Payments.ConsoleUtilities\SDA.DAS.Payments.ConsoleUtilities.csproj", "{A30D89FD-4D4E-4217-97E6-6D16797525F6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -64,6 +68,14 @@ Global
 		{3613DFE0-F4F6-480C-ABB6-882BA7FE8CB2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3613DFE0-F4F6-480C-ABB6-882BA7FE8CB2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3613DFE0-F4F6-480C-ABB6-882BA7FE8CB2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2EB83684-A0BF-4792-9B1C-D92D2DEB5682}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2EB83684-A0BF-4792-9B1C-D92D2DEB5682}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2EB83684-A0BF-4792-9B1C-D92D2DEB5682}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2EB83684-A0BF-4792-9B1C-D92D2DEB5682}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A30D89FD-4D4E-4217-97E6-6D16797525F6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A30D89FD-4D4E-4217-97E6-6D16797525F6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A30D89FD-4D4E-4217-97E6-6D16797525F6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A30D89FD-4D4E-4217-97E6-6D16797525F6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
