@@ -26,8 +26,12 @@
     AND CollectionPeriod = @collectionperiod
     AND AcademicYear = @academicyear
 	AND Amount != 0
-	AND	(EE.jobid IN (SELECT dcJobId FROM Payments2.LatestSuccessfulJobs))
-
+	AND	(EE.jobid IN (
+		SELECT dcJobId
+		FROM Payments2.LatestSuccessfulJobs
+		WHERE AcademicYear = @academicyear
+		AND CollectionPeriod = @collectionperiod
+	))
 )
 
 
