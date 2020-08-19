@@ -141,11 +141,12 @@ namespace SFA.DAS.Payments.Migration
 			
             if (selection == 11)
             {
+                var academicYear = await GetAcademicYear();
                 var period = await GetPeriod();
 
-                await ProcessV1Payments(period);
-                await ProcessV1AccountTransfers(period);
-                await ProcessFailedV1Payments(period);
+                await ProcessV1Payments(academicYear, period);
+                await ProcessV1AccountTransfers(academicYear, period);
+                await ProcessFailedV1Payments(academicYear, period);
             }
         }
 
@@ -185,13 +186,14 @@ namespace SFA.DAS.Payments.Migration
 
         private static async Task CompletePeriod()
         {
+            var academicYear = await GetAcademicYear();
             var period = await GetPeriod();
-            await CompletePeriod(period);
+            await CompletePeriod(academicYear, period);
         }
 
-        private static async Task CompletePeriod(int period)
+        private static async Task CompletePeriod(int academicYear, int period)
         {
-            var trigger = CreateTrigger(period);
+            var trigger = CreateTrigger(academicYear, period);
             var triggerList = new List<LegacyPeriodModel> { trigger };
 
             using (var connection = new SqlConnection(ConfigurationManager.ConnectionStrings["V1"].ConnectionString))
@@ -211,7 +213,7 @@ namespace SFA.DAS.Payments.Migration
             }
         }
 
-        private static LegacyPeriodModel CreateTrigger(int period)
+        private static LegacyPeriodModel CreateTrigger(int academicYear, int period)
         {
             var now = DateTime.Now;
 
@@ -220,9 +222,9 @@ namespace SFA.DAS.Payments.Migration
                 AccountDataValidAt = now,
                 CommitmentDataValidAt = now,
                 CompletionDateTime = now,
-                PeriodName = $"1920-R{period:D2}",
+                PeriodName = $"{academicYear}-R{period:D2}",
                 CalendarMonth = PaymentMapper.MonthFromPeriod((byte)period),
-                CalendarYear = PaymentMapper.YearFromPeriod(1920, (byte)period),
+                CalendarYear = PaymentMapper.YearFromPeriod((short)academicYear, (byte)period),
             };
 
             return trigger;
@@ -244,6 +246,39 @@ namespace SFA.DAS.Payments.Migration
 
                 return collectionPeriod;
             }
+        }
+
+        private static async Task<int> GetAcademicYear()
+        {
+            while (true)
+            {
+                await Logger.Log("");
+                await Logger.Log("Please enter the academic year: 1920, 2021 etc");
+                var input = Console.ReadLine();
+                if (!int.TryParse(input, out var academicYear) || !ValidateAcademicYear(academicYear))
+                {
+                    await Logger.Log($"Invalid academic year: '{input}'");
+                    continue;
+                }
+
+                return academicYear;
+            }
+        }
+
+        private static bool ValidateAcademicYear(int academicYear)
+        {
+            var yearAsString = academicYear.ToString();
+            if (yearAsString.Length != 4)
+                return false;
+            if (!int.TryParse(yearAsString.Substring(0, 2), out int firstYear))
+                return false;
+            if (!int.TryParse(yearAsString.Substring(2, 2), out int secondYear))
+                return false;
+
+            if (secondYear != (firstYear + 1))
+                return false;
+
+            return true;
         }
 
         private static async Task ProcessPreviousEarnings()
@@ -355,11 +390,12 @@ namespace SFA.DAS.Payments.Migration
 
         private static async Task ProcessV1Payments()
         {
+            var academicYear = await GetAcademicYear();
             var collectionPeriod = await GetPeriod();
-            await ProcessV1Payments(collectionPeriod);
+            await ProcessV1Payments(academicYear, collectionPeriod);
         }
 
-        private static async Task ProcessV1Payments(int collectionPeriod)
+        private static async Task ProcessV1Payments(int academicYear, int collectionPeriod)
         {
             var mapper = new PaymentMapper();
 
@@ -379,7 +415,7 @@ namespace SFA.DAS.Payments.Migration
                 {
                     // Load from v2
                     paymentsAndEarnings = (await v2Connection.QueryAsync<V2PaymentAndEarning>(V2Sql.PaymentsAndEarnings, 
-                            new { collectionPeriod, offset, pageSize },
+                            new { collectionPeriod, offset, pageSize, academicYear },
                             commandTimeout: 3600))
                         .ToList();
                     await Logger.Log($"Loaded {paymentsAndEarnings.Count} records from page {offset / pageSize}");
@@ -446,11 +482,12 @@ namespace SFA.DAS.Payments.Migration
 
         private static async Task ProcessV1AccountTransfers()
         {
+            var academicYear = await GetAcademicYear();
             var collectionPeriod = await GetPeriod();
-            await ProcessV1AccountTransfers(collectionPeriod);
+            await ProcessV1AccountTransfers(academicYear, collectionPeriod);
         }
 
-        private static async Task ProcessV1AccountTransfers(int collectionPeriod)
+        private static async Task ProcessV1AccountTransfers(int academicYear, int collectionPeriod)
         {
             var mapper = new PaymentMapper();
 
@@ -470,7 +507,7 @@ namespace SFA.DAS.Payments.Migration
                 {
                     // Load from v2
                     paymentsAndEarnings = (await v2Connection.QueryAsync<V2PaymentAndEarning>(V2Sql.PaymentsAndEarnings,
-                            new { collectionPeriod, offset, pageSize },
+                            new { collectionPeriod, offset, pageSize, academicYear },
                             commandTimeout: 3600))
                         .ToList();
                     await Logger.Log($"Loaded {paymentsAndEarnings.Count} records from page {offset / pageSize}");
@@ -503,11 +540,12 @@ namespace SFA.DAS.Payments.Migration
 
         private static async Task ProcessFailedV1Payments()
         {
+            var academicYear = await GetAcademicYear();
             var collectionPeriod = await GetPeriod();
-            await ProcessFailedV1Payments(collectionPeriod);
+            await ProcessFailedV1Payments(academicYear, collectionPeriod);
         }
 
-        private static async Task ProcessFailedV1Payments(int collectionPeriod)
+        private static async Task ProcessFailedV1Payments(int academicYear, int collectionPeriod)
         {
             var mapper = new PaymentMapper();
 
@@ -518,7 +556,7 @@ namespace SFA.DAS.Payments.Migration
 
                 var paymentsAndEarnings = (await v2Connection.QueryAsync<V2PaymentAndEarning>(
                         V2Sql.PaymentsAndEarningsForFailedTransfers,
-                        new {collectionPeriod},
+                        new {collectionPeriod, academicYear},
                         commandTimeout: 3600))
                     .ToList();
                 await Logger.Log($"Loaded {paymentsAndEarnings.Count} records");

@@ -43,7 +43,7 @@ namespace SFA.DAS.Payments.Migration.Constants
 ;WITH FundingSourceEvents AS (
 	SELECT DISTINCT EventId, RequiredPaymentEventId
 	FROM Payments2.FundingSourceEvent
-	WHERE AcademicYear = 1920 
+	WHERE AcademicYear = @academicYear 
 	AND CollectionPeriod = @collectionPeriod
 )
 
@@ -53,7 +53,7 @@ FROM FundingSourceEvents
 ;WITH RequiredPaymentEvents AS (
 	SELECT MAX(Amount) [Amount], EventId
 	FROM Payments2.RequiredPaymentEvent
-    WHERE AcademicYear = 1920
+    WHERE AcademicYear = @academicYear
     AND CollectionPeriod = @collectionPeriod
 	GROUP BY EventId
 )
@@ -71,7 +71,7 @@ FROM RequiredPaymentEvents
 		ON R.EventId = F.RequiredPaymentEventId
 	LEFT JOIN Payments2.EarningEvent E
 		ON E.EventId = P.EarningEventId
-	WHERE P.AcademicYear = 1920
+	WHERE P.AcademicYear = @academicYear
 	AND P.CollectionPeriod = @collectionPeriod
 )
 
@@ -114,7 +114,7 @@ FETCH NEXT @pageSize ROWS ONLY
 	                AND R2.LearnerUln = P.LearnerUln
 	                AND R2.TransactionType = P.TransactionType
                     AND R2.DeliveryPeriod = P.DeliveryPeriod
-                WHERE P.AcademicYear = 1920
+                WHERE P.AcademicYear = @academicYear
                     AND P.CollectionPeriod = @collectionPeriod
 	                AND R.EventId IS NULL
                 ORDER BY R2.EventId, P.Id
