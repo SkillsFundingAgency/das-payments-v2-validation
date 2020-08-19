@@ -58,7 +58,7 @@ namespace SFA.DAS.Payments.EarningsComparer
             try
             {
                 CalculateEarningComparisonMetric(options.CollectionPeriod, options.ProcessingStartTime,
-                    options.ProcessingFilterMode, options.UseLegacyMode);
+                    options.ProcessingFilterMode, options.UseLegacyMode, options.AcademicYear);
             }
             catch (Exception e)
             {
@@ -70,13 +70,13 @@ namespace SFA.DAS.Payments.EarningsComparer
         }
 
         private static void CalculateEarningComparisonMetric(short collectionPeriod, DateTime processingStartTime,
-            FilterMode filterMode, bool useLegacyMode)
+            FilterMode filterMode, bool useLegacyMode, short academicYear)
         {
             Spinner.Start("Getting required data. ", spinner =>
             {
                 var dasConnectionString =
                     ConfigurationManager.ConnectionStrings["DasConnectionString"].ConnectionString;
-                var dcConnectionString = ConfigurationManager.ConnectionStrings["DcConnectionString"].ConnectionString;
+                var dcConnectionString = ConfigurationManager.ConnectionStrings[$"DcEarnings{academicYear}ConnectionString"].ConnectionString;
                 var outputPath = ConfigurationManager.AppSettings["OutputPath"];
 
                 var dasQuery = ResourceHelpers.ReadResource(DasQuery);
