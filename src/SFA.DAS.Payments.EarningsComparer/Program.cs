@@ -115,7 +115,8 @@ namespace SFA.DAS.Payments.EarningsComparer
                         dasData = dasConnection.Query<EarningsRow>(dasQuery,
                             new
                             {
-                                collectionperiod = collectionPeriod
+                                collectionperiod = collectionPeriod,
+                                academicyear = academicYear
                             },
                             commandTimeout: 0);
                     }
