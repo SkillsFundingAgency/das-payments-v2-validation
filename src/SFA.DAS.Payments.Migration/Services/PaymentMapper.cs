@@ -150,6 +150,9 @@ namespace SFA.DAS.Payments.Migration.Services
                 return collectionPeriod + 7;
             }
 
+            if (collectionPeriod > 12)
+                return collectionPeriod - 4;
+
             return collectionPeriod - 5;
         }
     }
