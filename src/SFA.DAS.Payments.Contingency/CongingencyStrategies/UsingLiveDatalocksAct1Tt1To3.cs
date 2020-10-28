@@ -14,24 +14,27 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
 {
     class UsingLiveDatalocksAct1Tt1To3 : IProduceContingencyPayments
     {
-        public async Task GenerateContingencyPayments()
+        public async Task GenerateContingencyPayments(int period)
         {
+            Console.WriteLine("USING DATA THAT HAS SINCE BEEN REMOVED - DON'T TRUST THE OUTPUT");
+            // But still useful to keep for the datalock processing
+
             List<Earning> earnings;
-            List<V2Datalock> v2Datalocks;
+            List<V2Datalock> v2Datalocks = new List<V2Datalock>();
 
             Console.WriteLine("Processing ACT1 TT1-3 ...");
 
             // Load data
             using (var connection = new SqlConnection(ConfigurationManager.ConnectionStrings["ILR1920DataStore"].ConnectionString))
             {
-                earnings = (await connection.QueryAsync<Earning>(Sql.Earnings, commandTimeout: 3600).ConfigureAwait(false)).ToList();
+                earnings = (await connection.QueryAsync<Earning>(Sql.PeriodEarnings, commandTimeout: 3600).ConfigureAwait(false)).ToList();
             }
             Console.WriteLine($"Loaded {earnings.Count} earnings");
 
             using (var connection = new SqlConnection(ConfigurationManager.ConnectionStrings["DASPayments"].ConnectionString))
             {
-                v2Datalocks = (await connection.QueryAsync<V2Datalock>(Sql.V2Datalocks, commandTimeout: 3600)
-                    .ConfigureAwait(false)).ToList();
+                //v2Datalocks = (await connection.QueryAsync<V2Datalock>(Sql.V2Datalocks, commandTimeout: 3600)
+                //    .ConfigureAwait(false)).ToList();
             }
             Console.WriteLine($"Loaded {v2Datalocks.Count} V2 datalocks");
 
@@ -84,7 +87,7 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
             var excel = new XLWorkbook(Path.Combine("Template", "Contingency.xlsx"));
 
             var sheet = excel.Worksheet("Earnings");
-            Program.WriteToTable(sheet, earnings);
+            XlWriter.WriteToTable(sheet, earnings);
             Console.WriteLine("Written earnings page");
 
             // Extract ACT1 earnings for datalock processing
@@ -116,14 +119,14 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
 
             // Write the remainder of the datalocks to '1920 Datalocks' tab
             sheet = excel.Worksheet("1920 Datalocks (Full)");
-            Program.WriteToTable(sheet, finalEarningsWithDatalocks);
+            XlWriter.WriteToTable(sheet, finalEarningsWithDatalocks);
             Console.WriteLine($"Found {finalEarningsWithoutDatalocks.Count} remaining earnings with {finalEarningsWithDatalocks.Count} 1920 datalocks (full match)");
 
 
             
             // Write a summary tab
             sheet = excel.Worksheet("Final Amounts (Full)");
-            Program.WriteToTable(sheet, finalEarningsWithoutDatalocks);
+            XlWriter.WriteToTable(sheet, finalEarningsWithoutDatalocks);
 
             
 

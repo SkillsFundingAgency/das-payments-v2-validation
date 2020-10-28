@@ -14,7 +14,7 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
 {
     class R13Payments : IProduceContingencyPayments
     {
-        public async Task GenerateContingencyPayments()
+        public async Task GenerateContingencyPayments(int period)
         {
             List<Payment> payments;
             

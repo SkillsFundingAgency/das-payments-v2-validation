@@ -14,24 +14,27 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
 {
     class UsingLiveDatalocksAct1Tt4To16 : IProduceContingencyPayments
     {
-        public async Task GenerateContingencyPayments()
+        public async Task GenerateContingencyPayments(int period)
         {
+            Console.WriteLine("THIS IS USING OLD DATA AND SHOULD NOT BE TRUSTED!");
+            // Still has some good info in terms of calculating datalocks
+
             List<Earning> earnings;
-            List<V2Datalock> v2Datalocks;
+            List<V2Datalock> v2Datalocks = new List<V2Datalock>();
 
             Console.WriteLine("Processing ACT1 TT4-16 ...");
 
             // Load data
             using (var connection = new SqlConnection(ConfigurationManager.ConnectionStrings["ILR1920DataStore"].ConnectionString))
             {
-                earnings = (await connection.QueryAsync<Earning>(Sql.Earnings, commandTimeout: 3600).ConfigureAwait(false)).ToList();
+                earnings = (await connection.QueryAsync<Earning>(Sql.PeriodEarnings, new {collectionperiod=period}, commandTimeout: 3600).ConfigureAwait(false)).ToList();
             }
             Console.WriteLine($"Loaded {earnings.Count} earnings");
 
             using (var connection = new SqlConnection(ConfigurationManager.ConnectionStrings["DASPayments"].ConnectionString))
             {
-                v2Datalocks = (await connection.QueryAsync<V2Datalock>(Sql.V2Datalocks, commandTimeout: 3600)
-                    .ConfigureAwait(false)).ToList();
+                //v2Datalocks = (await connection.QueryAsync<V2Datalock>(Sql.V2Datalocks, commandTimeout: 3600)
+                //    .ConfigureAwait(false)).ToList();
             }
             Console.WriteLine($"Loaded {v2Datalocks.Count} V2 datalocks");
 
@@ -76,7 +79,7 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
             var excel = new XLWorkbook(Path.Combine("Template", "Contingency.xlsx"));
 
             var sheet = excel.Worksheet("Earnings");
-            Program.WriteToTable(sheet, earnings);
+            XlWriter.WriteToTable(sheet, earnings);
             Console.WriteLine("Written earnings page");
 
             // Extract ACT1 earnings for datalock processing
@@ -104,21 +107,16 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
                     finalEarningsWithoutDatalocks.Add(earning);
                 }
             }
-
-
+            
             // Write the remainder of the datalocks to '1920 Datalocks' tab
             sheet = excel.Worksheet("1920 Datalocks (Full)");
-            Program.WriteToTable(sheet, finalEarningsWithDatalocks);
+            XlWriter.WriteToTable(sheet, finalEarningsWithDatalocks);
             Console.WriteLine($"Found {finalEarningsWithoutDatalocks.Count} remaining earnings with {finalEarningsWithDatalocks.Count} 1920 datalocks (full match)");
-
-
             
             // Write a summary tab
             sheet = excel.Worksheet("Final Amounts (Full)");
-            Program.WriteToTable(sheet, finalEarningsWithoutDatalocks);
-
+            XlWriter.WriteToTable(sheet, finalEarningsWithoutDatalocks);
             
-
             var datalockedUlns = finalEarningsWithDatalocks.Select(x => x.Uln).Distinct().ToList();
             datalockedUlns = datalockedUlns.Distinct().ToList();
 
@@ -135,16 +133,13 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
             
             sheet.Cell(2, "H").Value = finalEarningsWithDatalocks.Sum(x => x.Amount);
             sheet.Cell(2, "H").Value = finalEarningsWithoutDatalocks.Sum(x => x.Amount);
-
-
+            
             // Raw earnings
             //sheet = excel.Worksheet("Raw Earnings");
             //Program.WriteRawResults(sheet, earnings);
 
             //sheet = excel.Worksheet("Raw 1920 Datalocks (Full)");
             //Program.WriteRawResults(sheet, finalEarningsWithDatalocks);
-
-            
 
             using (var stream = new MemoryStream())
             using (var file = File.OpenWrite($"Contingency-Output-Live-Datalocks-TT4-TT16-{DateTime.Now:yyyy-MM-dd-hh-mm}.xlsx"))

@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using ClosedXML.Excel;
 using SFA.DAS.Payments.Contingency.CongingencyStrategies;
-using SFA.DAS.Payments.Contingency.DTO;
 
 namespace SFA.DAS.Payments.Contingency
 {
@@ -14,20 +11,21 @@ namespace SFA.DAS.Payments.Contingency
         {
             try
             {
+                var period = GetPeriod();
+
                 var contingencyStrategies = new List<IProduceContingencyPayments>
                 {
-                    //new R13Payments(),
-                    new UsingLiveDatalocksAct1Tt1To3(),
-                    new UsingLiveDatalocksAct1Tt4To16(),
-                    new Act2FromEarnings(),
+                    new Act1FromSinglePeriodAndDatalock1And2(),
+                    new Act2FromSinglePeriodEarnings(),
                 };
 
                 foreach (var contingencyStrategy in contingencyStrategies)
                 {
-                    await contingencyStrategy.GenerateContingencyPayments();
+                    await contingencyStrategy.GenerateContingencyPayments(period);
+                    (contingencyStrategy as IDisposable)?.Dispose();
+                    GC.Collect();
                 }
-                
-                
+
                 Console.WriteLine("Finished - press enter to exit...");
                 Console.ReadLine();
             }
@@ -37,35 +35,22 @@ namespace SFA.DAS.Payments.Contingency
                 Console.ReadLine();
             }
         }
-
-        public static void WriteRawResults(IXLWorksheet sheet, List<Earning> earnings)
+        
+        private static int GetPeriod()
         {
-            var row = 2;
-            foreach (var earning in earnings.OrderBy(x => x.Ukprn).ThenBy(x => x.Uln))
+            while (true)
             {
-                sheet.Cell(row, "A").Value = earning.Ukprn;
-                sheet.Cell(row, "B").Value = earning.Uln;
-                sheet.Cell(row, "C").Value = earning.FundingLineType;
+                Console.WriteLine(
+                    "Please enter the collection period: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12");
+                var chosenPeriod = Console.ReadLine();
+                if (!int.TryParse(chosenPeriod, out var collectionPeriod) || collectionPeriod < 1 ||
+                    collectionPeriod > 12)
+                {
+                    Console.WriteLine($"Invalid collection period: '{chosenPeriod}'.");
+                    continue;
+                }
 
-                sheet.Cell(row, "D").Value = earning.Amount;
-                sheet.Cell(row, "E").Value = earning.OneToThree;
-                sheet.Cell(row, "F").Value = earning.Incentives;
-                row++;
-            }
-        }
-
-        public static void WriteToTable(IXLWorksheet sheet, List<Earning> earnings)
-        {
-            var row = 2;
-            var groupedEarnings = earnings.GroupBy(x => new { x.Ukprn, x.FundingLineType }).OrderBy(x => x.Key.Ukprn);
-            foreach (var groupedEarning in groupedEarnings)
-            {
-                sheet.Cell(row, "A").Value = groupedEarning.Key.Ukprn;
-                sheet.Cell(row, "B").Value = groupedEarning.Key.FundingLineType;
-                sheet.Cell(row, "C").Value = groupedEarning.Sum(x => x.Amount);
-                sheet.Cell(row, "D").Value = groupedEarning.Sum(x => x.OneToThree);
-                sheet.Cell(row, "E").Value = groupedEarning.Sum(x => x.Incentives);
-                row++;
+                return collectionPeriod;
             }
         }
     }

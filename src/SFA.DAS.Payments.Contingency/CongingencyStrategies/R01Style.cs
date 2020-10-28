@@ -14,7 +14,7 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
 {
     class R01Style : IProduceContingencyPayments
     {
-        public async Task GenerateContingencyPayments()
+        public async Task GenerateContingencyPayments(int period)
         {
             List<Earning> earnings;
             List<Datalock> datalocks1819;
@@ -25,7 +25,7 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
             // Load data
             using (var connection = new SqlConnection(ConfigurationManager.ConnectionStrings["ILR1920DataStore"].ConnectionString))
             {
-                earnings = (await connection.QueryAsync<Earning>(Sql.Earnings, commandTimeout: 3600).ConfigureAwait(false)).ToList();
+                earnings = (await connection.QueryAsync<Earning>(Sql.PeriodEarnings, new {collectionperiod=period}, commandTimeout: 3600).ConfigureAwait(false)).ToList();
             }
             Console.WriteLine($"Loaded {earnings.Count} earnings");
 
@@ -62,7 +62,7 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
             var excel = new XLWorkbook(Path.Combine("Template", "Contingency.xlsx"));
 
             var sheet = excel.Worksheet("Earnings");
-            Program.WriteToTable(sheet, earnings);
+            XlWriter.WriteToTable(sheet, earnings);
             Console.WriteLine("Written earnings page");
 
             // Extract ACT1 earnings for datalock processing
@@ -80,7 +80,7 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
 
             // Write to '1819 Datalocks' tab
             sheet = excel.Worksheet("1819 Datalocks");
-            Program.WriteToTable(sheet, earningsWithDatalocks);
+            XlWriter.WriteToTable(sheet, earningsWithDatalocks);
             Console.WriteLine($"Found {act1Earnings.Count} earnings with {earningsWithDatalocks.Count} 1819 datalocks and {earningsWithoutDatalocks.Count} remaining payable earnings");
 
 
@@ -124,7 +124,7 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
             }
             // Write the remainder of the datalocks to '1920 Datalocks' tab
             sheet = excel.Worksheet("1920 Datalocks (Full)");
-            Program.WriteToTable(sheet, finalEarningsWithDatalocks);
+            XlWriter.WriteToTable(sheet, finalEarningsWithDatalocks);
             Console.WriteLine($"Found {finalEarningsWithoutDatalocks.Count} remaining earnings with {finalEarningsWithDatalocks.Count} 1920 datalocks (full match)");
 
 
@@ -141,7 +141,7 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
             }
             // Write the remainder of the datalocks to '1920 Datalocks' tab
             sheet = excel.Worksheet("1920 Datalocks (Partial)");
-            Program.WriteToTable(sheet, finalEarningsWithPartialDatalocks);
+            XlWriter.WriteToTable(sheet, finalEarningsWithPartialDatalocks);
             Console.WriteLine($"Found {finalEarningsWithoutPartialDatalocks.Count} remaining earnings with {finalEarningsWithPartialDatalocks.Count} 1920 datalocks (partial match)");
 
 
@@ -149,12 +149,12 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
             // Write a summary tab
             sheet = excel.Worksheet("Final Amounts (Full)");
             var paidEarnings = finalEarningsWithoutDatalocks.Union(act2Earnings).ToList();
-            Program.WriteToTable(sheet, paidEarnings);
+            XlWriter.WriteToTable(sheet, paidEarnings);
 
             // Write a summary tab
             sheet = excel.Worksheet("Final Amounts (Partial)");
             paidEarnings = finalEarningsWithoutPartialDatalocks.Union(act2Earnings).ToList();
-            Program.WriteToTable(sheet, paidEarnings);
+            XlWriter.WriteToTable(sheet, paidEarnings);
 
 
             var datalockedUlns = earningsWithDatalocks.Select(x => x.Uln).Distinct().ToList();
@@ -177,17 +177,17 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
 
             // Raw earnings
             sheet = excel.Worksheet("Raw Earnings");
-            Program.WriteRawResults(sheet, earnings);
+            WriteRawResults(sheet, earnings);
 
 
             sheet = excel.Worksheet("Raw 1819 Datalocks");
-            Program.WriteRawResults(sheet, earningsWithDatalocks);
+            WriteRawResults(sheet, earningsWithDatalocks);
 
             sheet = excel.Worksheet("Raw 1920 Datalocks (Full)");
-            Program.WriteRawResults(sheet, finalEarningsWithDatalocks);
+            WriteRawResults(sheet, finalEarningsWithDatalocks);
 
             sheet = excel.Worksheet("Raw 1920 Datalocks (Partial)");
-            Program.WriteRawResults(sheet, finalEarningsWithPartialDatalocks);
+            WriteRawResults(sheet, finalEarningsWithPartialDatalocks);
 
 
             using (var stream = new MemoryStream())
@@ -197,6 +197,22 @@ namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
                 Console.WriteLine("Saved to memory");
                 stream.Seek(0, SeekOrigin.Begin);
                 stream.CopyTo(file);
+            }
+        }
+
+        private static void WriteRawResults(IXLWorksheet sheet, List<Earning> earnings)
+        {
+            var row = 2;
+            foreach (var earning in earnings.OrderBy(x => x.Ukprn).ThenBy(x => x.Uln))
+            {
+                sheet.Cell(row, "A").Value = earning.Ukprn;
+                sheet.Cell(row, "B").Value = earning.Uln;
+                sheet.Cell(row, "C").Value = earning.FundingLineType;
+
+                sheet.Cell(row, "D").Value = earning.Amount;
+                sheet.Cell(row, "E").Value = earning.OneToThree;
+                sheet.Cell(row, "F").Value = earning.Incentives;
+                row++;
             }
         }
     }

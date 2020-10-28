@@ -12,67 +12,62 @@ using SFA.DAS.Payments.Contingency.DTO;
 
 namespace SFA.DAS.Payments.Contingency.CongingencyStrategies
 {
-    class Act2FromEarnings : IProduceContingencyPayments
+    class Act2FromSinglePeriodEarnings : IProduceContingencyPayments, IDisposable
     {
+        public void Dispose()
+        {}
+
         public async Task GenerateContingencyPayments(int period)
         {
             List<Earning> earnings;
-            
-            Console.WriteLine("Processing ACT2...");
+
+            Console.WriteLine("Processing in year ACT2...");
 
             // Load data
             using (var connection = new SqlConnection(ConfigurationManager.ConnectionStrings["ILR1920DataStore"].ConnectionString))
             {
-                earnings = (await connection.QueryAsync<Earning>(Sql.PeriodEarnings, new {collectionperiod=period}, commandTimeout: 3600)
-                    .ConfigureAwait(false)).ToList();
+                earnings = (await connection.QueryAsync<Earning>(Sql.PeriodEarnings, new {collectionPeriod = period, act = 2}, 
+                    commandTimeout: 3600).ConfigureAwait(false))
+                        .Where(x => x.ApprenticeshipContractType == 2)
+                        .ToList();
             }
             Console.WriteLine($"Loaded {earnings.Count} earnings");
 
-            
             var excel = new XLWorkbook(Path.Combine("Template", "Contingency.xlsx"));
 
-            // Filter out all ACT1 earnings
-            earnings = earnings
-                .Where(x => x.ApprenticeshipContractType == 2)
-                .ToList();
-            
-            var rawEarnings = earnings.ToList();
-            rawEarnings.ForEach(x => x.Amount = x.AllTransactions);
-            // Write earnings tab
-            var sheet = excel.Worksheet("Earnings");
-            XlWriter.WriteToTable(sheet, rawEarnings);
-
+            GC.Collect();
 
             // Apply co-funding multiplier
             earnings.ForEach(x =>
             {
-                if (x.ApprenticeshipContractType == 2)
-                {
-                    x.TransactionType01 *= x.SfaContributionPercentage;
-                    x.TransactionType02 *= x.SfaContributionPercentage;
-                    x.TransactionType03 *= x.SfaContributionPercentage;
-                }
+                x.TransactionType01 *= x.SfaContributionPercentage;
+                x.TransactionType02 *= x.SfaContributionPercentage;
+                x.TransactionType03 *= x.SfaContributionPercentage;
             });
 
-            // Set the 'Amount'
             earnings.ForEach(x => x.Amount = x.AllTransactions);
-
-
-            // Get all earnings
-            // Write earnings to 'Earnings' tab
-            
             Console.WriteLine($"Found {earnings.Count} ACT2 earnings");
 
-            // Write a summary tab
-            sheet = excel.Worksheet("Final Amounts (Full)");
-            XlWriter.WriteToTable(sheet, earnings);
+            GC.Collect();
+
+            // Calculate Earnings - Payments
+            var newPayments = PaymentsCalculator.Generate(earnings, new List<Payment>());
+
+            // Write raw earnings
+            await AuditData.Output(earnings, $"ACT2EarningsByLearner-{DateTime.Now:yyyy-MM-dd-hh-mm}.csv");
+
+            // And payments
+            await AuditData.Output(newPayments, $"ACT2PaymentsByLearner-{DateTime.Now:yyyy-MM-dd-hh-mm}.csv");
 
             
+            // Write payments summarised by UKPRN
+            var sheet = excel.Worksheet("Final Payments");
+            XlWriter.WriteToSummarisedTable(sheet, newPayments);
+
             // Summary
             sheet = excel.Worksheet("Summary");
             sheet.Cell(2, "A").Value = earnings.Select(x => x.Uln).Distinct().Count();
             sheet.Cell(2, "B").Value = earnings.Sum(x => x.Amount);
-
             
 
             using (var stream = new MemoryStream())

@@ -14,4 +14,8 @@
 *.jfm
 App.Debug.config
 App.Release.config
-/src/.idea/
+
+**/*.crunchsolution.cache
+**/*.executiontimes.cache
+
+**/.idea/*

@@ -174,7 +174,7 @@ namespace SFA.DAS.Payments.Migration
                 await Logger.Log($"Connection successful for {friendlyName}");
                 Console.ForegroundColor = ConsoleColor.White;
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 await Logger.Log($"Connection failed for {friendlyName}");

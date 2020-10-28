@@ -47,7 +47,12 @@ RawEarnings AS (
         0 [TransactionType14],
         COALESCE(APEP.PriceEpisodeLSFCash, 0) [TransactionType15],
         COALESCE([APEP].[PriceEpisodeLearnerAdditionalPayment], 0) [TransactionType16],
-      	CASE WHEN [APE].[PriceEpisodeContractType] = 'Levy Contract' THEN 1 WHEN [APE].[PriceEpisodeContractType] = 'Contract for services with the employer' THEN 1 WHEN [APE].[PriceEpisodeContractType] = 'None' THEN 0 WHEN [APE].[PriceEpisodeContractType] = 'Non-Levy Contract' THEN 2 WHEN [APE].[PriceEpisodeContractType] = 'Contract for services with the ESFA' THEN 2 ELSE -1 END [ApprenticeshipContractType],
+      	CASE WHEN [APE].[PriceEpisodeContractType] = 'Levy Contract' THEN 1 
+            WHEN [APE].[PriceEpisodeContractType] = 'Contract for services with the employer' THEN 1 
+            WHEN [APE].[PriceEpisodeContractType] = 'None' THEN 0 
+            WHEN [APE].[PriceEpisodeContractType] = 'Non-Levy Contract' THEN 2 
+            WHEN [APE].[PriceEpisodeContractType] = 'Contract for services with the ESFA' THEN 2 
+            ELSE -1 END [ApprenticeshipContractType],
         PriceEpisodeTotalTNPPrice [TotalPrice],
         0 [MathsAndEnglish]
     FROM Rulebase.AEC_ApprenticeshipPriceEpisode_Period APEP
@@ -114,7 +119,12 @@ RawEarnings AS (
         COALESCE(MathEngBalPayment, 0) [TransactionType14],
         COALESCE(LearnSuppFundCash, 0) [TransactionType15],
         0 [TransactionType16],
-			CASE WHEN LDP.LearnDelContType = 'Levy Contract' THEN 1 WHEN LDP.LearnDelContType = 'Contract for services with the employer' THEN 1 WHEN LDP.LearnDelContType = 'None' THEN 0 WHEN LDP.LearnDelContType = 'Non-Levy Contract' THEN 2 WHEN LDP.LearnDelContType = 'Contract for services with the ESFA' THEN 2 ELSE -1 END [ApprenticeshipContractType],
+			CASE WHEN LDP.LearnDelContType = 'Levy Contract' THEN 1 
+                WHEN LDP.LearnDelContType = 'Contract for services with the employer' THEN 1 
+                WHEN LDP.LearnDelContType = 'None' THEN 0 
+                WHEN LDP.LearnDelContType = 'Non-Levy Contract' THEN 2 
+                WHEN LDP.LearnDelContType = 'Contract for services with the ESFA' THEN 2 
+                ELSE -1 END [ApprenticeshipContractType],
         0 [TotalPrice],
         1 [MathsAndEnglish]
     FROM Rulebase.AEC_LearningDelivery_Period LDP
