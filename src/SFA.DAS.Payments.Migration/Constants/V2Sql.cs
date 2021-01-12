@@ -62,7 +62,16 @@ SELECT * INTO #RequiredPaymentEvents
 FROM RequiredPaymentEvents
 
 ;WITH MigrationPayments AS (
-	SELECT R.EventId [RequiredPaymentEventId], P.*, 
+	SELECT R.EventId [RequiredPaymentEventId], P.Id, P.EventId, P.EarningEventId, P.FundingSourceEventId,
+		P.EventTime, P.JobId, P.DeliveryPeriod, P.CollectionPeriod, P.AcademicYear, P.Ukprn,
+		P.LearnerReferenceNumber, P.LearnerUln, P.PriceEpisodeIdentifier, P.Amount, P.LearningAimReference,
+		P.LearningAimProgrammeType, P.LearningAimStandardCode, P.LearningAimFrameworkCode, 
+		P.LearningAimPathwayCode, P.LearningAimFundingLineType, P.ContractType, P.TransactionType,
+		P.FundingSource, P.IlrSubmissionDateTime, P.SfaContributionPercentage, P.AgreementId,
+		P.AccountId, P.TransferSenderAccountId, P.CreationDate, P.EarningsStartDate, P.EarningsPlannedEndDate,
+		P.EarningsActualEndDate, P.EarningsCompletionStatus, P.EarningsCompletionAmount, P.EarningsInstalmentAmount,
+		P.EarningsNumberOfInstalments, P.LearningStartDate, P.ApprenticeshipId, P.ApprenticeshipPriceEpisodeId,
+		P.ApprenticeshipEmployerType, P.ReportingAimFundingLineType, P.NonPaymentReason,  
 		ISNULL(E.LearningAimSequenceNumber, 0) [LearningAimSequenceNumber], R.Amount [AmountDue]
 	FROM [Payments2].[Payment] P
 	JOIN #FundingSourceEvents F
@@ -100,7 +109,16 @@ FETCH NEXT @pageSize ROWS ONLY
                 ";
 
         public const string PaymentsAndEarningsForFailedTransfers = @"
-                SELECT R2.EventId [RequiredPaymentEventId], P.*, 
+                SELECT R2.EventId [RequiredPaymentEventId], P.Id, P.EventId, P.EarningEventId, P.FundingSourceEventId,
+		P.EventTime, P.JobId, P.DeliveryPeriod, P.CollectionPeriod, P.AcademicYear, P.Ukprn,
+		P.LearnerReferenceNumber, P.LearnerUln, P.PriceEpisodeIdentifier, P.Amount, P.LearningAimReference,
+		P.LearningAimProgrammeType, P.LearningAimStandardCode, P.LearningAimFrameworkCode, 
+		P.LearningAimPathwayCode, P.LearningAimFundingLineType, P.ContractType, P.TransactionType,
+		P.FundingSource, P.IlrSubmissionDateTime, P.SfaContributionPercentage, P.AgreementId,
+		P.AccountId, P.TransferSenderAccountId, P.CreationDate, P.EarningsStartDate, P.EarningsPlannedEndDate,
+		P.EarningsActualEndDate, P.EarningsCompletionStatus, P.EarningsCompletionAmount, P.EarningsInstalmentAmount,
+		P.EarningsNumberOfInstalments, P.LearningStartDate, P.ApprenticeshipId, P.ApprenticeshipPriceEpisodeId,
+		P.ApprenticeshipEmployerType, P.ReportingAimFundingLineType, P.NonPaymentReason, 
 	                ISNULL(E.LearningAimSequenceNumber, 0) [LearningAimSequenceNumber], R2.Amount [AmountDue]
                 FROM [Payments2].[Payment] P 
                 LEFT JOIN Payments2.FundingSourceEvent F 
