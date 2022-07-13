@@ -1,0 +1,65 @@
+﻿@page "/periodendrun"
+
+@using SFA.DAS.Payments.FM36Tool.Data
+@using SFA.DAS.Payments.FM36Tool.PeriodEnd
+@inject PeriodEndService PeriodEndService
+
+<h1>
+     Period end run
+</h1>
+
+<EditForm Model=@_periodEndTaskData OnSubmit="@SendPeriodEndTask">
+    <div class="form-row">
+        <div class="form-group col-md-6">
+            <label for="inputAcademicYear">Academic year</label>
+            <select id="inputAcademicYear" class="custom-select" @bind="_periodEndTaskData.AcademicYear">
+                <option value="2122">2122</option>
+                <option value="2223">2223</option>
+            </select>
+        </div>
+        <div class="form-group col-md-6">
+            <label for="inputCollectionPeriod">Collection Period</label>
+            <select id="inputCollectionPeriod" class="custom-select" @bind="_periodEndTaskData.CollectionPeriod">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+                <option value="9">9</option>
+                <option value="10">10</option>
+                <option value="11">11</option>
+                <option value="12">12</option>
+                <option value="13">13</option>
+                <option value="13">14</option>
+            </select>
+        </div>
+    </div>
+    <button type="submit" disabled="@_isDisabled" class="btn btn-primary">Trigger Run</button>
+</EditForm>
+
+<div>
+    <h4>Job Id: @_jobId</h4>
+</div>
+
+
+@code {
+
+    private long _jobId;
+    private readonly PeriodEndTaskData _periodEndTaskData = new PeriodEndTaskData();
+    private bool _isDisabled;
+
+    protected override Task OnInitializedAsync()
+    {
+        return Task.CompletedTask;
+    }
+
+    public async Task SendPeriodEndTask()
+    {
+        _isDisabled = true;
+        _jobId = await PeriodEndService.SendPeriodEndTask(PeriodEndTask.PeriodEndRun, _periodEndTaskData.AcademicYear, _periodEndTaskData.CollectionPeriod);
+        _isDisabled = false;
+    }
+}

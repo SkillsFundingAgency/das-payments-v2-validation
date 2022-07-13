@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Autofac" Version="6.4.0" />
+    <PackageReference Include="Azure.Storage.Files.Shares" Version="12.11.0" />
+    <PackageReference Include="ESFA.DC.FileService" Version="0.1.48-beta0001" />
+    <PackageReference Include="ESFA.DC.ILR.2223.FundingService.FM36.FundingOutput.Model" Version="0.17.4" />
+    <PackageReference Include="ESFA.DC.JobContext.Interface" Version="0.2.8-beta0001" />
+    <PackageReference Include="ESFA.DC.JobContextManager" Version="0.2.11-beta0001" />
+    <PackageReference Include="ESFA.DC.Queueing" Version="0.1.22-beta0001" />
+    <PackageReference Include="ESFA.DC.Serialization.Json" Version="0.1.48-beta0001" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="6.0.1" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+  </ItemGroup>
+
+</Project>
