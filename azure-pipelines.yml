@@ -27,7 +27,8 @@ steps:
 - task: NuGetToolInstaller@1
 
 - task: NuGetCommand@2
-  inputs:
+  inputs: 
+    vstsFeed: '1d5deb2d-cf8b-4bb1-b147-d13bc246e3f4'
     restoreSolution: '$(solution)'
 
 - task: VSBuild@1
