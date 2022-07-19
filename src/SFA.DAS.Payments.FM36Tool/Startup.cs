@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using SFA.DAS.Payments.FM36Tool.ApprenticeshipSetup;
 using SFA.DAS.Payments.FM36Tool.Data;
 using SFA.DAS.Payments.FM36Tool.JobContext;
 using SFA.DAS.Payments.FM36Tool.PeriodEnd;
@@ -48,7 +49,10 @@ namespace SFA.DAS.Payments.FM36Tool
 
             services.AddScoped<DcHelper>();
             services.AddSingleton(new ShareClient(Configuration.GetConnectionString("FileStorageConnectionString"), Configuration.GetSection("AppSettings")["ShareName"]));
+            
+            services.AddScoped(sp => new PaymentsDataContext(Configuration.GetConnectionString("PaymentsConnectionString")));
 
+            services.AddScoped<ApprenticeshipHelper>();
             services.AddScoped<AzureFileStorageFm36FilesProvider>();
             services.AddScoped<AzureFileStorageFm36FolderSubmission>();
             services.AddScoped<TopicPublishingServiceFactory>();

@@ -13,6 +13,7 @@
     <PackageReference Include="ESFA.DC.JobContextManager" Version="0.2.11-beta0001" />
     <PackageReference Include="ESFA.DC.Queueing" Version="0.1.22-beta0001" />
     <PackageReference Include="ESFA.DC.Serialization.Json" Version="0.1.48-beta0001" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="5.0.17" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="6.0.1" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
